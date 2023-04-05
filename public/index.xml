@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>ZhangShuai&#39;s Blog</title>
+    <link>https://flowlet.net/</link>
+    <description>Recent content on ZhangShuai&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 19 Mar 2023 11:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://flowlet.net/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>I/O虚拟化：Virtio 与 Vhost-net 架构 101</title>
+      <link>https://flowlet.net/2023/03/19/virtio-vhost-net/</link>
+      <pubDate>Sun, 19 Mar 2023 11:00:00 +0000</pubDate>
+      
+      <guid>https://flowlet.net/2023/03/19/virtio-vhost-net/</guid>
+      <description>云数据中心正在经历巨大的变革，虚拟化在经历了一虚多技术（一台 BM 虚拟成多台 VM ）多年的发展后，正朝着多虚一技术（多台 BM 的多台 VM 虚拟成一台 VM ）的方</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://flowlet.net/about/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://flowlet.net/about/</guid>
+      <description>About Me Shuai Zhang is a software architect. He has a solid experience in the information and telecommunication technology industry for more than 10 years. Throughout his career, he has built a number of large-scale, cross-country software systems, most of them are still running in production. He loves open source and has been contributing to various open source projects, he is the author of the open source project FastVPN. He</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://flowlet.net/notes/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://flowlet.net/notes/</guid>
+      <description>学习笔记</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://flowlet.net/search/placeholder/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://flowlet.net/search/placeholder/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Posts Archive</title>
+      <link>https://flowlet.net/archive/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://flowlet.net/archive/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>

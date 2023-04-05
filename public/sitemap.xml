@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  
+  <url>
+    <loc>https://flowlet.net/categories/</loc>
+    <lastmod>2023-03-19T11:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://flowlet.net/2023/03/19/virtio-vhost-net/</loc>
+    <lastmod>2023-03-19T11:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://flowlet.net/post/</loc>
+    <lastmod>2023-03-19T11:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://flowlet.net/tags/</loc>
+    <lastmod>2023-03-19T11:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://flowlet.net/categories/tech/</loc>
+    <lastmod>2023-03-19T11:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://flowlet.net/tags/virtio/</loc>
+    <lastmod>2023-03-19T11:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://flowlet.net/</loc>
+    <lastmod>2023-03-19T11:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://flowlet.net/about/</loc>
+  </url>
+  
+  <url>
+    <loc>https://flowlet.net/notes/</loc>
+  </url>
+  
+  <url>
+    <loc>https://flowlet.net/search/placeholder/</loc>
+  </url>
+  
+  <url>
+    <loc>https://flowlet.net/archive/</loc>
+  </url>
+  
+  <url>
+    <loc>https://flowlet.net/search/</loc>
+  </url>
+  
+</urlset>
