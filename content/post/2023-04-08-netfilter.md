@@ -836,9 +836,9 @@ root@ubuntu:~# ebtables-save > /etc/ebtables/ebtables-save.conf
 root@ubuntu:~# ebtables-restore < /etc/ebtables/ebtables-save.conf
 ```
 
-### 4.3 briage-netfilter
+### 4.3 bridge-netfilter
 - - -
-ebtables 只可以简单过滤二层以太网帧，无法过滤 ipv4 数据包。解决这个问题，Linux内核引入了 briage-netfilter（以下简称：br-nf）以解决在链路层 Bridge 中处理 IP 数据包的问题（比如：在链路层内进行IP DNAT，外部机器与主机上虚拟机之间的通信流量），br-nf 也是 openstack 中实现安全组功能的基础。
+ebtables 只可以简单过滤二层以太网帧，无法过滤 ipv4 数据包。解决这个问题，Linux内核引入了 bridge-netfilter（以下简称：br-nf）以解决在链路层 Bridge 中处理 IP 数据包的问题（比如：在链路层内进行IP DNAT，外部机器与主机上虚拟机之间的通信流量），br-nf 也是 openstack 中实现安全组功能的基础。
 
 ![](/img/2023-04-08-netfilter/2023-04-10-PacketFlow.png)
 
