@@ -10,12 +10,24 @@ image: "/img/2023-04-10-ebtables-iptables-interaction/backgroud.jpg"
 showtoc: true
 draft: true
 tags:
-    - Ebtables
+    - iptables
+    - ebtables
+    - br-nf
 categories: [ Tech ]
 URL: "/2023/04/10/ebtables-iptables-interaction/"
 ---
 
-本文翻译自[ebtables/iptables interaction on a Linux-based bridge](https://ebtables.netfilter.org/br_fw_ia/br_fw_ia.html)。由于译者水平有限，本文不免存在遗漏或错误之处。如有疑问，请查阅原文。
+- - -
+###### 关于作者
+> 
+> **`张帅，网络从业人员，公众号：Flowlet`**
+> 
+> **`个人博客：https://flowlet.net/`**
+- - -
+
+本文翻译自[ebtables/iptables interaction on a Linux-based bridge](https://ebtables.netfilter.org/br_fw_ia/br_fw_ia.html)。
+
+由于译者水平有限，本文不免存在遗漏或错误之处。如有疑问，请查阅原文。
 
 ## 前言
 - - -
@@ -53,5 +65,4 @@ URL: "/2023/04/10/ebtables-iptables-interaction/"
 
 ## 参考
 - - -
-* [Learn about virtio-networking](https://www.redhat.com/en/blog/learn-about-virtio-networking) 系列文章。如需了解更多，推荐阅读[原文](https://www.redhat.com/en/blog/learn-about-virtio-networking)。
-* [Learn about virtio-networking](https://www.redhat.com/en/blog/learn-about-virtio-networking) 系列文章。如需了解更多，推荐阅读[原文](https://www.redhat.com/en/blog/learn-about-virtio-networking)。
+* [ebtables/iptables interaction on a Linux-based bridge](https://ebtables.netfilter.org/br_fw_ia/br_fw_ia.html)

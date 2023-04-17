@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Virtio on ZhangShuai&#39;s Blog</title>
+    <title>virtio on ZhangShuai&#39;s Blog</title>
     <link>https://flowlet.net/tags/virtio/</link>
-    <description>Recent content in Virtio on ZhangShuai&#39;s Blog</description>
+    <description>Recent content in virtio on ZhangShuai&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Sun, 19 Mar 2023 11:00:00 +0000</lastBuildDate>
@@ -17,7 +17,7 @@
       <pubDate>Sun, 19 Mar 2023 11:00:00 +0000</pubDate>
       
       <guid>https://flowlet.net/2023/03/19/virtio-vhost-net/</guid>
-      <description>云数据中心正在经历巨大的变革，虚拟化在经历了一虚多技术（一台 BM 虚拟成多台 VM ）多年的发展后，正朝着多虚一技术（多台 BM 的多台 VM 虚拟成一台 VM ）的方</description>
+      <description>关于作者 张帅，网络从业人员，公众号：Flowlet 个人博客：https://flowlet.net/ 云数据中心正在经历巨大的变革，虚拟化在经</description>
     </item>
     
   </channel>

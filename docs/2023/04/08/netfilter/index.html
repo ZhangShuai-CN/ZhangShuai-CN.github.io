@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    
+    <meta property="og:site_name" content="ZhangShuai&#39;s Blog">
+    <meta property="og:type" content="article">
+
+    
+    <meta property="og:image" content="/img/2023-04-08-netfilter/backgroud.jpg">
+    <meta property="twitter:image" content="/img/2023-04-08-netfilter/backgroud.jpg" />
+    
+
+    
+    <meta name="title" content="Netfilter 与 iptables/ebtables 101" />
+    <meta property="og:title" content="Netfilter 与 iptables/ebtables 101" />
+    <meta property="twitter:title" content="Netfilter 与 iptables/ebtables 101" />
+    
+
+    
+    <meta name="description" content="A Deep Dive into Netfilter Architecture">
+    <meta property="og:description" content="A Deep Dive into Netfilter Architecture" />
+    <meta property="twitter:description" content="A Deep Dive into Netfilter Architecture" />
+    
+
+    
+    <meta property="twitter:card" content="summary" />
+    
+    
+
+    <meta name="keyword"  content="张帅, zhangshuai, ZhangShuai, , 张帅的网络日志, 张帅的博客, ZhangShuai&#39;s Blog, 博客, 个人网站, 互联网, Web, 云原生, PaaS, Iaas, Kubernetes">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>Netfilter 与 iptables/ebtables 101 | 张帅的博客 | ZhangShuai&#39;s Blog</title>
+
+    <link rel="canonical" href="/2023/04/08/netfilter/">
+
+    
+    
+    
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    
+    <link rel="stylesheet" href="/css/hugo-theme-cleanwhite.min.css">
+
+    
+    <link rel="stylesheet" href="/css/zanshang.css">
+
+    
+    <link href="https://cdn.jsdelivr.net/gh/FortAwesome/Font-Awesome@5.15.1/css/all.css" rel="stylesheet" type="text/css">
+
+    
+    
+
+    
+    <script src="/js/jquery.min.js"></script>
+
+    
+    <script src="/js/bootstrap.min.js"></script>
+
+    
+    <script src="/js/hux-blog.min.js"></script>
+
+    
+    <script src="/js/lazysizes.min.js"></script>
+
+    
+    
+
+</head>
+
+
+
+
+
+
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+
+    <div class="container-fluid">
+        
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">ZhangShuai&#39;s Blog</a>
+        </div>
+
+        
+        
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">All Posts</a>
+                    </li>
+                    
+                        
+                        <li>
+                            <a href="/categories/tech/">tech</a>
+                        </li>
+                        
+                    
+                    
+		    
+                        <li><a href="/archive//">ARCHIVE</a></li>
+                    
+                        <li><a href="/notes//">NOTES</a></li>
+                    
+                        <li><a href="/about//">ABOUT</a></li>
+                    
+		            <li>
+                        <a href="/search"><i class="fa fa-search"></i></a>
+		           </li>
+                </ul>
+            </div>
+        </div>
+        
+    </div>
+    
+</nav>
+<script>
+    
+    
+    
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        
+            $navbar.className = " ";
+            
+            setTimeout(function(){
+                
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+
+
+<style type="text/css">
+    header.intro-header {
+        background-image: url('/img/2023-04-08-netfilter/backgroud.jpg')
+    }
+</style>
+
+<header class="intro-header" >
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/netfilter" title="netfilter">
+                            netfilter
+                        </a>
+                        
+                        <a class="tag" href="/tags/iptables" title="iptables">
+                            iptables
+                        </a>
+                        
+                        <a class="tag" href="/tags/ebtables" title="ebtables">
+                            ebtables
+                        </a>
+                        
+                    </div>
+                    <h1>Netfilter 与 iptables/ebtables 101</h1>
+                    <h2 class="subheading">Netfilter 架构与 iptables/ebtables</h2>
+                    <span class="meta">
+                        
+                            Posted by 
+                            
+                                张帅
+                             
+                            on 
+                            Saturday, April 8, 2023
+                            
+                            
+                            
+                            
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+
+
+<article>
+    <div class="container">
+        <div class="row">
+
+            
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                
+                <hr>
+<h6 id="关于作者">关于作者</h6>
+<blockquote>
+<p><strong><code>张帅，网络从业人员，公众号：Flowlet</code></strong></p>
+<p><strong><code>个人博客：https://flowlet.net/</code></strong></p>
+</blockquote>
+<hr>
+<h2 id="序言">序言</h2>
+<hr>
+<p>数据中心网络<strong>中间节点</strong>数据包处理基本都采用了内核 Offload/Upload 解决方案。但是对于<strong>端节点</strong>来说，Linux 庞大的生态系统致使有大量的开源软件和应用程序基于 Linux 内核实现，这些庞大应用程序很难基于内核 Offload/Upload 方案做改造。由于是端节点，对于性能的要求远没有中间节点那么迫切。</p>
+<p>对于网络从业人员来说，无论是从事部分应用场景的网络开发，还是出于参考借鉴的目的，了解 Linux 内核网络协议栈的实现都是从事网络开发绕不开的点。</p>
+<h2 id="前言">前言</h2>
+<hr>
+<p>Netfilter 是 Linux 内核的数据包处理框架，由 Rusty Russell 于 1998 年开发， 旨在改进以前的 ipchains（Linux2.2.x）和 ipfwadm（Linux2.0.x）数据包处理框架。</p>
+<p>本文主要从 Netfilter 构成与转发框架、Iptables 示例、Conntrack详解、Netfilter开发实践等方面介绍 Netfilter 框架，由于笔者水平有限，文中不免有错误之处，欢迎指正交流。</p>
+<h2 id="1-netfilter-构成">1. Netfilter 构成</h2>
+<hr>
+<p>Netfilter 详细构成如下所示：
+
+  <img src="/img/2023-04-08-netfilter/2023-04-08-Netfilter-components.svg" alt="">
+
+</p>
+<p>从上图我们可以看出，Netfilter 框架才用了高内聚、低耦合的模块化设计理念。主要由 Netfilter hook API、内核防火墙子模块、用户态配置工具/应用程序 3 部分组成。</p>
+<ul>
+<li>
+<p><strong>Netfilter hook API</strong>：Netfilter 在网络协议栈处理数据包的关键流程中定义了 5 个 Hook 点，其它内核防火墙子模块（比如 ip_tables.ko）可以向这些 hook 点注册处理函数，这样当数据包经过这些 hook 点时，其上注册的处理函数将被依次调用。</p>
+</li>
+<li>
+<p><strong>内核防火墙子模块</strong>：Netfilter 提供了整个防火墙的框架，各个协议基于 Netfilter 框架来自己实现自己的防火墙功能。每个协议都有自己独立的表来存储自己的配置信息，他们之间完全独立的进行配置和运行。</p>
+<ul>
+<li>
+<p><strong>链路层（2 层）防火墙子模块</strong>：</p>
+<pre><code>ebtables，对运行在 Bridge 中协议报文进行处理。
+</code></pre>
+</li>
+<li>
+<p><strong>ARP（2.5 层）防火墙子模块</strong>：</p>
+<pre><code>arptables，对 ARP 协议报文进行处理。
+</code></pre>
+</li>
+<li>
+<p><strong>网络层（3 层）防火墙子模块</strong>：</p>
+<pre><code>iptables（IPv4）、ip6tables（IPv6）分别对 IPv4协议栈与IPv6协议栈中的报文进行处理。
+</code></pre>
+</li>
+<li>
+<p><strong>nf_tables</strong>：</p>
+<pre><code>旨在替换现有的 {ip，ip6，arp，eb}tables 框架，它使用现有的 Netfilter hook API，为 {ip，ip6}tables 提供一个新的包过滤框架、一个新的用户空间实用程序（nft）和一个兼容层。
+
+Centos 8 已经使用 nftables 框架替代 iptables 框架作为默认的网络包过滤工具。
+</code></pre>
+</li>
+<li>
+<p><strong>NAT 子系统</strong>：</p>
+<pre><code>网络地址转换（SNAT、DNAT）。
+</code></pre>
+</li>
+<li>
+<p><strong>Conntrack</strong>：</p>
+<pre><code>连接跟踪模块，内核实现 statefull firewall、L4LB功能的主要模块。
+</code></pre>
+</li>
+<li>
+<p><strong>Logging</strong>：</p>
+<pre><code>nf_log，主要提供 Netfilter 的日志记录服务。使用 nft 添加规则，Netfilter 抛出日志，然后用户态的 ulogd2 程序监听读取这些日志后。
+    
+ulogd2 会将这些数据包日志转换成json、sqlite3/mysql、pcap等多种格式文件，方便进行分析或用于进行其他的数据处理（审计、分析等）。
+</code></pre>
+</li>
+<li>
+<p><strong>Queueing</strong>：</p>
+<pre><code>nf_queue，内核在 Netfilter 框架基础上提供的 ip_queue/nfnetlink_queue 机制，通常用于将数据包上送给用户空间的应用程序进行处理，从而使得基于用户态的防火墙开发成为可能。
+</code></pre>
+</li>
+<li>
+<p><strong>Xtables</strong>：</p>
+<pre><code>主要包含{eb，arp，ip，ip6}tables模块所使用的共享代码部分。后来，Xtables或多或少被用来指整个防火墙(v4、v6、arp和eb)体系结构。
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>用户态配置工具/应用程序</strong>：每个内核防火墙子模块（除了 Xtables）都有一个对应的用户态配置工具/应用程序。在讲述<strong>内核防火墙子模块</strong>的时候已经进行了相应介绍，这里不再进行赘述。</p>
+</li>
+</ul>
+<h2 id="2-netfilter-转发框架">2. Netfilter 转发框架</h2>
+<hr>
+<p>数据包在 Netfilter 框架中的转发路径如下图所示：
+
+  <img src="/img/2023-04-08-netfilter/2023-04-08-Netfilter-packet-flow.svg" alt="">
+
+</p>
+<p>上图协议栈主要分为 4 层，蓝色框为链路层、绿色框为网络层、黄色框为协议层、红色框为应用层。</p>
+<p>图中绿色小方框表示 iptables 的表和链，蓝色小方框表示 ebtables 的表和链。在 br-nf 的作用下（从2.6 kernel开始）可以支持在链路层调用 iptables 的表和链。</p>
+<p>br-nf 的引入是为了解决在链路层 Bridge 中处理 IP 数据包的问题（比如：在链路层内进行IP DNAT，外部机器与主机上虚拟机之间的通信流量），br-nf 也是 openstack 中实现安全组功能的基础。</p>
+<h2 id="3-netfilter-与-iptables">3. Netfilter 与 iptables</h2>
+<hr>
+<p>Netfilter 在 网络层（L3）提供了以下 5 个 hook 点，包经过协议栈时会触发内核模块注册在这里的处理函数。触发哪个 hook 取决于包的方向（ingress/egress）、包的目的地址、包在上一个 hook 点是被丢弃还是拒绝等等。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">include<span style="color:#ff79c6">/</span>uapi<span style="color:#ff79c6">/</span>linux<span style="color:#ff79c6">/</span>netfilter.h
+
+<span style="color:#ff79c6">enum</span> nf_inet_hooks {
+	NF_INET_PRE_ROUTING,
+	NF_INET_LOCAL_IN,
+	NF_INET_FORWARD,
+	NF_INET_LOCAL_OUT,
+	NF_INET_POST_ROUTING,
+	NF_INET_NUMHOOKS
+};
+</code></pre></div><ul>
+<li>
+<p><strong>NF_INET_PRE_ROUTING</strong>:</p>
+<pre><code>接收到的包进入协议栈后立即触发此 hook，在进行任何路由判断 （将包发往哪里）之前。
+</code></pre>
+</li>
+<li>
+<p><strong>NF_INET_LOCAL_IN</strong>:</p>
+<pre><code>接收到的包经过路由判断，如果目的是本机，将触发此 hook。
+</code></pre>
+</li>
+<li>
+<p><strong>NF_INET_FORWARD</strong>:</p>
+<pre><code>接收到的包经过路由判断，如果目的是其他机器，将触发此 hook。
+</code></pre>
+</li>
+<li>
+<p><strong>NF_INET_LOCAL_OUT</strong>:</p>
+<pre><code>本机产生的准备发送的包，在进入协议栈后立即触发此 hook。
+</code></pre>
+</li>
+<li>
+<p><strong>NF_INET_POST_ROUTING</strong>:</p>
+<pre><code>本机产生的准备发送的包或者转发的包，在经过路由判断之后， 将触发此 hook。
+</code></pre>
+</li>
+</ul>
+<p>注册处理函数时必须提供优先级，以便 hook 触发时能按照优先级高低调用处理函数。这使得多个子模块（或者同一内核子模块的多个实例）可以在同一 hook 点注册，并且有确定的处理顺序。内核模块会依次被调用，每次返回一个结果给 netfilter 框架，提示该对这个包做什么操作。</p>
+<h3 id="31-iptables-构成">3.1 iptables 构成</h3>
+<hr>
+<p>iptables 由 tables、chains、rules 3 部分组成：</p>
+<p>
+  <img src="/img/2023-04-08-netfilter/2023-04-08-table-chain-rule.png" alt="">
+
+</p>
+<p>iptables 使用 table 来组织 rule，根据 rule 是被用来做什么业务类型处理，将 rule 分为不同 table。</p>
+<p>例如，如果 rule 是处理网络地址转换的，那会放到 nat table；如果是判断是否允许数据包继续转发，那可能会放到 filter table。</p>
+<p>在每个 table 内部，规则被进一步组织成 chain，内置的 chain 是 netfilter hook 触发的，chain 基本上能决定 rule 何时被匹配。</p>
+<p>rule 放置在特定 table 的特定 chain 里面。当 chain 被调用的时候，包会依次匹配 chain 里面的 rule。每条 rule 都有一个匹配部分和一个 target（动作）部分。</p>
+<h3 id="32-iptables-规则">3.2 iptables 规则</h3>
+<hr>
+<ul>
+<li>规则（rules）：是应用于数据包的操作。</li>
+</ul>
+<p>规则其实就是通过 iptables 配置的预定义的条件，规则一般定义为 “如果数据包满足这些条件（rules），就会执行相应的的动作（actions）”。</p>
+<p>规则可以匹配协议类型、目的或源地址、目的或源端口、目的或源网段、接收或发送的接口（网卡）、协议头、连接状态等信息，当数据包与规则匹配时，iptables就根据规则所定义的 actions 来处理这些数据包，如放行（accept）、拒绝（reject）和丢弃（drop）等。</p>
+<p>配置防火墙的主要工作就是添加、修改和删除这些规则。</p>
+<ul>
+<li>目标（target）：
+数据包符合某种规则条件而触发的动作（action）叫做目标（target）。</li>
+</ul>
+<p>目标分为两种类型：</p>
+<ul>
+<li>
+<p>终止目标（terminating targets）：</p>
+<pre><code>这种 target 会终止 chain 的匹配，将控制权转移回 netfilter hook。根据返回值的不同，hook 或者将数据包丢弃，或者允许数据包进行下一阶段的处理。
+</code></pre>
+</li>
+<li>
+<p>非终止目标（non-terminating targets）：</p>
+<pre><code>执行非终止目标动作，然后继续 chain 的执行。虽然每个 chain 最终都会回到一个终止目标，但是在这之前，可以执行任意多个非终止目标。
+</code></pre>
+</li>
+</ul>
+<h3 id="33-iptables-链">3.3 iptables 链</h3>
+<hr>
+<ul>
+<li>链（chains）：是规则的集合。</li>
+</ul>
+<p>内置的 chain 和 netfilter hook 是一一对应的，内置的 chain 是由 netfilter hook 触发的。chain 基本上能决定（basically determin）规则何时被匹配。</p>
+<ul>
+<li>
+<p>PREROUTING chain:</p>
+<pre><code>由 NF_INET_PRE_ROUTING hook 触发
+</code></pre>
+</li>
+<li>
+<p>INPUT chain:</p>
+<pre><code>由 NF_INET_LOCAL_IN hook 触发
+</code></pre>
+</li>
+<li>
+<p>FORWARD chain:</p>
+<pre><code>由 NF_INET_FORWARD hook 触发
+</code></pre>
+</li>
+<li>
+<p>OUTPUT chain:</p>
+<pre><code>由 NF_INET_LOCAL_OUT hook 触发
+</code></pre>
+</li>
+<li>
+<p>POSTROUTING chain:</p>
+<pre><code>由 NF_INET_POST_ROUTING hook 触发
+</code></pre>
+</li>
+</ul>
+<p>chain 使管理员可以控制在包的传输路径上哪个 hook 点应用策略。</p>
+<p>因为每个 table 有多个 chain，因此一个 table 可以在处理过程中的多个地方施加影响。特定类型的规则只在协议栈的特定点有意义，因此并不是每个 table 都 会在内核的每个 hook 注册 chain。</p>
+<h3 id="34-iptables-表">3.4 iptables 表</h3>
+<hr>
+<ul>
+<li>表（tables）：是链的集合。</li>
+</ul>
+<h4 id="341-filter-表过滤放行拒绝">3.4.1 filter 表：过滤（放行/拒绝）</h4>
+<hr>
+<p>filter table 是最常用的 table 之一，用于判断是否允许一个数据包通过。</p>
+<h4 id="342-nat-表网络地址转换">3.4.2 nat 表：网络地址转换</h4>
+<hr>
+<p>nat table 用于实现网络地址转换。</p>
+<p>当数据包进入协议栈的时候，这些规则决定是否以及如何修改包的源/目的地址，以改变数据包被路由时的行为。nat table 通常用于将数据包路由到无法直接访问的网络。</p>
+<h4 id="343-mangle-表修改-ip-头">3.4.3 mangle 表：修改 IP 头</h4>
+<hr>
+<p>mangle（修正）table 用于修改数据包的 IP 头。</p>
+<p>例如，可以修改数据包的 TTL，增加或减少数据包可以经过的跳数。</p>
+<p>这个 table 还可以对数据包打上只在内核内有效的“标记”（internal kernel “mark”），后续的 table 或工具可以根据这些标记进行处理。标记不会修改包本身，只是在包的内核表示上做标记。</p>
+<h4 id="344-raw-表conntrack-相关">3.4.4 raw 表：conntrack 相关</h4>
+<hr>
+<p>iptables 防火墙是有状态的：对每个数据包进行判断的时候是依赖已经判断过的数据包。</p>
+<p>建立在 netfilter 之上的连接跟踪（connection tracking）特性使得 iptables 将数据包看作是已有连接或会话的一部分，而不是一个由独立、不相关的数据包而组成的流。 数据包到达网络接口之后很快就会有连接跟踪逻辑判断。</p>
+<p>raw table 定义的功能非常有限，其唯一目的就是提供一个让数据包绕过连接跟踪的框架。</p>
+<h4 id="345-security-表打-selinux-标记">3.4.5 security 表：打 SELinux 标记</h4>
+<hr>
+<p>security table 的作用是给报文打上 SELinux 标记，以此影响 SELinux 或其他可以解读 SELinux 安全上下文的系统处理报文的行为。这些标记可以基于单个报文，也可以基于连接。</p>
+<h3 id="35-每种-table-实现的-chain">3.5 每种 table 实现的 chain</h3>
+<hr>
+<p>下面的表格展示了 table 和 chain 的关系。横向是 table， 纵向是 chain，Y 表示这个 table 里面有这个 chain。</p>
+<p>例如，第二行表示 raw table 有 PRETOUTING 和 OUTPUT 两 个 chain。具体到每列，从上倒下的顺序就是 netfilter hook 触发的时候，（对应 table 的）chain 被调用的顺序。</p>
+<p>在下面的图中，nat table 被细分成了 DNAT （修改目的 IP） 和 SNAT（修改源 IP），以更方便地展示他们的优先级。另外，我们添加了路由决策点和连接跟踪点，以使得整个过程更完整全面：</p>
+<table>
+<thead>
+<tr>
+<th>Tables/Chain</th>
+<th>PREROUTING</th>
+<th>INPUT</th>
+<th>FORWARD</th>
+<th>OUTPUT</th>
+<th>POSTROUTING</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>（路由判断）</td>
+<td></td>
+<td></td>
+<td></td>
+<td>Y</td>
+<td></td>
+</tr>
+<tr>
+<td>raw</td>
+<td>Y</td>
+<td></td>
+<td></td>
+<td>Y</td>
+<td></td>
+</tr>
+<tr>
+<td>（连接跟踪）</td>
+<td>Y</td>
+<td></td>
+<td></td>
+<td>Y</td>
+<td></td>
+</tr>
+<tr>
+<td>mangle</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+</tr>
+<tr>
+<td>nat（DNAT）</td>
+<td>Y</td>
+<td></td>
+<td></td>
+<td>Y</td>
+<td></td>
+</tr>
+<tr>
+<td>（路由判断）</td>
+<td>Y</td>
+<td></td>
+<td></td>
+<td>Y</td>
+<td></td>
+</tr>
+<tr>
+<td>filter</td>
+<td></td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td></td>
+</tr>
+<tr>
+<td>security</td>
+<td></td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td></td>
+</tr>
+<tr>
+<td>nat（SNAT）</td>
+<td></td>
+<td>Y</td>
+<td></td>
+<td>Y</td>
+<td>Y</td>
+</tr>
+</tbody>
+</table>
+<p>当一个报文触发 netfilter hook 时，处理过程将沿着列从上向下执行。 触发哪个 hook（列）和报文的方向（ingress/egress）、路由判断、过滤条件等相关。</p>
+<p>特定事件会导致 table 的 chain 被跳过。例如，只有每个连接的第一个报文会去匹配 NAT 规则，对这个报文的动作会应用于此连接后面的所有报文。到这个连接的应答报文会被自动应用反方向的 NAT 规则。</p>
+<h3 id="36-chain-遍历优先级">3.6 Chain 遍历优先级</h3>
+<hr>
+<p>假设服务器知道如何路由数据包，而且防火墙允许数据包传输，下面就是不同场景下报文的游走流程：</p>
+<ul>
+<li>
+<p><strong>收到的、目的是本机的包</strong>：</p>
+<pre><code>PRETOUTING -&gt; INPUT
+</code></pre>
+</li>
+<li>
+<p><strong>收到的、目的是其他主机的包</strong>：</p>
+<pre><code>PRETOUTING -&gt; FORWARD -&gt; POSTROUTING
+</code></pre>
+</li>
+<li>
+<p><strong>本地产生的包</strong>：</p>
+<pre><code>OUTPUT -&gt; POSTROUTING
+</code></pre>
+</li>
+</ul>
+<p>综合前面讨论的 table 顺序问题，我们可以看到对于一个收到的、目的是本机的包： 首先依次经过 PRETOUTING chain 上面的 raw、mangle、nat table；然后依次经过 INPUT chain 的 mangle、filter、security、nat table，然后才会到达本机的某个 socket。</p>
+<h3 id="37-用户自定义-chain">3.7 用户自定义 chain</h3>
+<hr>
+<p>这里要介绍一种特殊的非终止目标：跳转目标（jump target）。jump target 是跳转到其他 chain 继续处理的动作。我们已经讨论了很多内置的 chain，它们和调用它们的 netfilter hook 紧密联系在一起。然而，iptables 也支持管理员创建他们自己用于管理目的的 chain。</p>
+<p>向用户自定义 chain 添加规则和向内置的 chain 添加规则的方式是相同的。不同的地方在于， 用户定义的 chain 只能通过从另一个规则跳转（jump）到它，因为它们没有注册到 netfilter hook。</p>
+<p>用户定义的 chain 可以看作是对调用它的 chain 的扩展。例如，用户定义的 chain 在结束的时候，可以返回 netfilter hook，也可以继续跳转到其他自定义 chain。</p>
+<p>这种设计使框架具有强大的分支功能，使得管理员可以组织更大更复杂的网络规则。</p>
+<h3 id="38-iptables-简明教程">3.8 iptables 简明教程</h3>
+<hr>
+<h4 id="381-iptables-语法格式">3.8.1 iptables 语法格式</h4>
+<hr>
+<p>
+  <img src="/img/2023-04-08-netfilter/2023-04-15-iptables-cmd.png" alt="">
+
+</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">iptables <span style="color:#ff79c6">[</span>-t 表名<span style="color:#ff79c6">]</span> 命令选项 ［链名］［条件匹配］ <span style="color:#ff79c6">[</span>-j 目标动作或跳转<span style="color:#ff79c6">]</span>
+</code></pre></div><h4 id="382-表名">3.8.2 表名</h4>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">iptables <span style="color:#ff79c6">[</span>-t 表名<span style="color:#ff79c6">]</span> ：对指定的表 table 进行操作， table 必须是以下表中的一个。如果不指定此选项，默认的是 filter 表。
+</code></pre></div><ul>
+<li><strong>raw</strong>     ：高级功能，如：网址过滤。</li>
+<li><strong>mangle</strong>  ：数据包修改（QOS），用于实现服务质量。</li>
+<li><strong>nat</strong>     ：地址转换，用于网关路由器。</li>
+<li><strong>filter</strong>  ：包过滤，用于防火墙规则。</li>
+<li><strong>security</strong>：SELinux 相关</li>
+</ul>
+<h4 id="383-命令选项">3.8.3 命令选项</h4>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">-A 在指定链的末尾添加（append）一条新的规则
+-D 删除（delete）指定链中的某一条规则，可以按规则序号和内容删除
+-I 在指定链中插入（insert）一条新的规则，默认在第一行添加
+-R 修改、替换（replace）指定链中的某一条规则，可以按规则序号和内容替换
+-L 列出（list）指定链中所有的规则进行查看
+-E 重命名用户定义的链，不改变链本身
+-F 清空（flush）
+-N 新建（new-chain）一条用户自己定义的规则链
+-X 删除指定表中用户自定义的规则链（delete-chain）
+-P 设置指定链的默认策略（policy）
+-Z 将所有表的所有链的字节和数据包计数器清零
+-n 使用数字形式（numeric）显示输出结果
+-v 查看规则表详细信息（verbose）的信息
+-V 查看版本<span style="color:#ff79c6">(</span>version<span style="color:#ff79c6">)</span>
+-h 获取帮助（help）
+--line-numbers 规则显示带序号
+</code></pre></div><h4 id="384-链名区分大小写必须为大写">3.8.4 链名（区分大小写，必须为大写）</h4>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">INPUT 链 ：处理输入数据包。
+OUTPUT 链 ：处理输出数据包。
+FORWARD 链 ：处理转发数据包。
+PREROUTING 链 ：用于目标地址转换（DNAT）。
+POSTOUTING 链 ：用于源地址转换（SNAT）。
+</code></pre></div><h4 id="385-条件匹配">3.8.5 条件匹配</h4>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">! 表示：取反/非
+
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>-p  匹配协议
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>-s  匹配源地址
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>-d  匹配目标地址
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>-i  匹配入站网卡接口
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>-o  匹配出站网卡接口
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>--sport  匹配源端口
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>--dport  匹配目标端口
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>--src-range  匹配源地址范围
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>--dst-range  匹配目标地址范围
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>--limit  四配数据表速率
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>--mac-source  匹配源MAC地址
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>--sports  匹配源端口范围
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>--dports  匹配目标端口范围
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>--state  匹配状态（INVALID、ESTABLISHED、NEW、RELATED）
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>--string  匹配应用层字串
+</code></pre></div><h4 id="386-匹配动作区分大小写必须为大写">3.8.6 匹配动作（区分大小写，必须为大写）</h4>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">ACCEPT      ：接收数据包。
+DROP        ：丢弃数据包。
+REDIRECT    ：重定向、映射、透明代理。
+SNAT        ：源地址转换。
+DNAT        ：目标地址转换。
+MASQUERADE  ：IP伪装（NAT），用于ADSL。
+LOG         ：日志记录。
+SEMARK      : 添加SEMARK标记以供网域内强制访问控制（MAC）
+</code></pre></div><h4 id="387-实验">3.8.7 实验</h4>
+<hr>
+<h5 id="3871-实验环境">3.8.7.1 实验环境</h5>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">系统配置：
+  ubuntu20.04 + iptables v1.8.4
+</code></pre></div><p><strong>拓扑</strong>：
+
+  <img src="/img/2023-04-08-netfilter/2023-04-15-iptables-experiment.png" alt="">
+
+</p>
+<p>VM 1 的 ens33 网卡 与 VM 2 的 ens33 网卡连在一起，通过 192.168.129/24 网段进行通信。</p>
+<p>PC（10.0.0.1/24） 通过 VMware 网桥连接到 VM 2 的 ens37 网卡（10.0.0.11/24）。</p>
+<h5 id="3872-查看链默认策略">3.8.7.2 查看链默认策略</h5>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">iptables <span style="color:#ff79c6">[</span>-t 表名<span style="color:#ff79c6">]</span> -nvL
+</code></pre></div><p><strong>参数含义</strong>：</p>
+<p>-L ：表示查看当前表的所有规则，默认查看的是 filter 表，如果要查看 nat 表，可以加上 -t nat 参数。</p>
+<p>-n ：表示不对 IP 地址进行反查，加上这个参数显示速度将会加快。</p>
+<p>-v ：表示输出详细信息，包含通过该规则的数据包数量、总字节数以及相应的网络接口。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">在 VM2 机器上查看 filter 表的链默认策略：
+
+root@ubuntu:/home/ubuntu# iptables -nvL
+Chain INPUT <span style="color:#ff79c6">(</span>policy ACCEPT <span style="color:#bd93f9">505</span> packets, <span style="color:#bd93f9">46082</span> bytes<span style="color:#ff79c6">)</span>
+ pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+
+Chain FORWARD <span style="color:#ff79c6">(</span>policy ACCEPT <span style="color:#bd93f9">0</span> packets, <span style="color:#bd93f9">0</span> bytes<span style="color:#ff79c6">)</span>
+ pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+
+Chain OUTPUT <span style="color:#ff79c6">(</span>policy ACCEPT <span style="color:#bd93f9">384</span> packets, <span style="color:#bd93f9">31012</span> bytes<span style="color:#ff79c6">)</span>
+ pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination 
+</code></pre></div><p>所有的链旁边都有policy ACCEPT标注，这表明当前链的默认策略为ACCEPT，也就是对应的防火墙为黑名单，默认放通所有类型的流量，只有指定规则的 flow 才会 DROP。</p>
+<p>此时 VM1 ping VM2 可以 ping 通：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:/home/ubuntu# ping 192.168.79.130 -I 192.168.79.129
+PING 192.168.79.130 <span style="color:#ff79c6">(</span>192.168.79.130<span style="color:#ff79c6">)</span> from 192.168.79.129 : 56<span style="color:#ff79c6">(</span>84<span style="color:#ff79c6">)</span> bytes of data.
+<span style="color:#bd93f9">64</span> bytes from 192.168.79.130: <span style="color:#8be9fd;font-style:italic">icmp_seq</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">1</span> <span style="color:#8be9fd;font-style:italic">ttl</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">64</span> <span style="color:#8be9fd;font-style:italic">time</span><span style="color:#ff79c6">=</span>0.558 ms
+^C
+--- 192.168.79.130 ping statistics ---
+<span style="color:#bd93f9">1</span> packets transmitted, <span style="color:#bd93f9">1</span> received, 0% packet loss, <span style="color:#8be9fd;font-style:italic">time</span> 0ms
+rtt min/avg/max/mdev <span style="color:#ff79c6">=</span> 0.558/0.558/0.558/0.000 ms
+</code></pre></div><h5 id="3873-设置链默认策略">3.8.7.3 设置链默认策略</h5>
+<hr>
+<p>查看 VM2 可以看到 PC （10.0.0.1:6025）通过 ssh 连接到 VM2 的 （10.0.0.11:22） 端口。</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="display:block;width:100%;background-color:#3d3f4a"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# netstat -nat
+Active Internet connections <span style="color:#ff79c6">(</span>servers and established<span style="color:#ff79c6">)</span>
+Proto Recv-Q Send-Q Local Address           Foreign Address         State      
+tcp        <span style="color:#bd93f9">0</span>      <span style="color:#bd93f9">0</span> 127.0.0.53:53           0.0.0.0:*               LISTEN     
+tcp        <span style="color:#bd93f9">0</span>      <span style="color:#bd93f9">0</span> 0.0.0.0:22              0.0.0.0:*               LISTEN     
+tcp        <span style="color:#bd93f9">0</span>      <span style="color:#bd93f9">0</span> 127.0.0.1:6010          0.0.0.0:*               LISTEN     
+<span style="display:block;width:100%;background-color:#3d3f4a">tcp        <span style="color:#bd93f9">0</span>     <span style="color:#bd93f9">36</span> 10.0.0.11:22            10.0.0.1:6025           ESTABLISHED
+</span>tcp6       <span style="color:#bd93f9">0</span>      <span style="color:#bd93f9">0</span> :::22                   :::*                    LISTEN     
+tcp6       <span style="color:#bd93f9">0</span>      <span style="color:#bd93f9">0</span> ::1:6010                :::*                    LISTEN     
+</code></pre></td></tr></table>
+</div>
+</div><p>为了保证 PC 能够通过 SSH 正常连接到 VM2 不中断，我们先将 ens37 接口对应的流量放行：</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="display:block;width:100%;background-color:#3d3f4a"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="display:block;width:100%;background-color:#3d3f4a"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span></span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# iptables -A INPUT -i ens37 -j ACCEPT
+root@ubuntu:~# iptables -A OUTPUT -o ens37 -j ACCEPT
+root@ubuntu:~# iptables -nvL
+Chain INPUT <span style="color:#ff79c6">(</span>policy ACCEPT <span style="color:#bd93f9">1</span> packets, <span style="color:#bd93f9">328</span> bytes<span style="color:#ff79c6">)</span>
+ pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+<span style="display:block;width:100%;background-color:#3d3f4a">   <span style="color:#bd93f9">53</span>  <span style="color:#bd93f9">3168</span> ACCEPT     all  --  ens37  *       0.0.0.0/0            0.0.0.0/0           
+</span>
+Chain FORWARD <span style="color:#ff79c6">(</span>policy ACCEPT <span style="color:#bd93f9">0</span> packets, <span style="color:#bd93f9">0</span> bytes<span style="color:#ff79c6">)</span>
+ pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+
+Chain OUTPUT <span style="color:#ff79c6">(</span>policy ACCEPT <span style="color:#bd93f9">1</span> packets, <span style="color:#bd93f9">318</span> bytes<span style="color:#ff79c6">)</span>
+ pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+<span style="display:block;width:100%;background-color:#3d3f4a">   <span style="color:#bd93f9">31</span>  <span style="color:#bd93f9">2308</span> ACCEPT     all  --  *      ens37   0.0.0.0/0            0.0.0.0/0 
+</span></code></pre></td></tr></table>
+</div>
+</div><p>将 VM2 防火墙设置为白名单，默认拒绝所有类型流量，只有指定规则的 flow 才会 ACCEPT：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# iptables -P INPUT DROP
+root@ubuntu:~# iptables -P FORWARD DROP
+root@ubuntu:~# iptables -P OUTPUT DROP
+root@ubuntu:~# iptables -nvL
+Chain INPUT <span style="color:#ff79c6">(</span>policy DROP <span style="color:#bd93f9">0</span> packets, <span style="color:#bd93f9">0</span> bytes<span style="color:#ff79c6">)</span>
+ pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+  <span style="color:#bd93f9">220</span> <span style="color:#bd93f9">14373</span> ACCEPT     all  --  ens37  *       0.0.0.0/0            0.0.0.0/0           
+
+Chain FORWARD <span style="color:#ff79c6">(</span>policy DROP <span style="color:#bd93f9">0</span> packets, <span style="color:#bd93f9">0</span> bytes<span style="color:#ff79c6">)</span>
+ pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+
+Chain OUTPUT <span style="color:#ff79c6">(</span>policy DROP <span style="color:#bd93f9">0</span> packets, <span style="color:#bd93f9">0</span> bytes<span style="color:#ff79c6">)</span>
+ pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+  <span style="color:#bd93f9">149</span> <span style="color:#bd93f9">13204</span> ACCEPT     all  --  *      ens37   0.0.0.0/0            0.0.0.0/0
+</code></pre></div><p>将 VM 2 所有表的所有链的字节和数据包计数器清零</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# iptables -Z
+</code></pre></div><p>VM1 ping VM2 指定 10 个报文：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# ping 192.168.79.130 -I 192.168.79.129 -c <span style="color:#bd93f9">10</span> -i 0.1
+PING 192.168.79.130 <span style="color:#ff79c6">(</span>192.168.79.130<span style="color:#ff79c6">)</span> from 192.168.79.129 : 56<span style="color:#ff79c6">(</span>84<span style="color:#ff79c6">)</span> bytes of data.
+
+--- 192.168.79.130 ping statistics ---
+<span style="color:#bd93f9">10</span> packets transmitted, <span style="color:#bd93f9">0</span> received, 100% packet loss, <span style="color:#8be9fd;font-style:italic">time</span> 934ms
+</code></pre></div><p>VM 2 查看会发现 filter 表的 INPUT 链 ：DROP 10 packets</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="display:block;width:100%;background-color:#3d3f4a"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# iptables -nvL
+<span style="display:block;width:100%;background-color:#3d3f4a">Chain INPUT <span style="color:#ff79c6">(</span>policy DROP <span style="color:#bd93f9">10</span> packets, <span style="color:#bd93f9">840</span> bytes<span style="color:#ff79c6">)</span>
+</span> pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+   <span style="color:#bd93f9">56</span>  <span style="color:#bd93f9">3733</span> ACCEPT     all  --  ens37  *       0.0.0.0/0            0.0.0.0/0           
+
+Chain FORWARD <span style="color:#ff79c6">(</span>policy DROP <span style="color:#bd93f9">0</span> packets, <span style="color:#bd93f9">0</span> bytes<span style="color:#ff79c6">)</span>
+ pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+
+Chain OUTPUT <span style="color:#ff79c6">(</span>policy DROP <span style="color:#bd93f9">0</span> packets, <span style="color:#bd93f9">0</span> bytes<span style="color:#ff79c6">)</span>
+ pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+   <span style="color:#bd93f9">47</span>  <span style="color:#bd93f9">5192</span> ACCEPT     all  --  *      ens37   0.0.0.0/0            0.0.0.0/0 
+</code></pre></td></tr></table>
+</div>
+</div><p>将 VM 2 filter 表 INPUT 链设置为放通 icmp 流量，同时清空计数器：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# iptables -A INPUT -p icmp -j ACCEPT
+root@ubuntu:~# iptables -Z
+</code></pre></div><p>VM1 ping VM2 指定 10 个报文：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# ping 192.168.79.130 -I 192.168.79.129 -c <span style="color:#bd93f9">10</span> -i 0.1
+PING 192.168.79.130 <span style="color:#ff79c6">(</span>192.168.79.130<span style="color:#ff79c6">)</span> from 192.168.79.129 : 56<span style="color:#ff79c6">(</span>84<span style="color:#ff79c6">)</span> bytes of data.
+
+--- 192.168.79.130 ping statistics ---
+<span style="color:#bd93f9">10</span> packets transmitted, <span style="color:#bd93f9">0</span> received, 100% packet loss, <span style="color:#8be9fd;font-style:italic">time</span> 934ms
+</code></pre></div><p>VM 2 查看会发现 filter 表的 INPUT 链 ：ACCEPT 10 packets，OUTPUT 链 ：DROP 10 packets</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="display:block;width:100%;background-color:#3d3f4a"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="display:block;width:100%;background-color:#3d3f4a"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# iptables -nvL
+Chain INPUT <span style="color:#ff79c6">(</span>policy DROP <span style="color:#bd93f9">0</span> packets, <span style="color:#bd93f9">0</span> bytes<span style="color:#ff79c6">)</span>
+ pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+   <span style="color:#bd93f9">12</span>   <span style="color:#bd93f9">720</span> ACCEPT     all  --  ens37  *       0.0.0.0/0            0.0.0.0/0           
+<span style="display:block;width:100%;background-color:#3d3f4a">   <span style="color:#bd93f9">10</span>   <span style="color:#bd93f9">840</span> ACCEPT     icmp --  *      *       0.0.0.0/0            0.0.0.0/0           
+</span>
+Chain FORWARD <span style="color:#ff79c6">(</span>policy DROP <span style="color:#bd93f9">0</span> packets, <span style="color:#bd93f9">0</span> bytes<span style="color:#ff79c6">)</span>
+ pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+
+<span style="display:block;width:100%;background-color:#3d3f4a">Chain OUTPUT <span style="color:#ff79c6">(</span>policy DROP <span style="color:#bd93f9">10</span> packets, <span style="color:#bd93f9">840</span> bytes<span style="color:#ff79c6">)</span>
+</span> pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+    <span style="color:#bd93f9">7</span>   <span style="color:#bd93f9">716</span> ACCEPT     all  --  *      ens37   0.0.0.0/0            0.0.0.0/0
+</code></pre></td></tr></table>
+</div>
+</div><p>将 VM 2 filter 表 OUTPUT 链设置为放通 icmp 流量，同时清空计数器：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# iptables -A OUTPUT -p icmp -j ACCEPT
+root@ubuntu:~# iptables -Z
+</code></pre></div><p>VM1 ping VM2 指定 10 个报文：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# ping 192.168.79.130 -I 192.168.79.129 -c <span style="color:#bd93f9">10</span> -i 0.1
+PING 192.168.79.130 <span style="color:#ff79c6">(</span>192.168.79.130<span style="color:#ff79c6">)</span> from 192.168.79.129 : 56<span style="color:#ff79c6">(</span>84<span style="color:#ff79c6">)</span> bytes of data.
+<span style="color:#bd93f9">64</span> bytes from 192.168.79.130: <span style="color:#8be9fd;font-style:italic">icmp_seq</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">1</span> <span style="color:#8be9fd;font-style:italic">ttl</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">64</span> <span style="color:#8be9fd;font-style:italic">time</span><span style="color:#ff79c6">=</span>0.785 ms
+<span style="color:#bd93f9">64</span> bytes from 192.168.79.130: <span style="color:#8be9fd;font-style:italic">icmp_seq</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">2</span> <span style="color:#8be9fd;font-style:italic">ttl</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">64</span> <span style="color:#8be9fd;font-style:italic">time</span><span style="color:#ff79c6">=</span>0.401 ms
+<span style="color:#bd93f9">64</span> bytes from 192.168.79.130: <span style="color:#8be9fd;font-style:italic">icmp_seq</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">3</span> <span style="color:#8be9fd;font-style:italic">ttl</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">64</span> <span style="color:#8be9fd;font-style:italic">time</span><span style="color:#ff79c6">=</span>0.522 ms
+<span style="color:#bd93f9">64</span> bytes from 192.168.79.130: <span style="color:#8be9fd;font-style:italic">icmp_seq</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">4</span> <span style="color:#8be9fd;font-style:italic">ttl</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">64</span> <span style="color:#8be9fd;font-style:italic">time</span><span style="color:#ff79c6">=</span>0.510 ms
+<span style="color:#bd93f9">64</span> bytes from 192.168.79.130: <span style="color:#8be9fd;font-style:italic">icmp_seq</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">5</span> <span style="color:#8be9fd;font-style:italic">ttl</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">64</span> <span style="color:#8be9fd;font-style:italic">time</span><span style="color:#ff79c6">=</span>0.335 ms
+<span style="color:#bd93f9">64</span> bytes from 192.168.79.130: <span style="color:#8be9fd;font-style:italic">icmp_seq</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">6</span> <span style="color:#8be9fd;font-style:italic">ttl</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">64</span> <span style="color:#8be9fd;font-style:italic">time</span><span style="color:#ff79c6">=</span>1.42 ms
+<span style="color:#bd93f9">64</span> bytes from 192.168.79.130: <span style="color:#8be9fd;font-style:italic">icmp_seq</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">7</span> <span style="color:#8be9fd;font-style:italic">ttl</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">64</span> <span style="color:#8be9fd;font-style:italic">time</span><span style="color:#ff79c6">=</span>0.500 ms
+<span style="color:#bd93f9">64</span> bytes from 192.168.79.130: <span style="color:#8be9fd;font-style:italic">icmp_seq</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">8</span> <span style="color:#8be9fd;font-style:italic">ttl</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">64</span> <span style="color:#8be9fd;font-style:italic">time</span><span style="color:#ff79c6">=</span>0.346 ms
+<span style="color:#bd93f9">64</span> bytes from 192.168.79.130: <span style="color:#8be9fd;font-style:italic">icmp_seq</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">9</span> <span style="color:#8be9fd;font-style:italic">ttl</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">64</span> <span style="color:#8be9fd;font-style:italic">time</span><span style="color:#ff79c6">=</span>0.514 ms
+<span style="color:#bd93f9">64</span> bytes from 192.168.79.130: <span style="color:#8be9fd;font-style:italic">icmp_seq</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">10</span> <span style="color:#8be9fd;font-style:italic">ttl</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">64</span> <span style="color:#8be9fd;font-style:italic">time</span><span style="color:#ff79c6">=</span>0.500 ms
+</code></pre></div><p>VM 2 查看会发现 filter 表的 INPUT 链 ：ACCEPT 10 packets，OUTPUT 链 ：ACCEPT 10 packets</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="display:block;width:100%;background-color:#3d3f4a"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="display:block;width:100%;background-color:#3d3f4a"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span></span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# iptables -nvL
+Chain INPUT <span style="color:#ff79c6">(</span>policy DROP <span style="color:#bd93f9">0</span> packets, <span style="color:#bd93f9">0</span> bytes<span style="color:#ff79c6">)</span>
+ pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+   <span style="color:#bd93f9">16</span>   <span style="color:#bd93f9">992</span> ACCEPT     all  --  ens37  *       0.0.0.0/0            0.0.0.0/0           
+<span style="display:block;width:100%;background-color:#3d3f4a">   <span style="color:#bd93f9">10</span>   <span style="color:#bd93f9">840</span> ACCEPT     icmp --  *      *       0.0.0.0/0            0.0.0.0/0           
+</span>
+Chain FORWARD <span style="color:#ff79c6">(</span>policy DROP <span style="color:#bd93f9">0</span> packets, <span style="color:#bd93f9">0</span> bytes<span style="color:#ff79c6">)</span>
+ pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+
+Chain OUTPUT <span style="color:#ff79c6">(</span>policy DROP <span style="color:#bd93f9">0</span> packets, <span style="color:#bd93f9">0</span> bytes<span style="color:#ff79c6">)</span>
+ pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+   <span style="color:#bd93f9">11</span>  <span style="color:#bd93f9">1064</span> ACCEPT     all  --  *      ens37   0.0.0.0/0            0.0.0.0/0           
+<span style="display:block;width:100%;background-color:#3d3f4a">   <span style="color:#bd93f9">10</span>   <span style="color:#bd93f9">840</span> ACCEPT     icmp --  *      *       0.0.0.0/0            0.0.0.0/0 
+</span></code></pre></td></tr></table>
+</div>
+</div><p>VM 2 查看 filter 表，通过 &ndash;line-numbers 显示序号：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# iptables -nvL --line-numbers
+Chain INPUT <span style="color:#ff79c6">(</span>policy DROP <span style="color:#bd93f9">8</span> packets, <span style="color:#bd93f9">1025</span> bytes<span style="color:#ff79c6">)</span>
+num   pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+<span style="color:#bd93f9">1</span>       <span style="color:#bd93f9">66</span>  <span style="color:#bd93f9">4317</span> ACCEPT     all  --  ens37  *       0.0.0.0/0            0.0.0.0/0           
+<span style="color:#bd93f9">2</span>       <span style="color:#bd93f9">10</span>   <span style="color:#bd93f9">840</span> ACCEPT     icmp --  *      *       0.0.0.0/0            0.0.0.0/0           
+
+Chain FORWARD <span style="color:#ff79c6">(</span>policy DROP <span style="color:#bd93f9">0</span> packets, <span style="color:#bd93f9">0</span> bytes<span style="color:#ff79c6">)</span>
+num   pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+
+Chain OUTPUT <span style="color:#ff79c6">(</span>policy DROP <span style="color:#bd93f9">30</span> packets, <span style="color:#bd93f9">3000</span> bytes<span style="color:#ff79c6">)</span>
+num   pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+<span style="color:#bd93f9">1</span>       <span style="color:#bd93f9">41</span>  <span style="color:#bd93f9">3772</span> ACCEPT     all  --  *      ens37   0.0.0.0/0            0.0.0.0/0           
+<span style="color:#bd93f9">2</span>       <span style="color:#bd93f9">10</span>   <span style="color:#bd93f9">840</span> ACCEPT     icmp --  *      *       0.0.0.0/0            0.0.0.0/0 
+</code></pre></div><p>VM 2 删除 filter 表，INPUT 链与 OUTPUT 链序号为 2 的规则：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# iptables -D OUTPUT <span style="color:#bd93f9">2</span>
+root@ubuntu:~# iptables -D INPUT <span style="color:#bd93f9">2</span>
+</code></pre></div><p>VM 2 查看 filter 表，发现INPUT 链与 OUTPUT 链序号为 2 的规则已被删除：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# iptables -nvL --line-numbers
+Chain INPUT <span style="color:#ff79c6">(</span>policy DROP <span style="color:#bd93f9">0</span> packets, <span style="color:#bd93f9">0</span> bytes<span style="color:#ff79c6">)</span>
+num   pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+<span style="color:#bd93f9">1</span>      <span style="color:#bd93f9">160</span> <span style="color:#bd93f9">10101</span> ACCEPT     all  --  ens37  *       0.0.0.0/0            0.0.0.0/0           
+
+Chain FORWARD <span style="color:#ff79c6">(</span>policy DROP <span style="color:#bd93f9">0</span> packets, <span style="color:#bd93f9">0</span> bytes<span style="color:#ff79c6">)</span>
+num   pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+
+Chain OUTPUT <span style="color:#ff79c6">(</span>policy DROP <span style="color:#bd93f9">0</span> packets, <span style="color:#bd93f9">0</span> bytes<span style="color:#ff79c6">)</span>
+num   pkts bytes target     prot opt in     out     <span style="color:#8be9fd;font-style:italic">source</span>               destination         
+<span style="color:#bd93f9">1</span>      <span style="color:#bd93f9">100</span>  <span style="color:#bd93f9">9624</span> ACCEPT     all  --  *      ens37   0.0.0.0/0            0.0.0.0/0 
+</code></pre></div><p>VM 2 清空所有防火墙规则：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# iptables -F
+</code></pre></div><p>VM 2 清空所有链统计计数：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# iptables -Z
+</code></pre></div><p>VM 2 删除指定表中（默认为 filter 表），用户自定义的链：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# iptables -X
+</code></pre></div><p>VM 2 保存防火墙规则：</p>
+<p><code>iptables-save</code> 命令用来 dump iptables 规则，通过重定向将 iptables 配置保存到文件中：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# install -Dv /dev/null /etc/iptables/iptables-save.conf
+root@ubuntu:~# iptables-save &gt; /etc/iptables/iptables-save.conf
+</code></pre></div><p>VM 2 恢复防火墙规则：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# iptables-restore &lt; /etc/iptables/iptables-save.conf
+</code></pre></div><h2 id="4-netfilter-与-ebtables">4. Netfilter 与 ebtables</h2>
+<hr>
+<p>netfilter 实现主要分两层：</p>
+<p>
+  <img src="/img/2023-04-08-netfilter/2023-04-17-nf-hooks.png" alt="">
+
+</p>
+<p>第一层在 IP 层，由 IP 协议栈预留的 HOOK 点提供支持，对应的应用层的管理工具是 iptables；</p>
+<p>第二层在链路层，由软桥协议栈预留的 HOOK 点提供支持，对应应用层的管理工具是 ebtables。</p>
+<p>Netfilter 在 链路层（L2）提供了以下 6 个 hook 点：其中 NF_BR_BROUTING 不是通过调用 netfilter 框架的 register 函数来进行 HOOK 的回调注册的。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">include<span style="color:#ff79c6">/</span>uapi<span style="color:#ff79c6">/</span>linux<span style="color:#ff79c6">/</span>netfilter_bridge.h
+
+<span style="color:#ff79c6">#define NF_BR_PRE_ROUTING	  0
+</span><span style="color:#ff79c6">#define NF_BR_LOCAL_IN		  1
+</span><span style="color:#ff79c6">#define NF_BR_FORWARD		    2
+</span><span style="color:#ff79c6">#define NF_BR_LOCAL_OUT		  3
+</span><span style="color:#ff79c6">#define NF_BR_POST_ROUTING	4
+</span><span style="color:#ff79c6"></span><span style="color:#6272a4">/* Not really a hook, but used for the ebtables broute table */</span>
+<span style="color:#ff79c6">#define NF_BR_BROUTING		  5
+</span><span style="color:#ff79c6">#define NF_BR_NUMHOOKS		  6
+</span></code></pre></div><ul>
+<li>
+<p><strong>NF_BR_PRE_ROUTING</strong>:</p>
+<pre><code>在网卡混杂模式 drop 之后，进行 checksum 校验。
+</code></pre>
+</li>
+<li>
+<p><strong>NF_BR_LOCAL_IN</strong>:</p>
+<pre><code>数据包的目的 MAC 是本地 box。
+</code></pre>
+</li>
+<li>
+<p><strong>NF_BR_FORWARD</strong>:</p>
+<pre><code>数据包的目的 MAC 是桥的另一个接口。
+</code></pre>
+</li>
+<li>
+<p><strong>NF_BR_LOCAL_OUT</strong>:</p>
+<pre><code>本机产生的数据包。
+</code></pre>
+</li>
+<li>
+<p><strong>NF_BR_POST_ROUTING</strong>:</p>
+<pre><code>数据包即将发送出去。
+</code></pre>
+</li>
+<li>
+<p><strong>NF_BR_BROUTING</strong>:</p>
+<pre><code>并不是真正的 hook，被 ebtables 的 broute 表所使用的。
+</code></pre>
+</li>
+</ul>
+<h3 id="41-ebtables">4.1 ebtables</h3>
+<hr>
+<p>ebtables 即以太网桥防火墙，以太网桥工作在数据链路层，ebtables用来过滤数据链路层数据包。 在内核中，ebtables 的数据截获点比 iptables 更“靠前”，它获得的数据更“原始”，ebtables 多用于桥模式，比如控制 VLAN ID 等。</p>
+<p>ebtables 的配置分为表、链和规则三级。</p>
+<h4 id="411-表">4.1.1 表</h4>
+<hr>
+<p>表共分为三种: filter, nat, broute，用 -t 选项指定。默认为 filter 表。</p>
+<ul>
+<li>
+<p>filter：过滤本机流入流出的数据包时默认使用的表。</p>
+<pre><code>它包含有 3 条链，分别为 INPUT 链、OUTPUT 链、FORWARD 链。
+</code></pre>
+</li>
+<li>
+<p>nat   ：用于 mac 地址转换（mac-NAT）。</p>
+<pre><code>它包含有 3 条链，分别为 PREROUTING 链、OUTPUT链、POSTROUTING 链。
+</code></pre>
+</li>
+<li>
+<p>broute：网桥的一种特殊工作模式，它可以根据配置对满足某些规则的包送入三层进行路由；也可以根据配置对满足某些规则的二层包进行 bridge。；类似于 VPP（Vector packet processing）中的 bridge-domain。</p>
+<pre><code>它只有 1 个 BROUTING 链。
+</code></pre>
+</li>
+</ul>
+<h4 id="412-链">4.1.2 链</h4>
+<hr>
+<p>链分为内置和自定义两种。不同的表内置链不同。自定义链挂接在对应的内置链内，使用 -j 让其跳转到新的链中。</p>
+<p>ebtables 共分为以下 6 条内置链：</p>
+<ul>
+<li>
+<p>INPUT：</p>
+<pre><code>数据帧的目的地址是网桥本身。
+</code></pre>
+</li>
+<li>
+<p>FORWARD：</p>
+<pre><code>被网桥转发的数据帧。
+</code></pre>
+</li>
+<li>
+<p>OUTPUT：</p>
+<pre><code>针对本地生成和桥接路由的数据帧。
+</code></pre>
+</li>
+<li>
+<p>PREROUTING：</p>
+<pre><code>在被网桥转发之前。
+</code></pre>
+</li>
+<li>
+<p>POSTROUTING：</p>
+<pre><code>在被网桥转发之后。
+</code></pre>
+</li>
+<li>
+<p>BROUTING：</p>
+<pre><code>以太帧进入网桥设备后首先通过的就是 BROUTING 链，经过 BROUTING 后才决定数据包是进入网桥转发处理流程还是本地路由处理流程。
+</code></pre>
+</li>
+</ul>
+<h4 id="413-规则">4.1.3 规则</h4>
+<hr>
+<p>每个链中有一系列规则，每个规则定义了一些过滤选项。每个数据包都会匹配这些项，一旦匹配成功就会执行对应的动作（TARGET）。</p>
+<p>目标（TARGETS）可以是以下：</p>
+<ul>
+<li>ACCEPT：让以太帧通过此链。（BROUTING 链：ACCEPT 表示以太帧进入网桥转发处理流程）</li>
+<li>DROP：丢弃该以太帧。（BROUTING 链：DROP 表示以太帧进入本地路由处理流程）</li>
+<li>CONTINUE：检查同一条链的下一条规则，一般用于统计通过该条链的流量。</li>
+<li>RETURN：停止检查该条链的余下规则。</li>
+<li>TARGET EXTENSION：扩展的执行目标，如 –mark-set 等。</li>
+<li>跳转到自定义的链进行规则匹配。</li>
+</ul>
+<h3 id="42-ebtables-简明教程">4.2 ebtables 简明教程</h3>
+<hr>
+<p>ebtables 使用规则如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">ebtables <span style="color:#ff79c6">[</span>-t 表名<span style="color:#ff79c6">]</span> 命令选项 ［链名］［条件匹配］ <span style="color:#ff79c6">[</span>-j 目标动作或跳转<span style="color:#ff79c6">]</span>
+</code></pre></div><h4 id="421-表名">4.2.1 表名</h4>
+<hr>
+<p>filter, nat, broute 3 张表中的其中一个，默认为 filter 表。</p>
+<h4 id="422-命令选项">4.2.2 命令选项</h4>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">-A 添加到现有链的末尾
+-D 从选定的链中删除一条或多条规则
+-I 从选定的链中插入规则，默认插入到头部。
+-P 指定策略，可以为ACCEPT、DROP或 RETURN
+-F 删掉所有的链
+-Z 设置选定的链的计数为 <span style="color:#bd93f9">0</span>
+-L 列出所有的规则
+-n 显示规则的编码
+-c 显示匹配统计
+</code></pre></div><h4 id="423-链名区分大小写必须为大写">4.2.3 链名（区分大小写，必须为大写）</h4>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">INPUT：数据帧的目的地址是网桥本身。
+FORWARD：被网桥转发的数据帧。
+OUTPUT：针对本地生成和桥接路由的数据帧。
+PREROUTING：在被网桥转发之前。
+POSTROUTING：在被网桥转发之后。
+BROUTING：以太帧进入网桥设备后首先通过的就是 BROUTING 链，经过 BROUTING 后才决定数据包是进入网桥转发处理流程还是本地路由处理流程。
+</code></pre></div><h4 id="424-条件匹配">4.2.4 条件匹配</h4>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">! 表示：取反/非
+
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>-p  匹配协议
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>-s  匹配源地址
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>-d  匹配目标地址
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>-i  匹配入站网卡接口
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>-o  匹配出站网卡接口
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>--logical-in 网桥入接口
+<span style="color:#ff79c6">[</span>!<span style="color:#ff79c6">]</span>--logical-out 网桥出接口
+</code></pre></div><h4 id="424-匹配动作区分大小写必须为大写">4.2.4 匹配动作（区分大小写，必须为大写）</h4>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">ACCEPT：让以太帧通过此链。（BROUTING 链：ACCEPT 表示以太帧进入网桥转发处理流程）
+DROP：丢弃该以太帧。（BROUTING 链：DROP 表示以太帧进入本地路由处理流程）
+CONTINUE：检查同一条链的下一条规则，一般用于统计通过该条链的流量。
+RETURN：停止检查该条链的余下规则。
+TARGET EXTENSION：扩展的执行目标，如 –mark-set 等。
+</code></pre></div><h4 id="425-实验">4.2.5 实验</h4>
+<hr>
+<h5 id="4251-实验环境">4.2.5.1 实验环境</h5>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">系统配置：
+  ubuntu20.04 + ebtables 1.8.4
+</code></pre></div><h5 id="4252-查看链默认策略">4.2.5.2 查看链默认策略</h5>
+<hr>
+<p>查看 filter 表链的默认策略：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# ebtables -Lnc
+Bridge table: filter
+
+Bridge chain: INPUT, entries: 0, policy: ACCEPT
+
+Bridge chain: FORWARD, entries: 0, policy: ACCEPT
+
+Bridge chain: OUTPUT, entries: 0, policy: ACCEPT
+</code></pre></div><h5 id="4253-保存-ebtables-配置">4.2.5.3 保存 ebtables 配置：</h5>
+<hr>
+<p><code>ebtables-save</code> 命令用来 dump ebtables 规则，通过重定向将 ebtables 配置保存到文件中：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# install -Dv /dev/null /etc/ebtables/ebtables-save.conf
+root@ubuntu:~# ebtables-save &gt; /etc/ebtables/ebtables-save.conf
+<span style="color:#6272a4"># Generated by ebtables-save v1.8.4 on Mon Apr 17 07:23:57 2023</span>
+*filter
+:INPUT ACCEPT
+:FORWARD ACCEPT
+:OUTPUT ACCEPT
+<span style="color:#6272a4"># Completed on Mon Apr 17 07:23:57 2023</span>
+<span style="color:#6272a4"># Generated by ebtables-save v1.8.4 on Mon Apr 17 07:23:57 2023</span>
+*nat
+:PREROUTING ACCEPT
+:OUTPUT ACCEPT
+:POSTROUTING ACCEPT
+<span style="color:#6272a4"># Completed on Mon Apr 17 07:23:57 2023</span>
+</code></pre></div><h5 id="4254-恢复-ebtables-配置">4.2.5.4 恢复 ebtables 配置：</h5>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:~# ebtables-restore &lt; /etc/ebtables/ebtables-save.conf
+</code></pre></div><h3 id="43-briage-netfilter">4.3 briage-netfilter</h3>
+<hr>
+<p>ebtables 只可以简单过滤二层以太网帧，无法过滤 ipv4 数据包。解决这个问题，Linux内核引入了 briage-netfilter（以下简称：br-nf）以解决在链路层 Bridge 中处理 IP 数据包的问题（比如：在链路层内进行IP DNAT，外部机器与主机上虚拟机之间的通信流量），br-nf 也是 openstack 中实现安全组功能的基础。</p>
+<p>
+  <img src="/img/2023-04-08-netfilter/2023-04-10-PacketFlow.png" alt="">
+
+</p>
+<p>br-nf 在链路层 Bridge 代码中插入了几个能够被 iptables 调用的钩子函数，Bridge 中数据包在经过这些钩子函数时，iptables 规则被执行(上图中 Link Layer 中的绿色小方框即是 iptables 插入到链路层的 chain，蓝色小方框为 ebtables chain)。</p>
+<p>这就使得 {ip,ip6,arp}tables 能够 “看见” Bridge 中的 IPv4,ARP 等数据包。这样不管此数据包是发给主机本身，还是通过 Bridge 转发给虚拟机，iptables 都能完成过滤。</p>
+<h4 id="431-br-nf-启用">4.3.1 br-nf 启用：</h4>
+<hr>
+<p><strong>加载</strong>：br_netfilter.ko</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:/home/ubuntu# modprobe br_netfilter
+root@ubuntu:/home/ubuntu# lsmod | grep br_netfilter
+br_netfilter           <span style="color:#bd93f9">28672</span>  <span style="color:#bd93f9">0</span>
+bridge                <span style="color:#bd93f9">176128</span>  <span style="color:#bd93f9">1</span> br_netfilter
+</code></pre></div><p><strong>使能</strong>：/proc/sys/net/bridge/bridge-nf-call-iptables</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">root@ubuntu:/home/ubuntu# <span style="color:#8be9fd;font-style:italic">echo</span> <span style="color:#bd93f9">1</span> &gt; /proc/sys/net/bridge/bridge-nf-call-iptables
+</code></pre></div><h2 id="参考">参考</h2>
+<hr>
+<ul>
+<li><a href="%5Bhttps://%5D(https://www.digitalocean.com/community/tutorials/a-deep-dive-into-iptables-and-netfilter-architecture)">A Deep Dive into Iptables and Netfilter Architecture</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Netfilter">Netfilter</a></li>
+<li><a href="http://ebtables.netfilter.org/br_fw_ia/br_fw_ia.html">ebtables/iptables interaction on a Linux-based bridge</a></li>
+<li><a href="https://www.easy-network.de/iptables.html">IPTables， Chains &amp; Rules</a></li>
+<li><a href="%5Bhttps://%5D(https://opengers.github.io/openstack/openstack-base-netfilter-framework-overview/)">云计算底层技术-netfilter框架研究</a></li>
+<li><a href="http://arthurchiao.art/blog/deep-dive-into-iptables-and-netfilter-arch-zh/">[译] 深入理解 iptables 和 netfilter 架构</a></li>
+<li><a href="https://juejin.cn/post/7008945265021288484">走进Linux内核之Netfilter框架</a></li>
+<li><a href="https://www.freebuf.com/articles/network/324614.html">iptables&amp;Netfilter简介</a></li>
+</ul>
+
+
+                
+                
+<div class="entry-shang text-center">
+    
+	    <p> 「如果这篇文章对你有用,请随意打赏」</p>
+	
+	<button class="zs show-zs btn btn-bred">赞赏支持</button>
+</div>
+<div class="zs-modal-bg"></div>
+<div class="zs-modal-box">
+	<div class="zs-modal-head">
+		<button type="button" class="close">×</button>
+		<span class="author"><a href="https://flowlet.net"><img src="/img/favicon.png" />ZhangShuai&#39;s Blog</a></span>
+        
+	        <p class="tip"><i></i><span>如果这篇文章对你有用,请随意打赏</span></p>
+		
+ 
+	</div>
+	<div class="zs-modal-body">
+		<div class="zs-modal-btns">
+			<button class="btn btn-blink" data-num="2">2元</button>
+			<button class="btn btn-blink" data-num="5">5元</button>
+			<button class="btn btn-blink" data-num="10">10元</button>
+			<button class="btn btn-blink" data-num="50">50元</button>
+			<button class="btn btn-blink" data-num="100">100元</button>
+			<button class="btn btn-blink" data-num="1">任意金额</button>
+		</div>
+		<div class="zs-modal-pay">
+			<button class="btn btn-bred" id="pay-text">2元</button>
+			<p>使用<span id="pay-type">微信</span>扫描二维码完成支付</p>
+			<img src="/img/reward/wechat-2.png"  id="pay-image"/>
+		</div>
+	</div>
+	<div class="zs-modal-footer">
+		<label><input type="radio" name="zs-type" value="wechat" class="zs-type" checked="checked"><span ><span class="zs-wechat"><img src="/img/reward/wechat-btn.png"/></span></label>
+		<label><input type="radio" name="zs-type" value="alipay" class="zs-type" class="zs-alipay"><img src="/img/reward/alipay-btn.png"/></span></label>
+	</div>
+</div>
+<script type="text/javascript" src="/js/reward.js"></script>
+
+                
+
+                
+                <hr>
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2023/03/19/virtio-vhost-net/" data-toggle="tooltip" data-placement="top" title="I/O虚拟化：Virtio 与 Vhost-net 架构 101">&larr;
+                            Previous Post</a>
+                    </li>
+                    
+                    
+                </ul>
+                
+
+                
+
+
+
+            </div>
+
+            
+            
+            <div class="
+                col-lg-2 col-lg-offset-0
+                visible-lg-block
+                sidebar-container
+                catalog-container">
+                <div class="side-catalog">
+                    <hr class="hidden-sm hidden-xs">
+                    <h5>
+                        <a class="catalog-toggle" href="#">CATALOG</a>
+                    </h5>
+                    <ul class="catalog-body"></ul>
+                </div>
+            </div>
+            
+
+            
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                    </div>
+                </section>
+                
+
+                
+                
+                <section>
+                    <hr>
+                    <h5>FRIENDS</h5>
+                    <ul class="list-inline">
+                        
+                        <li><a target="_blank" href="https://www.zhaohuabing.com/">Huabing Blog</a></li>
+                        
+                    </ul>
+                </section>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">                  
+                    
+                    <li>
+                        <a href="mailto:1171570958@qq.com">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fas fa-envelope fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		           
+                    
+                    <li>
+                        <a href="https://twitter.com/ShuaiZhang_CN">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    
+                    
+
+		            
+                    
+                    <li>
+                        <a target="_blank" href="/img/wechat_qrcode.jpg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-weixin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		            
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/ZhangShuai-CN">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		            
+                    
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://www.linkedin.com/in/flowlet">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		           
+                    
+                    
+                    
+                    
+                    
+                    
+            
+            
+            
+           
+                   <li>
+                       <a href='' rel="alternate" type="application/rss+xml" title="ZhangShuai&#39;s Blog" >
+                           <span class="fa-stack fa-lg">
+                               <i class="fas fa-circle fa-stack-2x"></i>
+                               <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                           </span>
+                       </a>
+                   </li>
+            
+             </ul>
+		<p class="copyright text-muted">
+                    Copyright &copy; ZhangShuai&#39;s Blog 2023
+                    <br>
+                    <a href="https://themes.gohugo.io/hugo-theme-cleanwhite">CleanWhite Hugo Theme</a> by <a href="https://zhaohuabing.com">Huabing</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=zhaohuabing&repo=hugo-theme-cleanwhite&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+
+
+<script>
+    function loadAsync(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+
+
+
+
+<script>
+    
+    if($('#tag_cloud').length !== 0){
+        loadAsync("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+
+<script>
+    loadAsync("https://cdn.jsdelivr.net/npm/fastclick@1.0.6/lib/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+
+
+
+
+<script type="text/javascript">
+    function generateCatalog(selector) {
+
+        
+        
+        
+        
+            _containerSelector = 'div.post-container'
+        
+
+        
+        var P = $(_containerSelector), a, n, t, l, i, c;
+        a = P.find('h1,h2,h3,h4,h5,h6');
+
+        
+        $(selector).html('')
+
+        
+        a.each(function () {
+            n = $(this).prop('tagName').toLowerCase();
+            i = "#" + $(this).prop('id');
+            t = $(this).text();
+            c = $('<a href="' + i + '" rel="nofollow">' + t + '</a>');
+            l = $('<li class="' + n + '_nav"></li>').append(c);
+            $(selector).append(l);
+        });
+        return true;
+    }
+
+    generateCatalog(".catalog-body");
+
+    
+    $(".catalog-toggle").click((function (e) {
+        e.preventDefault();
+        $('.side-catalog').toggleClass("fold")
+    }))
+
+    
+
+
+    loadAsync("\/js\/jquery.nav.js", function () {
+        $('.catalog-body').onePageNav({
+            currentClass: "active",
+            changeHash: !1,
+            easing: "swing",
+            filter: "",
+            scrollSpeed: 700,
+            scrollOffset: 0,
+            scrollThreshold: .2,
+            begin: null,
+            end: null,
+            scrollChange: null,
+            padding: 80
+        });
+    });
+</script>
+
+
+
+
+
+
+</body>
+</html>

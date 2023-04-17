@@ -170,8 +170,12 @@
                 <div class="post-heading">
                     <div class="tags">
                         
-                        <a class="tag" href="/tags/virtio" title="Virtio">
-                            Virtio
+                        <a class="tag" href="/tags/virtio" title="virtio">
+                            virtio
+                        </a>
+                        
+                        <a class="tag" href="/tags/vhost-net" title="vhost-net">
+                            vhost-net
                         </a>
                         
                     </div>
@@ -210,7 +214,14 @@
                 post-container">
 
                 
-                <p>云数据中心正在经历巨大的变革，虚拟化在经历了<strong>一虚多</strong>技术（一台 BM 虚拟成多台 VM ）多年的发展后，正朝着<strong>多虚一</strong>技术（多台 BM 的多台 VM 虚拟成一台 VM ）的方向进行演进。</p>
+                <hr>
+<h6 id="关于作者">关于作者</h6>
+<blockquote>
+<p><strong><code>张帅，网络从业人员，公众号：Flowlet</code></strong></p>
+<p><strong><code>个人博客：https://flowlet.net/</code></strong></p>
+</blockquote>
+<hr>
+<p>云数据中心正在经历巨大的变革，虚拟化在经历了<strong>一虚多</strong>技术（一台 BM 虚拟成多台 VM ）多年的发展后，正朝着<strong>多虚一</strong>技术（多台 BM 的多台 VM 虚拟成一台 VM ）的方向进行演进。</p>
 <p>在 60s 大型机时代，IBM 创始人老沃森，曾说过一句话：<strong>“世界只需要5台计算机”</strong>，随着云计算的兴起，虚拟化<strong>多虚一</strong>技术的发展，在 HPC 与 AI 应用场景的推动下，<strong>“世界只需要5台计算机”</strong> 即将成为现实。</p>
 <p>虚拟化是实现云计算的核心技术之一，虚拟化的实现主要由三项关键技术构成：CPU虚拟化、内存虚拟化和I/O虚拟化。</p>
 <p>I/O 虚拟化最关键的技术就是 Virtio，Virtio 来源于《<a href="https://ozlabs.org/~rusty/virtio-spec/virtio-paper.pdf">Virtio: Towards a De-Facto Standard For Virtual I/O Devices</a>》 这篇论文，该论文发表于2008年，10多年过去了 Virtio 已经发展成为 I/O 虚拟化的事实标准。</p>
@@ -221,7 +232,7 @@
 
 </p>
 <p>I/O 虚拟化经历了从 I/O 全虚拟化、I/O 半虚拟化、硬件直通再到 vDPA 加速 Vhost-user 技术的演进。</p>
-<p>虚拟化架构的发展，将会催生新的网络架构的发展，本文将带大家了解 I/O 虚拟化技术：Virtio 与 Vhost-net 架构。</p>
+<p>虚拟化架构的发展，将会催生新的网络架构的发展，本文将带大家了解 I/O 虚拟化技术：Virtio 与 Vhost-net 架构，由于笔者水平有限，文中不免有错误之处，欢迎指正交流。</p>
 <h2 id="1-virtio-与-vhost-协议介绍">1. Virtio 与 Vhost 协议介绍</h2>
 <hr>
 <p>Virtio 目前被用作虚拟机（VM）访问块设备（virtio-blk）和网络设备（virtio-net）的标准开放接口。Virtio-net 作为一种虚拟网卡，是 virtio 迄今为止支持的最复杂的设备。</p>
@@ -865,7 +876,8 @@ rtt min/avg/max/mdev <span style="color:#ff79c6">=</span> 9.371/9.482/9.594/0.11
 <h2 id="参考">参考</h2>
 <hr>
 <ul>
-<li>本文部分内容参考自 Redhat 社区关于 <a href="https://www.redhat.com/en/blog/learn-about-virtio-networking">Learn about virtio-networking</a> 系列文章。如需了解更多，推荐阅读<a href="https://www.redhat.com/en/blog/learn-about-virtio-networking">原文</a>。</li>
+<li>本文理论部分参考自 Redhat 社区关于 <a href="https://www.redhat.com/en/blog/learn-about-virtio-networking">Learn about virtio-networking</a> 系列文章。如需了解更多，推荐阅读<a href="https://www.redhat.com/en/blog/learn-about-virtio-networking">原文</a>。</li>
+<li>本文第三节部分，为笔者基于自己的 PC 所搭建的实验环境。</li>
 </ul>
 
 
@@ -912,6 +924,17 @@ rtt min/avg/max/mdev <span style="color:#ff79c6">=</span> 9.371/9.482/9.594/0.11
                 
 
                 
+                <hr>
+                <ul class="pager">
+                    
+                    
+                    <li class="next">
+                        <a href="/2023/04/08/netfilter/" data-toggle="tooltip" data-placement="top" title="Netfilter 与 iptables/ebtables 101">Next
+                            Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+                
 
                 
 
@@ -948,6 +971,14 @@ rtt min/avg/max/mdev <span style="color:#ff79c6">=</span> 9.371/9.482/9.594/0.11
                     <hr class="hidden-sm hidden-xs">
                     <h5><a href="/tags/">FEATURED TAGS</a></h5>
                     <div class="tags">
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
                         
                         
                         

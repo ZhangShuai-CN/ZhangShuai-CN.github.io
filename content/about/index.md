@@ -23,20 +23,20 @@ Feel free to connect Shuai Zhang at Github and Linkedin, leave your thoughts in 
 ## Publications
 | 标题       |类型        |出版社   |链接        |
 | ----------- |----------- |----------- |----------- |
-|[使用 Ubuntu 进行 x86-64 汇编语言编程](https://flowlet.com/)|翻译书籍||[链接](https://flowlet.com/)|
-|[每个程序员都应该了解的内存知识](https://flowlet.com/)|在线教程||[链接](https://flowlet.com/)|
-|[无锁编程](https://flowlet.com/)|在线教程||[链接](https://flowlet.com/)|
+|[使用 Ubuntu 进行 x86-64 汇编语言编程](https://flowlet.net/)|翻译书籍||[链接](https://flowlet.net/)|
+|[每个程序员都应该了解的内存知识](https://flowlet.net/)|在线教程||[链接](https://flowlet.net/)|
+|[无锁编程](https://flowlet.net/)|在线教程||[链接](https://flowlet.net/)|
 
 ## Presentations (Selected)
 
 |年份          |城市        |会议         | 分享主题    |讲稿         |视频       |
 | ----------- |----------- |----------- |----------- |----------- |----------- |
-|2023|线上||[无锁编程](https://flowlet.com/)|[下载](https://flowlet.com/)|[观看](https://flowlet.com/)|
-|2022|线上||[每个程序员都应该了解的内存知识](https://flowlet.com/)|[下载](https://flowlet.com/)|[观看](https://flowlet.com/)|
+|2023|线上||[无锁编程](https://flowlet.net/)|[下载](https://flowlet.net/)|[观看](https://flowlet.net/)|
+|2022|线上||[每个程序员都应该了解的内存知识](https://flowlet.net/)|[下载](https://flowlet.net/)|[观看](https://flowlet.net/)|
 
 ## Open Source Projects
 
 |项目         |角色        |  网站   | GitHub     |
 | ----------- |----------- |----------- |----------- |
-| FastVPN | 创建者    | <https://flowlet.com/>  | <https://github.com/ZhangShuai-CN/> |
-| Flowlet | 创建者    | <https://flowlet.com/>  | <https://github.com/ZhangShuai-CN/> |
+| SharpGuard | 创建者 | <https://sharpguard.net/>  | <https://github.com/SharpGuard/> |
+| Flowlet | 创建者    | <https://flowlet.net/>  | <https://github.com/ZhangShuai-CN/> |

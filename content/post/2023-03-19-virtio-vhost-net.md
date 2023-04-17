@@ -9,10 +9,20 @@ author:     "张帅"
 image: "/img/2023-03-19-virtio-vhost-net/backgroud.jpg"
 published: true
 tags:
-    - Virtio
+    - virtio
+    - vhost-net
 categories: [ Tech ]
 URL: "/2023/03/19/virtio-vhost-net/"
 ---
+
+
+- - -
+###### 关于作者
+> 
+> **`张帅，网络从业人员，公众号：Flowlet`**
+> 
+> **`个人博客：https://flowlet.net/`**
+- - -
 
 云数据中心正在经历巨大的变革，虚拟化在经历了**一虚多**技术（一台 BM 虚拟成多台 VM ）多年的发展后，正朝着**多虚一**技术（多台 BM 的多台 VM 虚拟成一台 VM ）的方向进行演进。
 
@@ -30,7 +40,7 @@ I/O 虚拟化最关键的技术就是 Virtio，Virtio 来源于《[Virtio: Towar
 
 I/O 虚拟化经历了从 I/O 全虚拟化、I/O 半虚拟化、硬件直通再到 vDPA 加速 Vhost-user 技术的演进。
 
-虚拟化架构的发展，将会催生新的网络架构的发展，本文将带大家了解 I/O 虚拟化技术：Virtio 与 Vhost-net 架构。
+虚拟化架构的发展，将会催生新的网络架构的发展，本文将带大家了解 I/O 虚拟化技术：Virtio 与 Vhost-net 架构，由于笔者水平有限，文中不免有错误之处，欢迎指正交流。
 
 ## 1. Virtio 与 Vhost 协议介绍
 - - -
@@ -709,4 +719,5 @@ rtt min/avg/max/mdev = 9.371/9.482/9.594/0.111 ms
 
 ## 参考
 - - -
-* 本文部分内容参考自 Redhat 社区关于 [Learn about virtio-networking](https://www.redhat.com/en/blog/learn-about-virtio-networking) 系列文章。如需了解更多，推荐阅读[原文](https://www.redhat.com/en/blog/learn-about-virtio-networking)。
+* 本文理论部分参考自 Redhat 社区关于 [Learn about virtio-networking](https://www.redhat.com/en/blog/learn-about-virtio-networking) 系列文章。如需了解更多，推荐阅读[原文](https://www.redhat.com/en/blog/learn-about-virtio-networking)。
+* 本文第三节部分，为笔者基于自己的 PC 所搭建的实验环境。
