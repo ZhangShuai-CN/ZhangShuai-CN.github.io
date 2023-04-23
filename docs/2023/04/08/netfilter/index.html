@@ -10,14 +10,14 @@
     <meta property="og:type" content="article">
 
     
-    <meta property="og:image" content="/img/2023-04-08-netfilter/backgroud.jpg">
-    <meta property="twitter:image" content="/img/2023-04-08-netfilter/backgroud.jpg" />
+    <meta property="og:image" content="/img/2023-04-08-netfilter/background.jpg">
+    <meta property="twitter:image" content="/img/2023-04-08-netfilter/background.jpg" />
     
 
     
-    <meta name="title" content="Netfilter 与 iptables/ebtables 101" />
-    <meta property="og:title" content="Netfilter 与 iptables/ebtables 101" />
-    <meta property="twitter:title" content="Netfilter 与 iptables/ebtables 101" />
+    <meta name="title" content="Netfilter 101：netfilter 架构与 iptables/ebtables 入门" />
+    <meta property="og:title" content="Netfilter 101：netfilter 架构与 iptables/ebtables 入门" />
+    <meta property="twitter:title" content="Netfilter 101：netfilter 架构与 iptables/ebtables 入门" />
     
 
     
@@ -34,7 +34,7 @@
     <meta name="keyword"  content="张帅, zhangshuai, ZhangShuai, , 张帅的网络日志, 张帅的博客, ZhangShuai&#39;s Blog, 博客, 个人网站, 互联网, Web, 云原生, PaaS, Iaas, Kubernetes">
     <link rel="shortcut icon" href="/img/favicon.ico">
 
-    <title>Netfilter 与 iptables/ebtables 101 | 张帅的博客 | ZhangShuai&#39;s Blog</title>
+    <title>Netfilter 101：netfilter 架构与 iptables/ebtables 入门 | 张帅的博客 | ZhangShuai&#39;s Blog</title>
 
     <link rel="canonical" href="/2023/04/08/netfilter/">
 
@@ -158,7 +158,7 @@
 
 <style type="text/css">
     header.intro-header {
-        background-image: url('/img/2023-04-08-netfilter/backgroud.jpg')
+        background-image: url('/img/2023-04-08-netfilter/background.jpg')
     }
 </style>
 
@@ -183,7 +183,7 @@
                         </a>
                         
                     </div>
-                    <h1>Netfilter 与 iptables/ebtables 101</h1>
+                    <h1>Netfilter 101：netfilter 架构与 iptables/ebtables 入门</h1>
                     <h2 class="subheading">Netfilter 架构与 iptables/ebtables</h2>
                     <span class="meta">
                         
@@ -232,7 +232,7 @@
 <h2 id="前言">前言</h2>
 <hr>
 <p>Netfilter 是 Linux 内核的数据包处理框架，由 Rusty Russell 于 1998 年开发， 旨在改进以前的 ipchains（Linux2.2.x）和 ipfwadm（Linux2.0.x）数据包处理框架。</p>
-<p>本文主要从 Netfilter 构成与转发框架、Iptables 示例、Conntrack详解、Netfilter开发实践等方面介绍 Netfilter 框架，由于笔者水平有限，文中不免有错误之处，欢迎指正交流。</p>
+<p>本文主要从 Netfilter 构成与转发框架、iptables/ebtables 示例等方面介绍 Netfilter 框架，由于笔者水平有限，文中不免有错误之处，欢迎指正交流。</p>
 <h2 id="1-netfilter-构成">1. Netfilter 构成</h2>
 <hr>
 <p>Netfilter 详细构成如下所示：
@@ -1209,10 +1209,15 @@ bridge                <span style="color:#bd93f9">176128</span>  <span style="co
                 <ul class="pager">
                     
                     <li class="previous">
-                        <a href="/2023/03/19/virtio-vhost-net/" data-toggle="tooltip" data-placement="top" title="I/O虚拟化：Virtio 与 Vhost-net 架构 101">&larr;
+                        <a href="/2023/03/19/virtio-vhost-net/" data-toggle="tooltip" data-placement="top" title="I/O虚拟化 101：virtio 与 vhost-net 架构">&larr;
                             Previous Post</a>
                     </li>
                     
+                    
+                    <li class="next">
+                        <a href="/2023/04/10/ebtables-iptables-interaction/" data-toggle="tooltip" data-placement="top" title="Netfilter 102：在 Linux bridge 上 ebtables 与 iptables 如何进行交互 [译]">Next
+                            Post &rarr;</a>
+                    </li>
                     
                 </ul>
                 
@@ -1257,7 +1262,21 @@ bridge                <span style="color:#bd93f9">176128</span>  <span style="co
                         
                         
                         
+                        <a href="/tags/ebtables" title="ebtables">
+                            ebtables
+                        </a>
                         
+                        
+                        
+                        <a href="/tags/iptables" title="iptables">
+                            iptables
+                        </a>
+                        
+                        
+                        
+                        <a href="/tags/netfilter" title="netfilter">
+                            netfilter
+                        </a>
                         
                         
                         

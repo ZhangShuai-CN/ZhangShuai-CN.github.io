@@ -1,12 +1,12 @@
 ---
 layout:     post
-title:      "I/O虚拟化：Virtio 与 Vhost-net 架构 101"
-subtitle:   "I/O虚拟化：Virtio 与 Vhost-net 架构"
-description: ""
+title:      "I/O虚拟化 101：virtio 与 vhost-net 架构"
+subtitle:   "Virtio 与 vhost-net 架构"
+description: "A Deep Dive into Virtio Architecture"
 excerpt: ""
 date:       2023-03-19 11:00:00
 author:     "张帅"
-image: "/img/2023-03-19-virtio-vhost-net/backgroud.jpg"
+image: "/img/2023-03-19-virtio-vhost-net/background.jpg"
 published: true
 tags:
     - virtio

@@ -1,12 +1,12 @@
 ---
 layout:     post
-title:      "Netfilter 与 iptables/ebtables 101"
+title:      "Netfilter 101：netfilter 架构与 iptables/ebtables 入门"
 subtitle:   "Netfilter 架构与 iptables/ebtables"
 description: "A Deep Dive into Netfilter Architecture"
 excerpt: ""
 date:       2023-04-08 11:22:00
 author:     "张帅"
-image: "/img/2023-04-08-netfilter/backgroud.jpg"
+image: "/img/2023-04-08-netfilter/background.jpg"
 showtoc: true
 draft: false
 tags:
@@ -35,7 +35,7 @@ URL: "/2023/04/08/netfilter/"
 - - -
 Netfilter 是 Linux 内核的数据包处理框架，由 Rusty Russell 于 1998 年开发， 旨在改进以前的 ipchains（Linux2.2.x）和 ipfwadm（Linux2.0.x）数据包处理框架。
 
-本文主要从 Netfilter 构成与转发框架、Iptables 示例、Conntrack详解、Netfilter开发实践等方面介绍 Netfilter 框架，由于笔者水平有限，文中不免有错误之处，欢迎指正交流。
+本文主要从 Netfilter 构成与转发框架、iptables/ebtables 示例等方面介绍 Netfilter 框架，由于笔者水平有限，文中不免有错误之处，欢迎指正交流。
 
 ## 1. Netfilter 构成
 - - -

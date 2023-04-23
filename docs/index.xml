@@ -6,13 +6,22 @@
     <description>Recent content on ZhangShuai&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 08 Apr 2023 11:22:00 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 10 Apr 2023 11:23:01 +0000</lastBuildDate>
     
 	<atom:link href="https://flowlet.net/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>Netfilter 与 iptables/ebtables 101</title>
+      <title>Netfilter 102：在 Linux bridge 上 ebtables 与 iptables 如何进行交互 [译]</title>
+      <link>https://flowlet.net/2023/04/10/ebtables-iptables-interaction/</link>
+      <pubDate>Mon, 10 Apr 2023 11:23:01 +0000</pubDate>
+      
+      <guid>https://flowlet.net/2023/04/10/ebtables-iptables-interaction/</guid>
+      <description>关于作者 张帅，网络从业人员，公众号：Flowlet 个人博客：https://flowlet.net/ 本文翻译自文章 ebtables/iptables interaction on a Linux-based bridge。 本</description>
+    </item>
+    
+    <item>
+      <title>Netfilter 101：netfilter 架构与 iptables/ebtables 入门</title>
       <link>https://flowlet.net/2023/04/08/netfilter/</link>
       <pubDate>Sat, 08 Apr 2023 11:22:00 +0000</pubDate>
       
@@ -21,7 +30,7 @@
     </item>
     
     <item>
-      <title>I/O虚拟化：Virtio 与 Vhost-net 架构 101</title>
+      <title>I/O虚拟化 101：virtio 与 vhost-net 架构</title>
       <link>https://flowlet.net/2023/03/19/virtio-vhost-net/</link>
       <pubDate>Sun, 19 Mar 2023 11:00:00 +0000</pubDate>
       
