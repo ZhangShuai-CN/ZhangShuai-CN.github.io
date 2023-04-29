@@ -1,18 +1,18 @@
 ---
 layout:     post
-title:      "I/O虚拟化 101：virtio 与 vhost-net 架构"
+title:      "I/O虚拟化 105：virtio 与 vhost-net 架构"
 subtitle:   "Virtio 与 vhost-net 架构"
 description: "A Deep Dive into Virtio Architecture"
 excerpt: ""
-date:       2023-03-19 11:00:00
+date:       2023-03-21 11:00:00
 author:     "张帅"
-image: "/img/2023-03-19-virtio-vhost-net/background.jpg"
+image: "/img/2023-03-21-virtio-vhost-net/background.jpg"
 published: true
 tags:
     - virtio
     - vhost-net
 categories: [ Tech ]
-URL: "/2023/03/19/virtio-vhost-net/"
+URL: "/2023/03/21/virtio-vhost-net/"
 ---
 
 
@@ -36,7 +36,7 @@ I/O 虚拟化最关键的技术就是 Virtio，Virtio 来源于《[Virtio: Towar
 ## 前言
 - - -
 
-![](/img/2023-03-19-virtio-vhost-net/2023-03-26-io-evolution.png)
+![](/img/2023-03-21-virtio-vhost-net/2023-03-26-io-evolution.png)
 
 I/O 虚拟化经历了从 I/O 全虚拟化、I/O 半虚拟化、硬件直通再到 vDPA 加速 Vhost-user 技术的演进。
 
@@ -59,7 +59,7 @@ Host 通过 hypervisor 运行 VM，每个 VM 都有独立的操作系统，Host 
 * Libvirt - 将前端 XML 配置转换为 QEMU Cli 配置，它同时提供了一个管理守护进程用于配置和管理 QEMU。例如，当 Openstack Nova 启动一台 VM 的同时，也通过 Libvirt 为该 VM 启动一个 QEMU 进程。
 
 下图展示了这三个组件是如何组合在一起的：
-![](/img/2023-03-19-virtio-vhost-net/2023-03-19-Virtio_basic_building_blocks.jpg)
+![](/img/2023-03-21-virtio-vhost-net/2023-03-19-Virtio_basic_building_blocks.jpg)
 
 Host 与 Guest 都包含内核态与用户态，KVM 运行在 Host 的内核态，Libvirt 运行在 Host 的用户态。
 
@@ -98,7 +98,7 @@ virtio 接口有一个前端组件和一个后端组件：
 
 在 vhost-net/virtio-net 架构中组件如下所示：
 
-![](/img/2023-03-19-virtio-vhost-net/2023-03-19-vhost-net.jpg)
+![](/img/2023-03-21-virtio-vhost-net/2023-03-19-vhost-net.jpg)
 
 * virtio-net 是前端组件，运行在 guest 的内核空间。
 
@@ -112,7 +112,7 @@ virtio 接口有一个前端组件和一个后端组件：
 
 对于每个 guest 我们可以分配一些 vCPU ,基于每个 vCPU 我们创建 RX/TX 队列。下图我们以4个 vCPU 为例（为了简单起见移除了控制面）：
 
-![](/img/2023-03-19-virtio-vhost-net/2023-03-19-virtio-net-vcpu-queue.jpg)
+![](/img/2023-03-21-virtio-vhost-net/2023-03-19-virtio-net-vcpu-queue.jpg)
 
 ### 1.4 Virtio 与 OVS
 - - -
@@ -128,7 +128,7 @@ OVS 控制器与 ovsdb-server 和内核转发面进行通信。在我们的例�
 
 下图展示了如何通过 OVS 连接到 virtio：
 
-![](/img/2023-03-19-virtio-vhost-net/2023-03-19-ovs-virtio.jpg)
+![](/img/2023-03-21-virtio-vhost-net/2023-03-19-ovs-virtio.jpg)
 
 ## 2. 深入理解 Virtio 与 vhost-net
 - - -
@@ -144,7 +144,7 @@ TUN/TAP设备为用户空间的进程提供了相互转发数据包的能力。�
 
 换句话说，TUN/TAP驱动程序在 Linux 主机上构建一个虚拟网络接口。该接口可以像任何其他网络接口一样，即可以给它分配IP，也可以将流量路由到该接口。当流量被发送到该接口时，流量将被发送到用户空间进程中，而不是真实的网络。
 
-![](/img/2023-03-19-virtio-vhost-net/2023-03-23-tun-tap.png)
+![](/img/2023-03-21-virtio-vhost-net/2023-03-23-tun-tap.png)
 
 TUN/TAP 有两种驱动模式：
 
@@ -152,7 +152,7 @@ TUN/TAP 有两种驱动模式：
 
 * TAP（network tap）设备的操作很像 TUN 设备，但是 TAP 设备工作在 L2 层，因此 TAP 设备可以接收和发送原始的以太报文。
 
-![](/img/2023-03-19-virtio-vhost-net/2023-04-04-tun-tap-2.webp)
+![](/img/2023-03-21-virtio-vhost-net/2023-04-04-tun-tap-2.webp)
 
 当 TUN/TAP 内核模块被加载时，它会创建一个特殊的设备/dev/net/tun。用户进程可以创建一个 tap 设备，打开该设备并向它发送特定的 ioctl 命令。新的 tap 设备在文件系统中有一个名称，另一个用户进程可以打开它，并通过它发送和接收数据包。
 
@@ -223,7 +223,7 @@ virtio 驱动接口暴露以下内容：
 
 ### 2.3 Virtio 网络 ：qemu 实现方式
 - - -
-![](/img/2023-03-19-virtio-vhost-net/2023-03-25-virtio-net-qemu.png)
+![](/img/2023-03-21-virtio-vhost-net/2023-03-25-virtio-net-qemu.png)
 
 virtio 网络设备是一个虚拟网卡，TX/RX 支持多队列。在缓冲区中创建 N 个 virtqueue 用于接收数据包，另外 N 个 virtqueue 用于发送数据包。此外再创建一个 virtqueue 用于与数据面之外的驱动程序进行设备通信，比如用来设置高级过滤功能、设置 mac 地址或活动队列数量。支持 Virtio 的物理网卡支持许多 offload 特性，并且可以让 Host 上的设备执行这些操作。
 
@@ -237,7 +237,7 @@ virtio 网络设备是一个虚拟网卡，TX/RX 支持多队列。在缓冲区�
 
 收包过程与发包过程类似。唯一的区别是，在发包的场景下，空缓冲区是由客户机预先分配的，并可供设备使用，以便将传入的数据写入缓冲区。
 
-![](/img/2023-03-19-virtio-vhost-net/2023-03-25-virtio-buffer-flow.jpg)
+![](/img/2023-03-21-virtio-vhost-net/2023-03-25-virtio-buffer-flow.jpg)
 
 ### 2.4 Vhost 协议
 - - -
@@ -266,7 +266,7 @@ vhost 消息可以在任何 host-local 传输协议中进行传输，例如 Unix
 #### 2.4.2 Vhost-net
 - - -
 
-![](/img/2023-03-19-virtio-vhost-net/2023-03-25-vhost-net-block.png)
+![](/img/2023-03-21-virtio-vhost-net/2023-03-25-vhost-net-block.png)
 
 vhost-net 是一个内核驱动程序，是一个高效的数据转发平面。在这个实现中，qemu 和 vhost-net 内核驱动程序使用 ioctl 来交换 vhost 消息，使用两个类似事件 fd 的文件描述符 irqfd 和 ioeventfd 来与 Guest 程序交换通知消息。
 
@@ -284,7 +284,7 @@ Qemu 分配一个 eventfd 并将其注册到 vhost 和 KVM，以实现通知 byp
 
 下面的框图显示了从 QEMU 卸载到 vhost-net 内核驱动程序的数据路径:
 
-![](/img/2023-03-19-virtio-vhost-net/2023-03-25-vhost-net-flow.png)
+![](/img/2023-03-21-virtio-vhost-net/2023-03-25-vhost-net-flow.png)
 
 ### 2.5 如何与外面的网络进行通信
 - - -
@@ -296,7 +296,7 @@ Guest 可以使用 tap 设备与 Host 进行通信，但问题是它如何与同
 
 如下图所示，内核中运行着 OVS 数据面，在物理网卡和虚拟 TAP 设备之间转发报文:
 
-![](/img/2023-03-19-virtio-vhost-net/2023-03-26-virtio-ovs.png)
+![](/img/2023-03-21-virtio-vhost-net/2023-03-26-virtio-ovs.png)
 
 当同一台 Host 环境上的多台 VM 时，每台 VM 都有其一个对应的 QEMU 进程、TAP口和 vhost-net 驱动程序，这有助于避免 QEMU 上下文切换。
 
@@ -316,7 +316,7 @@ Windows10 + VMware® Workstation 17 Pro + Ubuntu 20.04.5 LTS + Ubuntu 20.04.5 LT
 ```
 
 * VMware® Workstation 启动 Ubuntu 20.04.5 LTS 虚拟机的时候勾选：Intel VT-x/EPT或AMD-V/RVI(V)
-![](/img/2023-03-19-virtio-vhost-net/2023-03-26-wmware-nested.png)
+![](/img/2023-03-21-virtio-vhost-net/2023-03-26-wmware-nested.png)
 
 * Ubuntu 虚拟机启动后查看是否支持硬件虚拟化，KVM 是半虚拟化技术需要依赖 CPU 硬件虚拟化技术
 ```bash
@@ -715,7 +715,7 @@ PING baidu.com (39.156.66.10) 56(84) bytes of data.
 rtt min/avg/max/mdev = 9.371/9.482/9.594/0.111 ms
 ```
 在 Host 通过 top 查看各个线程的资源占用情况：可以看到qemu-system-x86进程与vhost-$pid 内核线程：
-![](/img/2023-03-19-virtio-vhost-net/2023-04-05-top.png)
+![](/img/2023-03-21-virtio-vhost-net/2023-04-05-top.png)
 
 ## 参考
 - - -

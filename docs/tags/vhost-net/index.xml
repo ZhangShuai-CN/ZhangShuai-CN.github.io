@@ -6,17 +6,17 @@
     <description>Recent content in vhost-net on ZhangShuai&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 19 Mar 2023 11:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 21 Mar 2023 11:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://flowlet.net/tags/vhost-net/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>I/O虚拟化 101：virtio 与 vhost-net 架构</title>
-      <link>https://flowlet.net/2023/03/19/virtio-vhost-net/</link>
-      <pubDate>Sun, 19 Mar 2023 11:00:00 +0000</pubDate>
+      <title>I/O虚拟化 105：virtio 与 vhost-net 架构</title>
+      <link>https://flowlet.net/2023/03/21/virtio-vhost-net/</link>
+      <pubDate>Tue, 21 Mar 2023 11:00:00 +0000</pubDate>
       
-      <guid>https://flowlet.net/2023/03/19/virtio-vhost-net/</guid>
+      <guid>https://flowlet.net/2023/03/21/virtio-vhost-net/</guid>
       <description>关于作者 张帅，网络从业人员，公众号：Flowlet 个人博客：https://flowlet.net/ 云数据中心正在经历巨大的变革，虚拟化在经</description>
     </item>
     

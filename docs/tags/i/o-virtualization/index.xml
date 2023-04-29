@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>I/O virtualization on ZhangShuai&#39;s Blog</title>
+    <link>https://flowlet.net/tags/i/o-virtualization/</link>
+    <description>Recent content in I/O virtualization on ZhangShuai&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://flowlet.net/tags/i/o-virtualization/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>I/O虚拟化 101：虚拟化技术概述 与 I/O 虚拟化（IOV）详解</title>
+      <link>https://flowlet.net/2023/03/17/virtualization-tech-and-iov/</link>
+      <pubDate>Fri, 17 Mar 2023 01:01:01 +0000</pubDate>
+      
+      <guid>https://flowlet.net/2023/03/17/virtualization-tech-and-iov/</guid>
+      <description>关于作者 张帅，网络从业人员，公众号：Flowlet 个人博客：https://flowlet.net/ 序言 虚拟化技术是实现云计算的基石，虚拟化</description>
+    </item>
+    
+  </channel>
+</rss>

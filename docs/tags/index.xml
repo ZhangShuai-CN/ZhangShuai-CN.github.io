@@ -50,7 +50,7 @@
     <item>
       <title>vhost-net</title>
       <link>https://flowlet.net/tags/vhost-net/</link>
-      <pubDate>Sun, 19 Mar 2023 11:00:00 +0000</pubDate>
+      <pubDate>Tue, 21 Mar 2023 11:00:00 +0000</pubDate>
       
       <guid>https://flowlet.net/tags/vhost-net/</guid>
       <description></description>
@@ -59,9 +59,27 @@
     <item>
       <title>virtio</title>
       <link>https://flowlet.net/tags/virtio/</link>
-      <pubDate>Sun, 19 Mar 2023 11:00:00 +0000</pubDate>
+      <pubDate>Tue, 21 Mar 2023 11:00:00 +0000</pubDate>
       
       <guid>https://flowlet.net/tags/virtio/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>virtualization</title>
+      <link>https://flowlet.net/tags/virtualization/</link>
+      <pubDate>Fri, 17 Mar 2023 01:01:01 +0000</pubDate>
+      
+      <guid>https://flowlet.net/tags/virtualization/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>I/O virtualization</title>
+      <link>https://flowlet.net/tags/i/o-virtualization/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://flowlet.net/tags/i/o-virtualization/</guid>
       <description></description>
     </item>
     

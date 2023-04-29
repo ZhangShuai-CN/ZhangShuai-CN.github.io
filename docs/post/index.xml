@@ -30,12 +30,21 @@
     </item>
     
     <item>
-      <title>I/O虚拟化 101：virtio 与 vhost-net 架构</title>
-      <link>https://flowlet.net/2023/03/19/virtio-vhost-net/</link>
-      <pubDate>Sun, 19 Mar 2023 11:00:00 +0000</pubDate>
+      <title>I/O虚拟化 105：virtio 与 vhost-net 架构</title>
+      <link>https://flowlet.net/2023/03/21/virtio-vhost-net/</link>
+      <pubDate>Tue, 21 Mar 2023 11:00:00 +0000</pubDate>
       
-      <guid>https://flowlet.net/2023/03/19/virtio-vhost-net/</guid>
+      <guid>https://flowlet.net/2023/03/21/virtio-vhost-net/</guid>
       <description>关于作者 张帅，网络从业人员，公众号：Flowlet 个人博客：https://flowlet.net/ 云数据中心正在经历巨大的变革，虚拟化在经</description>
+    </item>
+    
+    <item>
+      <title>I/O虚拟化 101：虚拟化技术概述 与 I/O 虚拟化（IOV）详解</title>
+      <link>https://flowlet.net/2023/03/17/virtualization-tech-and-iov/</link>
+      <pubDate>Fri, 17 Mar 2023 01:01:01 +0000</pubDate>
+      
+      <guid>https://flowlet.net/2023/03/17/virtualization-tech-and-iov/</guid>
+      <description>关于作者 张帅，网络从业人员，公众号：Flowlet 个人博客：https://flowlet.net/ 序言 虚拟化技术是实现云计算的基石，虚拟化</description>
     </item>
     
   </channel>
