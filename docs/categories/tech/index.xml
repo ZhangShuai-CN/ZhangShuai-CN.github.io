@@ -39,6 +39,15 @@
     </item>
     
     <item>
+      <title>I/O虚拟化 102：Virtio - 一种 Linux I/O 半虚拟化框架 [译]</title>
+      <link>https://flowlet.net/2023/03/18/virtio/</link>
+      <pubDate>Sat, 18 Mar 2023 01:01:01 +0000</pubDate>
+      
+      <guid>https://flowlet.net/2023/03/18/virtio/</guid>
+      <description>关于作者 张帅，网络从业人员，公众号：Flowlet 个人博客：https://flowlet.net/ 序言 本文翻译自文章 Virtio: An I/O virtualization framework for Linux</description>
+    </item>
+    
+    <item>
       <title>I/O虚拟化 101：虚拟化技术概述 与 I/O 虚拟化（IOV）详解</title>
       <link>https://flowlet.net/2023/03/17/virtualization-tech-and-iov/</link>
       <pubDate>Fri, 17 Mar 2023 01:01:01 +0000</pubDate>

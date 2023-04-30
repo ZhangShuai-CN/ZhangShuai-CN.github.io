@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    
+    <meta property="og:site_name" content="ZhangShuai&#39;s Blog">
+    <meta property="og:type" content="article">
+
+    
+    <meta property="og:image" content="/img/2023-03-18-virtio/background.jpg">
+    <meta property="twitter:image" content="/img/2023-03-18-virtio/background.jpg" />
+    
+
+    
+    <meta name="title" content="I/O虚拟化 102：Virtio - 一种 Linux I/O 半虚拟化框架 [译]" />
+    <meta property="og:title" content="I/O虚拟化 102：Virtio - 一种 Linux I/O 半虚拟化框架 [译]" />
+    <meta property="twitter:title" content="I/O虚拟化 102：Virtio - 一种 Linux I/O 半虚拟化框架 [译]" />
+    
+
+    
+    <meta name="description" content="Virtio: An I/O virtualization framework for Linux">
+    <meta property="og:description" content="Virtio: An I/O virtualization framework for Linux" />
+    <meta property="twitter:description" content="Virtio: An I/O virtualization framework for Linux" />
+    
+
+    
+    <meta property="twitter:card" content="summary" />
+    
+    
+
+    <meta name="keyword"  content="张帅, zhangshuai, ZhangShuai, , 张帅的网络日志, 张帅的博客, ZhangShuai&#39;s Blog, 博客, 个人网站, 互联网, Web, 云原生, PaaS, Iaas, Kubernetes">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>I/O虚拟化 102：Virtio - 一种 Linux I/O 半虚拟化框架 [译] | 张帅的博客 | ZhangShuai&#39;s Blog</title>
+
+    <link rel="canonical" href="/2023/03/18/virtio/">
+
+    
+    
+    
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    
+    <link rel="stylesheet" href="/css/hugo-theme-cleanwhite.min.css">
+
+    
+    <link rel="stylesheet" href="/css/zanshang.css">
+
+    
+    <link href="https://cdn.jsdelivr.net/gh/FortAwesome/Font-Awesome@5.15.1/css/all.css" rel="stylesheet" type="text/css">
+
+    
+    
+
+    
+    <script src="/js/jquery.min.js"></script>
+
+    
+    <script src="/js/bootstrap.min.js"></script>
+
+    
+    <script src="/js/hux-blog.min.js"></script>
+
+    
+    <script src="/js/lazysizes.min.js"></script>
+
+    
+    
+
+</head>
+
+
+
+
+
+
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+
+    <div class="container-fluid">
+        
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">ZhangShuai&#39;s Blog</a>
+        </div>
+
+        
+        
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">All Posts</a>
+                    </li>
+                    
+                        
+                        <li>
+                            <a href="/categories/tech/">tech</a>
+                        </li>
+                        
+                    
+                    
+		    
+                        <li><a href="/archive//">ARCHIVE</a></li>
+                    
+                        <li><a href="/notes//">NOTES</a></li>
+                    
+                        <li><a href="/about//">ABOUT</a></li>
+                    
+		            <li>
+                        <a href="/search"><i class="fa fa-search"></i></a>
+		           </li>
+                </ul>
+            </div>
+        </div>
+        
+    </div>
+    
+</nav>
+<script>
+    
+    
+    
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        
+            $navbar.className = " ";
+            
+            setTimeout(function(){
+                
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+
+
+<style type="text/css">
+    header.intro-header {
+        background-image: url('/img/2023-03-18-virtio/background.jpg')
+    }
+</style>
+
+<header class="intro-header" >
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/virtio" title="virtio">
+                            virtio
+                        </a>
+                        
+                    </div>
+                    <h1>I/O虚拟化 102：Virtio - 一种 Linux I/O 半虚拟化框架 [译]</h1>
+                    <h2 class="subheading">Virtio - 一种 Linux I/O 半虚拟化框架</h2>
+                    <span class="meta">
+                        
+                            Posted by 
+                            
+                                张帅
+                             
+                            on 
+                            Saturday, March 18, 2023
+                            
+                            
+                            
+                            
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+
+
+<article>
+    <div class="container">
+        <div class="row">
+
+            
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                
+                <hr>
+<h6 id="关于作者">关于作者</h6>
+<blockquote>
+<p><strong><code>张帅，网络从业人员，公众号：Flowlet</code></strong></p>
+<p><strong><code>个人博客：https://flowlet.net/</code></strong></p>
+</blockquote>
+<hr>
+<h2 id="序言">序言</h2>
+<hr>
+<p>本文翻译自文章 <a href="https://developer.ibm.com/articles/l-virtio/">Virtio: An I/O virtualization framework for Linux</a>。</p>
+<p>本文为译者根据原文意译，非逐词逐句翻译。由于译者水平有限，本文不免存在遗漏或错误之处。如有疑问，请查阅原文。</p>
+<h2 id="前言">前言</h2>
+<hr>
+<p>简言之，virtio 是对于半虚拟化管理程序（para-virtualized hypervisor）中设备的一个抽象层。virtio 是 Rusty Russell 为了支持他自己的虚拟化方案 lguest 而开发的。</p>
+<p>这篇文章先对半虚拟化和设备模拟技术进行介绍，然后探寻 virtio 技术实现中的一些细节。</p>
+<blockquote>
+<p>本文基于 kernel 2.6.30 版本的 virtio 框架进行讲解。</p>
+</blockquote>
+<p>Linux 是 hypervisor 的“试验场”。Linux 提供了许多具有不同特点和优势的虚拟化解决方案。例如 KVM（Kernel-based Virtual Machine），lguest、和用户态的 Linux。因为这些虚拟化解决方案各自都有不同的需求，因此在 Linux 实现这些虚拟化解决方案给操作系统造成了不小的重担，其中一个负担就是设备虚拟。</p>
+<p>virtio 没有为不同类型的设备(如：网络设备、块设备等)提供不同的设备模拟机制，而是通过标准化的接口为这些设备模拟提供了一个通用的前端，从而增加了代码在跨平台时的重用性。</p>
+<h2 id="1-全虚拟化-vs-半虚拟化">1. 全虚拟化 VS 半虚拟化</h2>
+<hr>
+<p>我们先来快速讨论两种完全不同的虚拟化方案：全虚拟化和半虚拟化。</p>
+<p>在全虚拟化中，客户机操作系统运行在 hypervisor 之上，而 hypervisor 运行在裸机之上。客户机不知道它是在虚拟机还是物理机中运行，在全虚拟化中客户机不需要修改操作系统就可以直接运行。</p>
+<p>与此相反的是，在半虚拟化中，客户机操作系统不仅需要感知其运行于 hypervisor 之上，还必须包含与 hypervisor 进行交互能够带来更高效率的代码。（如图 1 所示）。</p>
+<p>在全虚拟化中，hypervisor 必须进行设备硬件的模拟，也就是需要模拟最底层的通信机制（如：网卡驱动）。尽管这种抽象模拟机制很干净，但这样做同时也是最低效率和最复杂的。</p>
+<p>在半虚拟化中，客户机与 hypervisor 可以协作工作以提高模拟效率。半虚拟化的缺点就是客户机操作系统必须感知到它运行于虚拟机之中，而且需要对客户机操作系统进行修改才能工作。</p>
+<p><strong>图 1 ：全虚拟化与半虚拟化环境中的设备模拟</strong>
+
+  <img src="/img/2023-03-18-virtio/2023-03-18-figure1.gif" alt="">
+
+</p>
+<p>硬件辅助虚拟化也在不断发展。新处理器增加高级指令，使客户机操作系统和 hypervisor 之间的的转换更有效率。硬件 I/O 虚拟化同样也在不断发展（例如 SR-IOV、MR-IOV）。</p>
+<p>（如图1 左侧所示）在传统的全虚拟化环境中，hypervisor 必须捕获 I/O 请求，然后模拟出真实硬件的行为。尽管这样提供了很大的灵活性（可以运行不用进行修改的操作系统），但这样却会造成效率低下。</p>
+<p>（如图1 右侧所示）在半虚拟化环境中。客户机操作系统知道其运行在虚拟机之中，并且加入了作为前端的驱动程序。hypervisor 为特定设备模拟实现后端驱动程序。这里的前后端驱动就是 virtio 的架构的组成部分，为模拟设备的访问的开发提供标准化接口，以提高代码重用率及增加转换效率。</p>
+<blockquote>
+<p>Virtio 替代品：</p>
+<p>virtio 并不是半虚拟化领域的唯一形式，Xen 也提供了类似的半虚拟化设备驱动，VMware 也提供了名为 Guest Tools 的半虚拟化架构。</p>
+</blockquote>
+<h2 id="2-linux-客户机的一种抽象">2. Linux 客户机的一种抽象</h2>
+<hr>
+<p>如前节所述，virtio 是半虚拟化 hypervisor 中一组通用模拟设备的抽象。</p>
+<p>这种设计允许 hypervisor 输出一组通用的模拟设备，并通过通用的应用程序编程接口 (API) 使它们可用。</p>
+<p>如图 2 所示，使用半虚拟化 hypervisor，客户机实现了一组通用的接口，并在一组后端驱动后面进行特定设备模拟。后端驱动并不需要做到通用，只要它能实现前端所需的各种行为即可。</p>
+<p><strong>图 2 ：使用 virtio 进行驱动程序抽象</strong>
+
+  <img src="/img/2023-03-18-virtio/2023-03-18-figure2.gif" alt="">
+
+</p>
+<p>在实际实现中，使用用户空间的 QEMU 程序来进行设备模拟，所以后端驱动通过与用户空间的 hypervisor 进行通信，以便通过 QEMU 进行 I/O 操作。QEMU 是系统模拟器，除了提供客户机操作系统虚拟化平台外，还提供整个系统的设备模拟（PCI host 控制器、磁盘、网络、视频硬件、USB 控制器和其他硬件设备）。</p>
+<p>virtio API 依赖于一个简单的缓冲区抽象来封装客户机的命令和数据请求。让我们看看 virtio API 及其组件的内部结构。</p>
+<h2 id="3-virtio-架构">3. virtio 架构</h2>
+<hr>
+<p>除了前端驱动（在客户机操作系统中实现）和后端驱动（在虚拟机 hypervisor 中实现）之外，virtio 还定义了 2 个层次来支持客户机到 hypervisor 的通信。</p>
+<p>在顶层（称为 virtio 层）是虚拟队列接口，它在概念上将前端驱动程序附加到后端驱动，驱动可以根据需要使用零个或多个队列。例如，virtio 网络驱动使用两个虚拟队列（一个用于接收，一个用于发送），而 virtio 块驱动只使用一个队列。虚拟队列是虚拟的，它通过 ring 实现，以用于遍历客户机到 hypervisor 的信息。这可以以任何方式来实现，只要 Guest 和 hypervisor 通过相同的方式来实现。</p>
+<p><strong>图 3 ：virtio 架构</strong>
+
+  <img src="/img/2023-03-18-virtio/2023-03-18-figure3.gif" alt="">
+
+</p>
+<p>如图 3 所示，列出了五个前端驱动程序，分别用于块设备（例如磁盘）、网络设备、PCI 模拟、balloon 驱动（用于动态管理客户机内存使用）和控制台驱动。 每个前端驱动在 hypervisor 中都有一个对应的后端驱动。</p>
+<h2 id="4-概念层级">4. 概念层级</h2>
+<hr>
+<p>从客户机的角度来看，对象层次结构的定义如图 4 所示。</p>
+<p>最顶层是 virtio_driver，它代表客户机中的前端驱动。与此驱动程序所匹配的设备通过 virtio_device 结构体进行封装（Guest 设备的表示形式）。virtio_config_ops 结构体定义了对 virtio 设备进行配置的操作。virtio_device 被 virtqueue 所引用（包括被 virtqueue 所使用的 virtio_device 的引用）。最后，每个 virtqueue 对象都引用 virtqueue_ops 对象，该对象定义了用于处理 hypervisor 驱动程序的底层队列操作。</p>
+<p>虽然队列操作是 virtio API 的核心，但我们只会对其进行简要讨论，然后更详细地探讨 virtqueue_ops 操作。</p>
+<p><strong>图 4 ：virtio 前端对象层次结构</strong>
+
+  <img src="/img/2023-03-18-virtio/2023-03-18-figure4.gif" alt="">
+
+</p>
+<p>该过程从创建 virtio_driver 开始，随后通过 register_virtio_driver 进行注册。</p>
+<p>virtio_driver 结构定义了上层设备驱动，驱动程序支持的设备 ID 列表、功能列表（取决于设备类型）和回调函数列表。当 hypervisor 识别出与设备列表中的设备 ID 所匹配的新设备时，会调用 probe 函数（在 virtio_driver 对象中定义）来传递 virtio_device 对象。此对象与设备的管理数据一起被缓存（以依赖于驱动程序的方式）。</p>
+<p>根据驱动程序类型，可以调用 virtio_config_ops 函数来获取或设置特定于设备的选项（例如，获取 virtio_blk 设备的磁盘的读/写状态或设置块设备的块大小）。</p>
+<p>请注意，virtio_device 不包含对 virtqueue 的引用（但 virtqueue 引用了 virtio_device）。您可以使用带有 find_vq 函数的 virtio_config_ops 对象来要识别与此 virtio_device 关联的 virtqueue。此对象返回与此 virtio_device 实例关联的虚拟队列。find_vq 函数还允许为 virtqueue 指定回调函数（参见图 4 中的 virtqueue 结构），用于通过 hypervisor 的响应缓冲区来通知客户机。</p>
+<p>virtqueue 是一个简单的结构，它包含一个可选的回调函数（当 hypervisor 消耗缓冲区时调用它），对 virtio_device 的引用，对 virtqueue 操作的引用以及对特殊 priv 的引用（指的是使用的底层实现）。尽管回调是可选的，但可以动态启用或禁用回调函数。</p>
+<p>但是这个层次结构的核心是 virtqueue_ops，它定义了命令和数据如何在 Guest 和 hypervisor 之间移动的。让我们首先从探讨在 virtqueue 中添加或删除的对象开始。</p>
+<h2 id="5-virtio-buffer">5. virtio buffer</h2>
+<hr>
+<p>Guest（前端）驱动程序通过缓冲区与 hypervisor（后端）驱动程序进行通信。对于 I/O 操作来说，Guest 提供一个或多个表示请求的缓冲区。</p>
+<p>例如，您可以提供三个缓冲区，第一个缓冲区表示读取请求，随后的两个缓冲区表示响应数据。在内部，此配置表示为一个分散-收集列表（列表中的每个条目被表示为一个地址和一个长度）。</p>
+<h2 id="6-核心-api">6. 核心 API</h2>
+<hr>
+<p>通过 virtio_device 连接 Guest 驱动程序和 hypervisor 驱动程序，最常见的是通过 virtqueues。 virtqueue 支持它自己的由五个函数（见图4 ）组成的 API。使用第一个函数 add_buf 向 hypervisor 发起请求。该请求采用前面讨论的分散-聚集列表的形式表示。为了实现 add_buf 操作，guest 将进行将 request 在 virtqueue 中进行入队、分散收集列表（地址和长度的数组）、配置输出条目的缓冲区数量（用于底层的 hypervisor）以及配置输入条目的数量（hypervisor 将为其存储数据并返回给 Guest）的一系列操作。当通过 add_buf 在将向 hypervisor 的请求消息入队时，guest 可以使用 kick 函数将新请求通知给 hypervisor。为了获得最佳性能，Guest 应在通过 kick 通知之前将尽可能多的缓冲区放置到 virtqueue 上。</p>
+<p>来自 hypervisor 响应消息可以通过 get_buf 获得。Guest 可以简单地通过调用此函数进行轮询或通过 virtqueue 提供的 callback 函数异步的方式等待响应消息通知。当 Guest 得知缓冲区可用时，调用 get_buf 返回已完成的缓冲区。</p>
+<p>virtqueue API 中的最后两个函数是 enable_cb 和 disable_cb。您可以使用这些函数来启用和禁用 callback 处理（在 virtqueue 中通过 find_vq 函数初始化的 callback 函数）。请注意，callback 函数和 hypervisor 位于不同的地址空间中，因此是通过间接对 hypervisor 的调用进行的（例如 kvm_hypercall）。</p>
+<p>缓冲区的格式、顺序和内容仅对前端和后端驱动程序有意义。内部传输（当前是通过 ring 实现的）仅移动缓冲区并且不知道缓冲区的内部表示形式。</p>
+<h2 id="7-virtio-驱动示例">7. virtio 驱动示例</h2>
+<hr>
+<p>您可以在 Linux 内核的 ./drivers 子目录下找到各种前端驱动代码。virtio 网络驱动在可以在 ./driver/net/virtio_net.c 中找到，virtio 块驱动可以在 ./driver/block/virtio_blk.c 中找到。</p>
+<p>./driver/virtio 子目录下提供了 virtio 接口实现（virtio 设备、驱动程序、virtqueue 和 ring）。virtio 也被用在了高性能计算（HPC）研究之中，使用共享内存在虚拟机之间进行通信。具体来说，这是通过使用 virtio PCI 驱动程序的虚拟 PCI 接口实现的。</p>
+<p>您现在可以在 Linux 内核中使用这种半虚拟化基础设施。你所需要的就是一个用作 hypervisor 的内核，guest 内核和用来进行设备模拟的 QEMU。你可以使用 KVM（一个存在于宿主机内核中的模块）或者 Rusty Russell 的 lguest（一个修改过的 Linux 内核）。两种方案都支持 virtio（以及用于进行系统模拟的 QEMU 和 用于虚拟化管理的 libvirt）。</p>
+<p>Rusty 的工作成果是一个更简单的半虚拟化驱动程序代码库和更快的虚拟设备模拟，但更重要的是，人们发现 virtio 可以提供比当前商业解决方案更好的性能（网络 I/O 的 2-3 倍）。这种性能提升是有代价的，但如果使用 Linux 作为您的  hypervisor 和 guest，那将是非常值得的。</p>
+<h2 id="8-关于未来">8. 关于未来</h2>
+<hr>
+<p>尽管您可能永远不会为 virtio 开发前端或后端驱动，但 virtio 整个架构，值得更详细地了解。</p>
+<p>virtio 提高了半虚拟化 I/O 环境中的效率，virtio 是基于之前在 Xen 中的工作进行构建的。Linux 继续证明自己是新虚拟化技术的研究平台。virtio 是将 Linux 作为 hypervisor 比使用其他类型的 hypervisor 具有竞争力的另一个例子。</p>
+<h2 id="参考">参考</h2>
+<hr>
+<ul>
+<li><a href="https://developer.ibm.com/articles/l-virtio/">Virtio: An I/O virtualization framework for Linux</a></li>
+</ul>
+
+
+                
+                
+<div class="entry-shang text-center">
+    
+	    <p> 「如果这篇文章对你有用,请随意打赏」</p>
+	
+	<button class="zs show-zs btn btn-bred">赞赏支持</button>
+</div>
+<div class="zs-modal-bg"></div>
+<div class="zs-modal-box">
+	<div class="zs-modal-head">
+		<button type="button" class="close">×</button>
+		<span class="author"><a href="https://flowlet.net"><img src="/img/favicon.png" />ZhangShuai&#39;s Blog</a></span>
+        
+	        <p class="tip"><i></i><span>如果这篇文章对你有用,请随意打赏</span></p>
+		
+ 
+	</div>
+	<div class="zs-modal-body">
+		<div class="zs-modal-btns">
+			<button class="btn btn-blink" data-num="2">2元</button>
+			<button class="btn btn-blink" data-num="5">5元</button>
+			<button class="btn btn-blink" data-num="10">10元</button>
+			<button class="btn btn-blink" data-num="50">50元</button>
+			<button class="btn btn-blink" data-num="100">100元</button>
+			<button class="btn btn-blink" data-num="1">任意金额</button>
+		</div>
+		<div class="zs-modal-pay">
+			<button class="btn btn-bred" id="pay-text">2元</button>
+			<p>使用<span id="pay-type">微信</span>扫描二维码完成支付</p>
+			<img src="/img/reward/wechat-2.png"  id="pay-image"/>
+		</div>
+	</div>
+	<div class="zs-modal-footer">
+		<label><input type="radio" name="zs-type" value="wechat" class="zs-type" checked="checked"><span ><span class="zs-wechat"><img src="/img/reward/wechat-btn.png"/></span></label>
+		<label><input type="radio" name="zs-type" value="alipay" class="zs-type" class="zs-alipay"><img src="/img/reward/alipay-btn.png"/></span></label>
+	</div>
+</div>
+<script type="text/javascript" src="/js/reward.js"></script>
+
+                
+
+                
+                <hr>
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2023/03/17/virtualization-tech-and-iov/" data-toggle="tooltip" data-placement="top" title="I/O虚拟化 101：虚拟化技术概述 与 I/O 虚拟化（IOV）详解">&larr;
+                            Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2023/03/21/virtio-vhost-net/" data-toggle="tooltip" data-placement="top" title="I/O虚拟化 105：virtio 与 vhost-net 架构">Next
+                            Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+                
+
+                
+
+
+
+            </div>
+
+            
+            
+            <div class="
+                col-lg-2 col-lg-offset-0
+                visible-lg-block
+                sidebar-container
+                catalog-container">
+                <div class="side-catalog">
+                    <hr class="hidden-sm hidden-xs">
+                    <h5>
+                        <a class="catalog-toggle" href="#">CATALOG</a>
+                    </h5>
+                    <ul class="catalog-body"></ul>
+                </div>
+            </div>
+            
+
+            
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/ebtables" title="ebtables">
+                            ebtables
+                        </a>
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/iptables" title="iptables">
+                            iptables
+                        </a>
+                        
+                        
+                        
+                        <a href="/tags/netfilter" title="netfilter">
+                            netfilter
+                        </a>
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/virtio" title="virtio">
+                            virtio
+                        </a>
+                        
+                        
+                        
+                        
+                    </div>
+                </section>
+                
+
+                
+                
+                <section>
+                    <hr>
+                    <h5>FRIENDS</h5>
+                    <ul class="list-inline">
+                        
+                        <li><a target="_blank" href="https://www.zhaohuabing.com/">Huabing Blog</a></li>
+                        
+                    </ul>
+                </section>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">                  
+                    
+                    <li>
+                        <a href="mailto:1171570958@qq.com">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fas fa-envelope fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		           
+                    
+                    <li>
+                        <a href="https://twitter.com/ShuaiZhang_CN">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    
+                    
+
+		            
+                    
+                    <li>
+                        <a target="_blank" href="/img/wechat_qrcode.jpg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-weixin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		            
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/ZhangShuai-CN">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		            
+                    
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://www.linkedin.com/in/flowlet">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		           
+                    
+                    
+                    
+                    
+                    
+                    
+            
+            
+            
+           
+                   <li>
+                       <a href='' rel="alternate" type="application/rss+xml" title="ZhangShuai&#39;s Blog" >
+                           <span class="fa-stack fa-lg">
+                               <i class="fas fa-circle fa-stack-2x"></i>
+                               <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                           </span>
+                       </a>
+                   </li>
+            
+             </ul>
+		<p class="copyright text-muted">
+                    Copyright &copy; ZhangShuai&#39;s Blog 2023
+                    <br>
+                    <a href="https://themes.gohugo.io/hugo-theme-cleanwhite">CleanWhite Hugo Theme</a> by <a href="https://zhaohuabing.com">Huabing</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=zhaohuabing&repo=hugo-theme-cleanwhite&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+
+
+<script>
+    function loadAsync(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+
+
+
+
+<script>
+    
+    if($('#tag_cloud').length !== 0){
+        loadAsync("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+
+<script>
+    loadAsync("https://cdn.jsdelivr.net/npm/fastclick@1.0.6/lib/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+
+
+
+
+<script type="text/javascript">
+    function generateCatalog(selector) {
+
+        
+        
+        
+        
+            _containerSelector = 'div.post-container'
+        
+
+        
+        var P = $(_containerSelector), a, n, t, l, i, c;
+        a = P.find('h1,h2,h3,h4,h5,h6');
+
+        
+        $(selector).html('')
+
+        
+        a.each(function () {
+            n = $(this).prop('tagName').toLowerCase();
+            i = "#" + $(this).prop('id');
+            t = $(this).text();
+            c = $('<a href="' + i + '" rel="nofollow">' + t + '</a>');
+            l = $('<li class="' + n + '_nav"></li>').append(c);
+            $(selector).append(l);
+        });
+        return true;
+    }
+
+    generateCatalog(".catalog-body");
+
+    
+    $(".catalog-toggle").click((function (e) {
+        e.preventDefault();
+        $('.side-catalog').toggleClass("fold")
+    }))
+
+    
+
+
+    loadAsync("\/js\/jquery.nav.js", function () {
+        $('.catalog-body').onePageNav({
+            currentClass: "active",
+            changeHash: !1,
+            easing: "swing",
+            filter: "",
+            scrollSpeed: 700,
+            scrollOffset: 0,
+            scrollThreshold: .2,
+            begin: null,
+            end: null,
+            scrollChange: null,
+            padding: 80
+        });
+    });
+</script>
+
+
+
+
+
+
+</body>
+</html>

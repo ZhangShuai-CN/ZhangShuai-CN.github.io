@@ -20,5 +20,14 @@
       <description>关于作者 张帅，网络从业人员，公众号：Flowlet 个人博客：https://flowlet.net/ 云数据中心正在经历巨大的变革，虚拟化在经</description>
     </item>
     
+    <item>
+      <title>I/O虚拟化 102：Virtio - 一种 Linux I/O 半虚拟化框架 [译]</title>
+      <link>https://flowlet.net/2023/03/18/virtio/</link>
+      <pubDate>Sat, 18 Mar 2023 01:01:01 +0000</pubDate>
+      
+      <guid>https://flowlet.net/2023/03/18/virtio/</guid>
+      <description>关于作者 张帅，网络从业人员，公众号：Flowlet 个人博客：https://flowlet.net/ 序言 本文翻译自文章 Virtio: An I/O virtualization framework for Linux</description>
+    </item>
+    
   </channel>
 </rss>
