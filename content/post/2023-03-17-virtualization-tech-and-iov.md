@@ -243,3 +243,10 @@ SR-IOV 全称 Single Root I/O Virtualization。在SR-IOV中，定义了两个功
 * [VMware，Redhat，Citrix和Microsoft 4种主要的网络IO虚拟化模型](https://www.dell.com/community/%E7%BB%BC%E5%90%88%E8%AE%A8%E8%AE%BA%E5%8C%BA/%E5%88%86%E4%BA%AB-VMware-Redhat-Citrix%E5%92%8CMicrosoft-4%E7%A7%8D%E4%B8%BB%E8%A6%81%E7%9A%84%E7%BD%91%E7%BB%9CIO%E8%99%9A%E6%8B%9F%E5%8C%96%E6%A8%A1%E5%9E%8B/td-p/6930736)
 * [CNTT Relevant Technologies](https://cntt-test.readthedocs.io/en/anuket-docs-all-sphinx-interlink/common/technologies.html)
 * [NFV关键技术：计算虚拟化之IO虚拟化](https://www.51cto.com/article/696128.html)
+
+## 公众号：Flowlet
+- - -
+
+<img src="/img/qrcode_flowlet.jpg" width = 30% height = 30% alt="Flowlet" align=center/>
+
+- - -

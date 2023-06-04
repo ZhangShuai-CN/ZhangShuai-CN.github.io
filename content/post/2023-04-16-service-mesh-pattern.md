@@ -52,3 +52,10 @@ URL: "/2023/04/16/service-mesh-pattern/"
 ## 参考
 - - -
 * [Pattern: Service Mesh](https://philcalcado.com/2017/08/03/pattern_service_mesh.html)
+
+## 公众号：Flowlet
+- - -
+
+<img src="/img/qrcode_flowlet.jpg" width = 30% height = 30% alt="Flowlet" align=center/>
+
+- - -

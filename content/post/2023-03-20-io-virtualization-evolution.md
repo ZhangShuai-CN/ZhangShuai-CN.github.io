@@ -55,3 +55,10 @@ I/O 虚拟化技术的变革必将带来网络架构与存储架构的变革，�
 - - -
 * [浅谈Linux设备虚拟化技术的演进之路](https://www.modb.pro/db/110904)
 * [Virtio_user for Container Networking](https://doc.dpdk.org/guides/howto/virtio_user_for_container_networking.html)
+
+## 公众号：Flowlet
+- - -
+
+<img src="/img/qrcode_flowlet.jpg" width = 30% height = 30% alt="Flowlet" align=center/>
+
+- - -

@@ -721,3 +721,10 @@ rtt min/avg/max/mdev = 9.371/9.482/9.594/0.111 ms
 - - -
 * 本文理论部分参考自 Redhat 社区关于 [Learn about virtio-networking](https://www.redhat.com/en/blog/learn-about-virtio-networking) 系列文章。如需了解更多，推荐阅读[原文](https://www.redhat.com/en/blog/learn-about-virtio-networking)。
 * 本文第三节部分，为笔者基于自己的 PC 所搭建的实验环境。
+
+## 公众号：Flowlet
+- - -
+
+<img src="/img/qrcode_flowlet.jpg" width = 30% height = 30% alt="Flowlet" align=center/>
+
+- - -

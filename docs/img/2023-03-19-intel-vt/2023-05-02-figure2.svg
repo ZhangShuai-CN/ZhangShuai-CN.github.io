@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="229.6875px" preserveAspectRatio="none" style="width:570px;height:229px;" version="1.1" viewBox="0 0 570 229" width="570.3125px" zoomAndPan="magnify"><defs><filter height="300%" id="fbc5flnfumoeq" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="3.125"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="6.25" dy="6.25" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--cluster CPU--><rect fill="#FFFFFF" filter="url(#fbc5flnfumoeq)" height="187.5" style="stroke: #000000; stroke-width: 1.5625;" width="118.75" x="205.4688" y="25"/><text fill="#000000" font-family="sans-serif" font-size="18.75" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="43.75" x="210.1563" y="45.5292">CPU</text><!--cluster RAM--><rect fill="#FFFFFF" filter="url(#fbc5flnfumoeq)" height="187.5" style="stroke: #000000; stroke-width: 1.5625;" width="200" x="353.9063" y="25"/><text fill="#000000" font-family="sans-serif" font-size="18.75" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="46.875" x="358.5938" y="45.5292">RAM</text><!--entity Ring0--><rect fill="#FEFECE" filter="url(#fbc5flnfumoeq)" height="53.0762" style="stroke: #000000; stroke-width: 1.5625;" width="92.1875" x="218.75" y="146.875"/><text fill="#000000" font-family="sans-serif" font-size="18.75" lengthAdjust="spacingAndGlyphs" textLength="60.9375" x="234.375" y="179.9042">Ring 0</text><!--entity Ring3--><rect fill="#FEFECE" filter="url(#fbc5flnfumoeq)" height="53.0762" style="stroke: #000000; stroke-width: 1.5625;" width="92.1875" x="218.75" y="62.5"/><text fill="#000000" font-family="sans-serif" font-size="18.75" lengthAdjust="spacingAndGlyphs" textLength="60.9375" x="234.375" y="95.5292">Ring 3</text><!--entity RealMem--><rect fill="#FEFECE" filter="url(#fbc5flnfumoeq)" height="53.0762" style="stroke: #000000; stroke-width: 1.5625;" width="154.6875" x="371.875" y="146.875"/><text fill="#000000" font-family="sans-serif" font-size="18.75" lengthAdjust="spacingAndGlyphs" textLength="123.4375" x="387.5" y="179.9042">Real Memory</text><!--entity VirtMem--><rect fill="#FEFECE" filter="url(#fbc5flnfumoeq)" height="53.0762" style="stroke: #000000; stroke-width: 1.5625;" width="175" x="366.4063" y="62.5"/><text fill="#000000" font-family="sans-serif" font-size="18.75" lengthAdjust="spacingAndGlyphs" textLength="143.75" x="382.0313" y="95.5292">Virtual Memory</text><!--entity IO--><rect fill="#FEFECE" filter="url(#fbc5flnfumoeq)" height="53.0762" style="stroke: #000000; stroke-width: 1.5625;" width="154.6875" x="9.375" y="146.875"/><text fill="#000000" font-family="sans-serif" font-size="18.75" lengthAdjust="spacingAndGlyphs" textLength="123.4375" x="25" y="179.9042">Input/Output</text><!--link IO to Ring0--><path d="M164.3288,165.625 C164.3288,165.625 210.9316,165.625 210.9316,165.625 " fill="none" id="IO-Ring0" style="stroke: #A80036; stroke-width: 1.09375;"/><polygon fill="#A80036" points="218.7441,165.625,204.6816,159.375,210.9316,165.625,204.6816,171.875,218.7441,165.625" style="stroke: #A80036; stroke-width: 1.09375;"/><!--link IO to Ring0--><path d="M172.1413,182.8125 C172.1413,182.8125 218.7441,182.8125 218.7441,182.8125 " fill="none" id="IO-Ring0" style="stroke: #A80036; stroke-width: 1.09375;"/><polygon fill="#A80036" points="164.3288,182.8125,178.3913,189.0625,172.1413,182.8125,178.3913,176.5625,164.3288,182.8125" style="stroke: #A80036; stroke-width: 1.09375;"/><!--link Ring3 to Ring0--><path d="M264.8438,123.5717 C264.8438,123.5717 264.8438,146.6248 264.8438,146.6248 " fill="none" id="Ring3-Ring0" style="stroke: #A80036; stroke-width: 1.09375;"/><polygon fill="#A80036" points="264.8438,115.7592,258.5938,129.8217,264.8438,123.5717,271.0938,129.8217,264.8438,115.7592" style="stroke: #A80036; stroke-width: 1.09375;"/><!--link Ring0 to RealMem--><path d="M311.3694,173.4375 C311.3694,173.4375 364.0494,173.4375 364.0494,173.4375 " fill="none" id="Ring0-RealMem" style="stroke: #A80036; stroke-width: 1.09375;"/><polygon fill="#A80036" points="371.8619,173.4375,357.7994,167.1875,364.0494,173.4375,357.7994,179.6875,371.8619,173.4375" style="stroke: #A80036; stroke-width: 1.09375;"/><!--link VirtMem to RealMem--><path d="M449.2188,123.5717 C449.2188,123.5717 449.2188,146.6248 449.2188,146.6248 " fill="none" id="VirtMem-RealMem" style="stroke: #A80036; stroke-width: 1.09375;"/><polygon fill="#A80036" points="449.2188,115.7592,442.9688,129.8217,449.2188,123.5717,455.4688,129.8217,449.2188,115.7592" style="stroke: #A80036; stroke-width: 1.09375;"/><!--link Ring3 to VirtMem--><path d="M311.0936,89.0625 C311.0936,89.0625 358.213,89.0625 358.213,89.0625 " fill="none" id="Ring3-VirtMem" style="stroke: #A80036; stroke-width: 1.09375;"/><polygon fill="#A80036" points="366.0255,89.0625,351.963,82.8125,358.213,89.0625,351.963,95.3125,366.0255,89.0625" style="stroke: #A80036; stroke-width: 1.09375;"/><!--
+@startuml
+
+skinparam ranksep 20
+skinparam dpi 150
+skinparam arrowThickness 0.7
+skinparam packageTitleAlignment left
+skinparam usecaseBorderThickness 0.4
+skinparam defaultFontSize 12
+skinparam rectangleBorderThickness 1
+skinparam componentBorderThickness 0
+skinparam agentBorderThickness 0
+skinparam linetype ortho
+skinparam componentStyle uml2
+
+
+rectangle "Input/Output" as IO
+
+rectangle "CPU" {
+	rectangle "Ring 0" as Ring0
+	rectangle "Ring 3" as Ring3
+}
+
+rectangle "RAM" {
+	rectangle "Real Memory" as RealMem
+	rectangle "Virtual Memory" as VirtMem
+}
+
+IO -r-> Ring0
+Ring0 -l-> IO
+
+Ring0 -u-> Ring3
+
+Ring0 -r-> RealMem
+RealMem -u-> VirtMem
+Ring3 -r-> VirtMem
+
+@enduml
+
+PlantUML version 1.2019.02beta10(Unknown compile time)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Java Version: 11.0.7+10-post-Debian-3deb10u1
+Operating System: Linux
+OS Version: 4.19.0-8-amd64
+Default Encoding: UTF-8
+Language: en
+Country: AU
+--></g></svg>

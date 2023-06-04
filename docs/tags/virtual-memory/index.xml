@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>virtual memory on ZhangShuai&#39;s Blog</title>
+    <link>https://flowlet.net/tags/virtual-memory/</link>
+    <description>Recent content in virtual memory on ZhangShuai&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 07 May 2023 01:01:01 +0000</lastBuildDate>
+    
+	<atom:link href="https://flowlet.net/tags/virtual-memory/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>计算机系统 Lecture 1：虚拟内存</title>
+      <link>https://flowlet.net/2023/05/07/cs-virtual-memory/</link>
+      <pubDate>Sun, 07 May 2023 01:01:01 +0000</pubDate>
+      
+      <guid>https://flowlet.net/2023/05/07/cs-virtual-memory/</guid>
+      <description>关于作者 张帅，网络从业人员，公众号：Flowlet 个人博客：https://flowlet.net/ 序言 本文主要讲解计算机系统：虚拟内存部分</description>
+    </item>
+    
+  </channel>
+</rss>

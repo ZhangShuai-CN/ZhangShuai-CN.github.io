@@ -9,6 +9,7 @@ preserveTaxonomyNames = true
 paginate = 5 #frontpage pagination
 hasCJKLanguage = true
 publishDir = "docs"
+buildFuture = true
 
 [outputs]
 home = ["HTML", "RSS", "Algolia"]
@@ -129,8 +130,12 @@ vars = ["title", "summary", "date", "publishdate", "expirydate", "permalink"]
 params = ["categories", "tags"] 
 
 [markup]
+  defaultMarkdownHandler = "goldmark"
   [markup.tableOfContents]
     endLevel = 2
     startLevel = 1
   [markup.highlight]
     style = "dracula"
+  [markup.glodmark]
+    [markup.goldmark.renderer]
+      unsafe = true

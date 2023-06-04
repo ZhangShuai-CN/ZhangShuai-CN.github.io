@@ -92,3 +92,10 @@ http://www.example.com
 - - -
 * [Reference 1](https://)
 * [Reference 2](https://)
+
+## 公众号：Flowlet
+- - -
+
+<img src="/img/qrcode_flowlet.jpg" width = 30% height = 30% alt="Flowlet" align=center/>
+
+- - -

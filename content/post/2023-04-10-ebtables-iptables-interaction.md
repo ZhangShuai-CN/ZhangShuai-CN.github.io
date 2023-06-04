@@ -298,3 +298,10 @@ Jan Engelhardt 基于 Joshua 的流程图制作了一张更新的[转发流程�
 ## 参考
 - - -
 * [ebtables/iptables interaction on a Linux-based bridge](https://ebtables.netfilter.org/br_fw_ia/br_fw_ia.html)
+
+## 公众号：Flowlet
+- - -
+
+<img src="/img/qrcode_flowlet.jpg" width = 30% height = 30% alt="Flowlet" align=center/>
+
+- - -
