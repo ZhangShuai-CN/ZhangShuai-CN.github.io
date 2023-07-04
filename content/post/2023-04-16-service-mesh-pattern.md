@@ -1,7 +1,7 @@
 ---
 layout:     post
-title:      "微服务时代的 TCP/IP 协议：Service Mesh"
-subtitle:   "下一代微服务：Service Mesh"
+title:      "微服务时代的 TCP/IP：Service Mesh 的演进之路"
+subtitle:   "下一代微服务：Service Mesh 的演进之路"
 description: ""
 excerpt: ""
 date:       2023-04-16 01:01:01
@@ -143,7 +143,92 @@ URL: "/2023/04/16/service-mesh-pattern/"
 ## 8. Service Mesh 的未来
 - - -
 
-![]()
+对于 ServiceMesh 而言，目前最流行框架是 Istio，而它的数据面是 Envoy（使用 c++ 14 开发）。
+
+基于 Istio 的 Service Mesh 架构在互联网公司进行大规模线上部署的时候逐渐遇到以下问题：
+
+- Envoy（基于 c++ 开发） 上手难度大、维护成本高；
+- SideCar 带来的额外资源开销以及 Proxy 模式带来的延迟增加；
+- 全量配置下发带来内存消耗过大、配置文件过多难以查看运维；
+- 微服务之间的通过 Http 或者其他不安全的协议进行通信，东西向流量难以防护；
+- 线上为了保证系统的可用性，通常部署多集群多活，开源的 ServiceMesh 方案只注重单集群内的治理，对多集群多活场景没有直接给出完善的解决方案；
+
+下面我们就从以上痛点出发，浅析一下 Service Mesh 的未来演进的几个方向。
+
+### 8.1 数据面替换与插件模式
+- - -
+
+对于 ServiceMesh 而言，目前最流行框架是 Istio，而它的数据面是 Envoy（使用 c++ 14 开发）。Envoy 入门门槛比较高，直接改动或者进行二次开发难度很大。除此之外，很多公司更希望建立自己的生态系统，所以市面上就有很多数据面产品产生，主要分为下面两类：
+
+* 网关类作代理的玩法，例如 apisix，他们推出了apiseven 来专门搞这件事情。
+* 直接自研产品进行替代的玩法，以mson为代表，整个使用go进行开发的数据面，已经纳入cncf社区，不过还没有从里面毕业。
+
+
+### 8.2 插件模式研究
+- - -
+
+目前社区的wasm方式不够成熟，支持内容偏少，加上大家对服务网格的需求很多，社区的研发进度满足不了很多人的需求，大家就希望一个成熟的插件模式能够出来。
+
+当前阶段，插件模式的玩法主要有下面几种:
+
+1）基于native c++自研，这一类对研发人员要求过高，不过结合是最好的。
+
+2）脚本方式实现，以lua,nodejs为代表的。
+
+3）cgo方式实现filter插件，以蚂蚁为代表。
+
+4）基于envoyfilter进行协议对接，通过外围产品来辅助完成。
+
+### 8.3 插件模式研究
+- - -
+
+3.性能问题的演进
+
+对于服务网格来说，低延迟的快速转发一直是个强需求，而大家又想在这个基础上尽量少的使用cpu等资源。目前istio这一类网格产品表现则是差强人意，所以这方面的研究一直从未间断，当前市面上的玩法集中在下面两点:
+
+1）iptables的替换策略，主要以ebpf
+
+为代表，当然也有ipc通讯的方式，这种其实破坏了sdk和数据面之间的耦合性。
+
+2）架构的调整，把数据面下沉到宿主机这个层面，有点类似把数据面往网卡这种设备去抽象的意思，这也是社区的最新研发方向。
+
+对于这种玩法来说，笔者觉得是需要对当前数据面做切割的，要把通用的能力提取出来，来玩，其他功能往上浮才行。
+
+4.xds按需下发
+
+
+xDS 协议是 “X Discovery Service” 的简写，这里的 “X” 表示它不是指具体的某个协议，是一组基于不同数据源的服务发现协议的总称，包括 CDS、LDS、EDS、RDS 和 SDS 等。客户端可以通过多种方式获取数据资源，比如监听指定文件、订阅 gRPC stream 以及轮询相应的 REST API 等。
+
+在 Istio 架构中，基于 xDS 协议提供了标准的控制面规范，并以此向数据面传递服务信息和治理规则。在 Envoy 中，xDS 被称为数据平面 API，并且担任控制平面 Pilot 和数据平面 Envoy 的通信协议，同时这些 API 在特定场景里也可以被其他代理所使用。目前 xDS 主要有两个版本 v2 和 v3，其中 v2 版本将于 2020 年底停止使用。
+
+注：对于通用数据平面标准 API 的工作将由 CNCF 下设的 UDPA 工作组开展，后面一节会专门介绍。
+
+
+
+当前社区xds的下发方式采用的都是全量下发的模式，这种模式通常会带来下面几个问题:
+
+问题一:
+
+每个运行态的sidecar上面的xds数据超大，而这些数据对当前pod来说绝大部分都是脏数据，这一来会影响envoy处理流量的耗时，二来也会消耗envoy很大的内存。
+
+问题二:
+
+这种超大的xds配置对于istiod更新xds有很大的冲击，特别是pod数量成千上万的时候，这种数据更新就会变得很不及时，而这种不及时会导致这段时间内的流量有可能会出错。
+
+问题三:
+很难排障，一个大几十万的配置文件，是很难发现问题的，只有研发一些工具才能解决，这又是一笔额外开销。
+
+目前市面上的解决办法主要是两种，一种是社区增量xds的演进，据说2022年是重点，我们可以期待下。另外一种，是自己实现一些配套产品对xds进行裁剪，像蚂蚁才用了单独一个进程的方式与envoy进行通讯来解决这个问题。
+
+5.安全和零信任网络
+
+目前这是一个大趋势，社区和市面上已经有很多人在搞了，这个对于服务网格来说是一个天然优势，只要接入了服务网格，整个零信任网络就可以在业务无感知的情况下玩起来。
+
+6.虚拟机调度和跨集群访问
+
+对于企业来说，规模越大，虚拟机使用的越多，如果他们想推服务网格的话，虚拟机纳入管控中是必须要做的事情，像百度，阿里，腾讯这些大厂在玩服务网格的时候，都做了虚拟机这部分的单独开发。
+
+除了虚拟机之外跨集群业务调度也是不得不解决的问题，因为规模的原因，很多业务线是物理隔离的，集群也是分离的，这样就需要有办法把他们统一管控起来。在网格中，这部分是通过serviceentry和ingress/egress配合来搞的。
 
 
 
@@ -158,6 +243,15 @@ URL: "/2023/04/16/service-mesh-pattern/"
 * [microservices](https://aws.amazon.com/cn/microservices/)
 * [微服务时代](http://icyfenix.cn/architecture/architect-history/microservices.html)
 * [ServiceMesh PPT](https://hanamichi.wiki/posts/service-mesh2/)
+* [eBPF and Wasm: Exploring the Future of the Service Mesh Data Plane](https://www.infoq.com/news/2022/01/ebpf-wasm-service-mesh/)
+* [eBPF 和 Wasm：探索服务网格数据平面的未来](https://mp.weixin.qq.com/s/AeKaWy6ZHUiT3t_0AmKkHA)
+* [How eBPF will solve Service Mesh – Goodbye Sidecars](https://isovalent.com/blog/post/2021-12-08-ebpf-servicemesh/)
+* [告别 Sidecar——使用 eBPF 解锁内核级服务网格](https://cloudnative.to/blog/ebpf-solve-service-mesh-sidecar/)
+* [Proxyless Service Mesh在百度的实践与思考 ](https://www.sohu.com/a/507156089_355140)
+* [阿里巴巴 Service Mesh 落地的架构与挑战](https://zhuanlan.zhihu.com/p/465388624?utm_id=0)
+* [目前社区关于ServiceMesh的主要方向](https://blog.csdn.net/zhghost/article/details/127099560)
+* [百度在 Service Mesh 上的大规模落地实践](https://zhuanlan.zhihu.com/p/547654142)
+* [xDS](https://www.wenjiangs.com/doc/xaweiqwblc)
 
 ## 公众号：Flowlet
 - - -
