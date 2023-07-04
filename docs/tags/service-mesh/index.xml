@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>service mesh on ZhangShuai&#39;s Blog</title>
+    <link>https://flowlet.net/tags/service-mesh/</link>
+    <description>Recent content in service mesh on ZhangShuai&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 16 Apr 2023 01:01:01 +0000</lastBuildDate>
+    
+	<atom:link href="https://flowlet.net/tags/service-mesh/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>微服务时代的 TCP/IP：Service Mesh 的演进之路</title>
+      <link>https://flowlet.net/2023/04/16/service-mesh-pattern/</link>
+      <pubDate>Sun, 16 Apr 2023 01:01:01 +0000</pubDate>
+      
+      <guid>https://flowlet.net/2023/04/16/service-mesh-pattern/</guid>
+      <description>关于作者 张帅，网络从业人员，公众号：Flowlet 个人博客：https://flowlet.net/ 前言 2018 年 9 月 1 日，Bilgin Ibryam 在 InfoQ 发表</description>
+    </item>
+    
+  </channel>
+</rss>

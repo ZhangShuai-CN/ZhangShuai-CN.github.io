@@ -367,7 +367,7 @@
 
 </p>
 <p>被 bridge 的数据包永远不会进入链路层以上的任何网络代码。 所以，一个被 bridge 的 IP 数据包永远不会进入 IP 代码中。如上图所示，当 IP 数据包在 bridge 代码中时，将遍历所有的 iptables 链。</p>
-<h2 id="6-被-bridge-的-ip-数据包的链遍历过程">6. 被 bridge 的 IP 数据包的链遍历过程</h2>
+<h2 id="6-在-iptables-规则中使用-bridge-端口">6. 在 iptables 规则中使用 bridge 端口</h2>
 <hr>
 <p>如果能够在 iptables 中基于网桥的物理端口配置 iptables 规则这对防止欺骗攻击将会很有帮助。</p>
 <p>假设 br0 有 2 个物理端口 eth0 和 eth1。如果 iptables 只能基于 br0 配置规则，那么除了查看报文的源 MAC 地址之外，无法知道 eth0 端所连的设备何时将其源 IP 地址更改为 eth1 端所连设备的源 IP 地址。</p>
@@ -541,7 +541,7 @@ iptables -m physdev --physdev-out &lt;bridge-port&gt;
                     
                     
                     <li class="next">
-                        <a href="/2023/05/07/cs-virtual-memory/" data-toggle="tooltip" data-placement="top" title="计算机系统 Lecture 1：虚拟内存">Next
+                        <a href="/2023/04/16/service-mesh-pattern/" data-toggle="tooltip" data-placement="top" title="微服务时代的 TCP/IP：Service Mesh 的演进之路">Next
                             Post &rarr;</a>
                     </li>
                     
@@ -605,6 +605,8 @@ iptables -m physdev --physdev-out &lt;bridge-port&gt;
                         <a href="/tags/netfilter" title="netfilter">
                             netfilter
                         </a>
+                        
+                        
                         
                         
                         

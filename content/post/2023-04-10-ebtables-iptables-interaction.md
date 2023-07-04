@@ -173,7 +173,7 @@ BROUTING 链中的默认策略是网桥转发。
 
 被 bridge 的数据包永远不会进入链路层以上的任何网络代码。 所以，一个被 bridge 的 IP 数据包永远不会进入 IP 代码中。如上图所示，当 IP 数据包在 bridge 代码中时，将遍历所有的 iptables 链。
 
-## 6. 被 bridge 的 IP 数据包的链遍历过程
+## 6. 在 iptables 规则中使用 bridge 端口
 - - -
 
 如果能够在 iptables 中基于网桥的物理端口配置 iptables 规则这对防止欺骗攻击将会很有帮助。

@@ -21,6 +21,15 @@
     </item>
     
     <item>
+      <title>微服务时代的 TCP/IP：Service Mesh 的演进之路</title>
+      <link>https://flowlet.net/2023/04/16/service-mesh-pattern/</link>
+      <pubDate>Sun, 16 Apr 2023 01:01:01 +0000</pubDate>
+      
+      <guid>https://flowlet.net/2023/04/16/service-mesh-pattern/</guid>
+      <description>关于作者 张帅，网络从业人员，公众号：Flowlet 个人博客：https://flowlet.net/ 前言 2018 年 9 月 1 日，Bilgin Ibryam 在 InfoQ 发表</description>
+    </item>
+    
+    <item>
       <title>Netfilter 102：在 Linux bridge 上 ebtables 与 iptables 如何进行交互 [译]</title>
       <link>https://flowlet.net/2023/04/10/ebtables-iptables-interaction/</link>
       <pubDate>Mon, 10 Apr 2023 11:23:01 +0000</pubDate>
