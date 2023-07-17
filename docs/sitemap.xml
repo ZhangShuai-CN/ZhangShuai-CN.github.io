@@ -93,6 +93,11 @@
   </url>
   
   <url>
+    <loc>https://flowlet.net/2023/03/19/intel-vt/</loc>
+    <lastmod>2023-03-19T01:01:01+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://flowlet.net/2023/03/18/virtio/</loc>
     <lastmod>2023-03-18T01:01:01+00:00</lastmod>
   </url>
@@ -124,11 +129,19 @@
   </url>
   
   <url>
+    <loc>https://flowlet.net/tags/intel-ept/amd-rvi/</loc>
+  </url>
+  
+  <url>
     <loc>https://flowlet.net/archive/</loc>
   </url>
   
   <url>
     <loc>https://flowlet.net/search/</loc>
+  </url>
+  
+  <url>
+    <loc>https://flowlet.net/tags/vt-x/vt-i/</loc>
   </url>
   
 </urlset>

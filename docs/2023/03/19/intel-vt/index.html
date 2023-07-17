@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    
+    <meta property="og:site_name" content="ZhangShuai&#39;s Blog">
+    <meta property="og:type" content="article">
+
+    
+    <meta property="og:image" content="/img/2023-03-19-intel-vt/background.jpg">
+    <meta property="twitter:image" content="/img/2023-03-19-intel-vt/background.jpg" />
+    
+
+    
+    <meta name="title" content="Intel 虚拟化技术（Intel® VT）：CPU 虚拟化与内存虚拟化" />
+    <meta property="og:title" content="Intel 虚拟化技术（Intel® VT）：CPU 虚拟化与内存虚拟化" />
+    <meta property="twitter:title" content="Intel 虚拟化技术（Intel® VT）：CPU 虚拟化与内存虚拟化" />
+    
+
+    
+    <meta name="description" content="A Deep Dive into Intel® Virtualization Technology: VT-x/VT-i, Intel EPT/AMD RVI.">
+    <meta property="og:description" content="A Deep Dive into Intel® Virtualization Technology: VT-x/VT-i, Intel EPT/AMD RVI." />
+    <meta property="twitter:description" content="A Deep Dive into Intel® Virtualization Technology: VT-x/VT-i, Intel EPT/AMD RVI." />
+    
+
+    
+    <meta property="twitter:card" content="summary" />
+    
+    
+
+    <meta name="keyword"  content="张帅, zhangshuai, ZhangShuai, , 张帅的网络日志, 张帅的博客, ZhangShuai&#39;s Blog, 博客, 个人网站, 互联网, Web, 云原生, PaaS, Iaas, Kubernetes">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>Intel 虚拟化技术（Intel® VT）：CPU 虚拟化与内存虚拟化 | 张帅的博客 | ZhangShuai&#39;s Blog</title>
+
+    <link rel="canonical" href="/2023/03/19/intel-vt/">
+
+    
+    
+    
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    
+    <link rel="stylesheet" href="/css/hugo-theme-cleanwhite.min.css">
+
+    
+    <link rel="stylesheet" href="/css/zanshang.css">
+
+    
+    <link href="https://cdn.jsdelivr.net/gh/FortAwesome/Font-Awesome@5.15.1/css/all.css" rel="stylesheet" type="text/css">
+
+    
+    
+
+    
+    <script src="/js/jquery.min.js"></script>
+
+    
+    <script src="/js/bootstrap.min.js"></script>
+
+    
+    <script src="/js/hux-blog.min.js"></script>
+
+    
+    <script src="/js/lazysizes.min.js"></script>
+
+    
+    
+
+</head>
+
+
+
+
+
+
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+
+    <div class="container-fluid">
+        
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">ZhangShuai&#39;s Blog</a>
+        </div>
+
+        
+        
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">All Posts</a>
+                    </li>
+                    
+                        
+                        <li>
+                            <a href="/categories/tech/">tech</a>
+                        </li>
+                        
+                    
+                    
+		    
+                        <li><a href="/archive//">ARCHIVE</a></li>
+                    
+                        <li><a href="/notes//">NOTES</a></li>
+                    
+                        <li><a href="/about//">ABOUT</a></li>
+                    
+		            <li>
+                        <a href="/search"><i class="fa fa-search"></i></a>
+		           </li>
+                </ul>
+            </div>
+        </div>
+        
+    </div>
+    
+</nav>
+<script>
+    
+    
+    
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        
+            $navbar.className = " ";
+            
+            setTimeout(function(){
+                
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+
+
+<style type="text/css">
+    header.intro-header {
+        background-image: url('/img/2023-03-19-intel-vt/background.jpg')
+    }
+</style>
+
+<header class="intro-header" >
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/vt-x/vt-i" title="VT-x/VT-i">
+                            VT-x/VT-i
+                        </a>
+                        
+                        <a class="tag" href="/tags/intel-ept/amd-rvi" title="Intel EPT/AMD RVI">
+                            Intel EPT/AMD RVI
+                        </a>
+                        
+                    </div>
+                    <h1>Intel 虚拟化技术（Intel® VT）：CPU 虚拟化与内存虚拟化</h1>
+                    <h2 class="subheading">VT-x/VT-i、Intel EPT/AMD RVI 技术概述</h2>
+                    <span class="meta">
+                        
+                            Posted by 
+                            
+                                张帅
+                             
+                            on 
+                            Sunday, March 19, 2023
+                            
+                            
+                            
+                            
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+
+
+<article>
+    <div class="container">
+        <div class="row">
+
+            
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                
+                <hr>
+<h6 id="关于作者">关于作者</h6>
+<blockquote>
+<p><strong><code>张帅，网络从业人员，公众号：Flowlet</code></strong></p>
+<p><strong><code>个人博客：https://flowlet.net/</code></strong></p>
+</blockquote>
+<hr>
+<h2 id="序言">序言</h2>
+<hr>
+<p>虚拟化技术允许多个工作负载共享一组公共的硬件资源。Intel® VT 就是 Intel 平台上虚拟化技术（Virtualization Technology）的总称，广义的 Intel® VT 技术主要包括：</p>
+<ul>
+<li><strong>CPU 虚拟化技术（VT-x/VT-i）</strong></li>
+<li><strong>内存虚拟化技术（EPT）</strong></li>
+<li><strong>I/O 虚拟化技术（VT-d/IOMMU、VMDQ、SR-IOV/MR-IOV、DDIO）</strong></li>
+<li><strong>网络与安全功能虚拟化（DPDK、QAT）</strong></li>
+<li><strong>图形虚拟化（GVT）</strong></li>
+</ul>
+<p>本文主要讲解 Intel CPU、内存相关的虚拟化技术。</p>
+<h2 id="前言">前言</h2>
+<hr>
+<p>由于作者水平有限，本文不免存在遗漏或错误之处，欢迎指正交流。</p>
+<h2 id="1-intel-vt-虚拟化技术概述">1. Intel® VT 虚拟化技术概述</h2>
+<hr>
+<p>
+  <img src="/img/2023-03-19-intel-vt/2023-05-01-figure.png" alt="">
+
+</p>
+<p>狭义的 Intel® VT 主要提供分别针对处理器、芯片组、网络的虚拟化技术。</p>
+<ul>
+<li><strong>处理器虚拟化技术（Intel VT-x）</strong>：包括虚拟化灵活迁移技术（Intel VT FlexMigration）、中断加速技术（Intel VT FlexPriority）、内存虚拟化技术（Intel EPT）</li>
+<li><strong>芯片组虚拟化技术（Intel VT-d）</strong>：直接 I/O 访问技术</li>
+<li><strong>I/O 虚拟化技术（Intel VT-c）</strong>：包括虚拟机设备队列技术（VMDq）、虚拟机直接互连技术（VMDc）、网卡直通技术（SR-IOV/MR-IOV）、数据直接 I/O 技术（DDIO）</li>
+</ul>
+<h2 id="2-cpu-虚拟化">2. CPU 虚拟化</h2>
+<hr>
+<p>目前主要的 CPU 虚拟化技术是 Intel 的 VT-x/VT-i 和 AMD 的 AMD-V 这两种技术。</p>
+<p>Intel CPU 虚拟化技术主要有 2 类：</p>
+<ul>
+<li><strong>VT-x</strong>：用于 X86 架构的的 CPU 虚拟化技术（Intel Virtualization Technologyfor x86），主要是 IA-32 和 Intel 64 系列处理器。</li>
+<li><strong>VT-i</strong>：用于安腾（Itanium）架构处理器的 CPU 虚拟化技术（Intel Virtualization Technology for ltanium），主要是 Itanium 系列处理器。</li>
+</ul>
+<h3 id="21-服务器虚拟化平台">2.1 服务器虚拟化平台</h3>
+<hr>
+<p>
+  <img src="/img/2023-03-19-intel-vt/2023-06-07-components-of-virtualized-architecture.png" alt="">
+
+</p>
+<p>一个完整的服务器虚拟化平台从下到上包括以下几个部分：</p>
+<ul>
+<li><strong>底层物理资源</strong>：包括网卡、CPU、内存、存储设备等硬件资源，一般将包含物理资源的物理机称为宿主机（Host）。</li>
+<li><strong>虚拟机监控器（Virtual Machine Monitor，VMM）</strong>：VMM是位于虚拟机与底层硬件设备之间的虚拟层，直接运行于硬件设备之上，负责对硬件资源进行抽象，为上层虚拟机提供运行环境所需资源，并使每个虚拟机都能够互不干扰、相互独立地运行于同一个系统中。</li>
+<li><strong>抽象化的虚拟机硬件</strong>：即虚拟层呈现的虚拟化的硬件设备。虚拟机能够发现哪种硬件设施，完全由 VMM 决定。虚拟设备可以是模拟的真实设备，也可以是现实中并不存在的虚拟设备，如 VMware 的 vmxnet 网卡。</li>
+<li><strong>虚拟机</strong>：相对于底层提物理机，也称为客户机（Guest）。运行在其上的操作系统则称为客户机操作系统（Guest OS）。每个虚拟机操作系统都拥有自己的虚拟硬件，并在一个独立的虚拟环境中执行。通过 VMM 的隔离机制，每个虚拟机都认为自己作为一个独立的系统在运行。</li>
+</ul>
+<p>Hypervisor 是位于虚拟机和底层物理硬件之间的虚拟层，包括 boot loader、x86 平台硬件的抽象层，以及内存与 CPU 调度器，负责对运行在其上的多个虚拟机进行资源调度。而 VMM 则是与上层的虚机一一对应的进程，负责对指令集、内存、中断与基本的 I/O 设备进行虚拟化。</p>
+<p>当运行一个虚拟机时，Hypervisor 中的 VM kernel 会装载 VMM，虚拟机直接运行于 VMM 之上，并通过 VMM 的接口与 Hypervisor 进行通信。而在 KVM 和 Xen 架构中，虚拟层都称为 Hypervisor，也就是 VMM = Hypervisor。</p>
+<h3 id="22-cpu-指令分级">2.2 CPU 指令分级</h3>
+<hr>
+<p>现代计算机的 CPU 技术有个核心特点，就是指令分级运行，这样做的目的是为了避免用户应用程序层面的错误导致整个系统的崩溃。</p>
+<p>不同类型的 CPU 会分成不同的级别，比如 IBM PowerPC 和 SUN SPARC 分为 Core 与 User 两个级别，MIPS 多了个 Supervisor 共三个级别。</p>
+<p>
+  <img src="/img/2023-03-19-intel-vt/2023-05-01-figure1.png" alt="">
+
+</p>
+<p>本文针对的 X86 CPU 则分为 Ring0-Ring3 共 4 个级别，我们只需要关注特权级别（Ring 0）和用户级别（Ring1-Ring3）两个层面即可。</p>
+<p>
+  <img src="/img/2023-03-19-intel-vt/2023-05-02-figure2.svg" alt="">
+
+</p>
+<p>对于非虚拟化的普通操作系统而言，Ring 0 是最高特权级别，拥有对物理内存和硬件 I/O 资源的直接访问控制权。Ring 1、2 和 3 权限依次降低，无法执行操作内核系统级别的指令集合，只拥有对于虚拟内存的直接访问控制权。相应的，运行于 Ring 0 的指令称为“特权指令”；运行于其他级别的称为“非特权指令”。</p>
+<p>常见的操作系统如 Linux 与 Windows 都运行于 Ring 0，而用户级应用程序运行于 Ring 3。如果低特权级别的程序执行了特权指令，会引起“陷入”（Trap）内核态，并抛出一个异常。</p>
+<h3 id="23-非-x86-平台的虚拟化">2.3 非 X86 平台的虚拟化</h3>
+<hr>
+<p>当这种分层隔离机制应用于虚拟化平台，为了满足 VMM（Virtual Machine Monitor，虚拟机监控器） 的“资源可控”的特征，VMM 必须处于 Ring 0 级别控制所有的硬件资源，并且执行最高特权系统调用。而虚拟机操作系统 Guest OS 则要被降级运行在 Ring 1 级别，Guest OS 的应用程序则运行在 Ring 3。</p>
+<p>故 Guest OS 在执行特权指令时都会引起”陷入“。如果 VMM 能够正常捕获异常，模拟 Guest OS 发出的指令并执行，就达到了目的，这就是 IBM 的 Power 系列所采用的特权解除和陷入模拟的机制。</p>
+<p>
+  <img src="/img/2023-03-19-intel-vt/2023-05-02-figure4.png" alt="">
+
+</p>
+<p>我们将操作系统中涉及系统底层公共资源调用的一些运行指令成为敏感指令。大型服务器如 PowerPC 和 SPARC 架构的 CPU 运行在 RISC 指令集中，所有的敏感指令都属于特权指令。因此可以采用上面所说的特权解除和陷入模拟的机制完美的进行虚拟化实现。</p>
+<p>但对于 X86 架构的 CISC 指令集而言，存在 19 条非特权指令的敏感指令，这些指令被 Guest OS 在 Ring1 级别执行时，会被直接执行，无法产生异常从而陷入 Ring0 处理，也就导致无法采用上面所说的经典技术进行虚拟化。</p>
+<h3 id="24-x86-平台的虚拟化">2.4 X86 平台的虚拟化</h3>
+<hr>
+<p>正式因为 x86 平台指令集有上述缺陷，所以为了计算虚拟化技术在 x86 平台应用，各大虚拟化厂商推出了五花八门的虚拟化技术，其目的都是围绕“如何捕获模拟这 19 条敏感指令”这一命题来设计。</p>
+<p>在上述问题中，涉及到 3 个主要的对象，Guest OS、VMM 和硬件 CPU 的指令集，其中 VMM 是新插入的对象，修改起来最方便，但 OS 和 CPU 改起来就难一些。解决方案的思路也由此分为 3 个方向：</p>
+<ul>
+<li><strong>改动 VMM</strong>：即 CPU 全虚拟化（CPU Full-Virtualization），优点是兼容性最强，OS 和 CPU 都无需改动，缺点是效率最低。</li>
+<li><strong>改动 OS</strong>：即 CPU 半虚拟化（CPU Para-Virtualization），优点是相较于 CPU Full-Virtualization 效率有较大的提升，缺点是要改动 OS，因为 Windows 内核并不开源，只能基于 Linux 内核进行适配，而且会带来扩展性与安全性方面的隐患。</li>
+<li><strong>改动 CPU 指令集</strong>：即硬件辅助虚拟化（HVM：Hardware-assisted Virtualization Machine），优点是无需改动 Guest OS，兼容 Windows 与 Linux。</li>
+</ul>
+<p>HVM（Hardware-assisted Virtualization Machine，硬件辅助虚拟化）已成为数据中心主流虚拟化技术。</p>
+<h4 id="241-cpu-全虚拟化">2.4.1 CPU 全虚拟化</h4>
+<hr>
+<p>CPU 全虚拟化，又被细分为 Emulation、Scan-and-Patch 和 Binary Translation 三种方案。其中 Emulation 是根本解决方案，而 Scan-and-Patch 和 Binary Translation 可以理解为是 Emulation 在 X86 体系上使用的扩展实现方案。</p>
+<p>CPU Full-Virtualization 由于实现较为简单，早在上世纪末就已经出现，是最早期的 X86 虚拟化技术。</p>
+<p>
+  <img src="/img/2023-03-19-intel-vt/2023-05-02-figure3.png" alt="">
+
+</p>
+<ul>
+<li>
+<p><strong>Emulation</strong>：基本的 Emulation 主要应用在进行跨平台虚拟化模拟，Guest OS 与底层系统平台不同，尤其是指令集区别很大的场景，比如在 X86 系统上模拟 PowerPC 或 ARM 系统。其主要思路就是 VMM 将 Guest OS 指令进行读取，模拟出此指令的执行效果返回，周而复始逐条执行，不区分用户指令和敏感指令，由于每条指令都被通过模拟陷入到 Ring0 了，因此也就可以解决之前的敏感指令问题。</p>
+<p>代表产品就是 Linux 上的 QEMU，目前主要应用于在嵌入式平台的相关开发领域。</p>
+</li>
+<li>
+<p><strong>Scan-and-Patch</strong>：Scan-and-Patch 的主思路是将 Guest OS 的每个指令段在执行前先扫描一遍，找出敏感指令，在 VMM 中生成对应的补丁指令，同时将敏感指令替换为跳转指令，指向生成的补丁指令。这样当指令段执行到此跳转时会由 VMM 运行补丁指令模拟出结果返回给 Guest OS，然后再顺序继续执行。</p>
+<p>代表产品是 Oracle 的开源虚拟化系统 VirtualBox，目前主要应用于在主机上进行虚拟机的模拟，服务器使用较少。</p>
+</li>
+<li>
+<p><strong>Binary Translation</strong>：Binary Translation 主要思路是将 Guest OS 的指令段在执行之前进行整段翻译，将其中的敏感指令替换为 Ring0 中执行的对应特权指令，然后在执行的同时翻译下一节指令段，交叉处理。</p>
+<p>代表产品为 VMware Workstation 以及早期 VMware 的 ESXi 系列服务器虚拟化系统，目前的服务器上已经很少使用了。</p>
+</li>
+</ul>
+<p>CPU Full-Virtualization 受性能影响，在服务器上目前被逐渐淘汰。主要代表产品如 VirtualBox 和 VMware Workstation 大都应用于主机虚拟化的一些开发测试环境中。只有 QEMU 作为基础虚拟化技术工具，在其他的虚拟化产品中被广泛实用。</p>
+<h4 id="242-cpu-半虚拟化">2.4.2 CPU 半虚拟化</h4>
+<hr>
+<p>CPU Para-Virtualization 以 Xen 和 Hyper-V 为代表，但 VMware 的 ESXi Server 和 Linux 的 KVM 两种当前主流虚拟化产品也都支持 Para-Virtualization，Para-Virtualization 技术实际上是一类技术总称，下面先要谈的是 CPU 的 Para-Virtualization (CPU PV)。</p>
+<p>
+  <img src="/img/2023-03-19-intel-vt/2023-06-11-figure7.png" alt="">
+
+</p>
+<p>CPU PV 技术实现的主要原理如下，首先 VMM 公布其一些称为 Hypercalls 的接口函数出来，然后在 Guest os 中增加根据这些接口函数修改内核中的代码以替代有问题的 17 条敏感指令执行系统调用操作。修改后的指令调用通常被称为 Hypercalls，Guest OS 可以通过 Hypercalls 直接调用 VMM 进行系统指令执行，相比较前面提到的陷入模拟方式极大的提升了处理效率。</p>
+<p>然而 CPU PV 修改操作系统内核代码的方式带来了对 Guest OS 的很多使用限制，如只有 Hyper-V 可以支持 Para-Virtualization 方式的 Windows Server 作为 Guest OS，另外由于 KVM/Xen/VMware/Hyper-V 各自 Hypercalls 代码进入 Linux 内核版本不同，因此采用 Linux 作为 Guest OS 时也必须关注各个发行版的 Linux 内核版本情况。</p>
+<table>
+<thead>
+<tr>
+<th align="left">虚拟化平台</th>
+<th align="left">Linux Kernel（Guest OS）版本要求</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">KVM</td>
+<td align="left">Kernel &gt;= 2.6.20</td>
+</tr>
+<tr>
+<td align="left">VMware</td>
+<td align="left">Kernel &gt;= 2.6.22</td>
+</tr>
+<tr>
+<td align="left">Xen</td>
+<td align="left">Kernel &gt;= 2.6.23</td>
+</tr>
+<tr>
+<td align="left">Hyper-V</td>
+<td align="left">Kernel &gt;= 2.6.32</td>
+</tr>
+</tbody>
+</table>
+<p>CPU PV 方式由于对 Guest OS 的限制，应用范围并不很广，但由于其技术上的系统调用效率提升，仍然被部分开发与使用者所看好，在某些特定场景中也存在一定需求。</p>
+<h4 id="243-硬件辅助虚拟化intel-vt-xvt-i-技术">2.4.3 硬件辅助虚拟化（Intel VT-x/VT-i 技术）</h4>
+<hr>
+<p>
+  <img src="/img/2023-03-19-intel-vt/2023-05-02-figure6.webp" alt="">
+
+</p>
+<blockquote>
+<p>比尔搞不定，安迪来帮忙。（比尔·盖茨是微软公司创始人，安迪·葛洛夫是 Intel 公司创始人）</p>
+</blockquote>
+<p>针对敏感指令引发的一系列虚拟化问题，2005 年 Intel 与 AMD 公司分别推出了 VT-x/VT-i 与 AMD-V，能够在芯片级别支持全虚拟化时，这就是现在称之为的硬件辅助虚拟化技术（HVM：Hardware-assisted Virtualization Machine）。</p>
+<p>
+  <img src="/img/2023-03-19-intel-vt/2023-05-02-figure5.png" alt="">
+
+</p>
+<p>VT-x 与 AMD-V 都试图通过定义新的运行模式，使 Guest OS 恢复到 Ring 0，而让 VMM 运行在比 Ring 0 低的级别（可以理解为Ring -1）。</p>
+<p>VT-x 引入了两种操作模式，统称为 VMX（Virtual Machine eXtension）操作模式：</p>
+<ul>
+<li><strong>根操作模式（VMX Root Operation）</strong>：VMM 运行所处的模式，以下简称根模式。</li>
+<li><strong>非根操作模式（VMX Non-Root Operation）</strong>：客户机运行所处的模式，以下简称非根模式。</li>
+</ul>
+<p>Root/Non-Root 操作模式将原有的 CPU 操作区分为 VMM 所在的 Root 操作与 VM 所在的 Non-Root 操作，每个操作都拥有 Ring0-Ring3 的所有指令级别。</p>
+<p>在 Intel 公司的 VT-x 解决方案中，运行于非根模式下的 Guest OS 可以像在非虚拟化平台下一样运行于 Ring 0 级别，无论是 Ring 0 发出的特权指令还是 Ring 3 发出的敏感指令都会被陷入到根模式的虚拟层。</p>
+<p>VT-x 和 AMD-V 等技术的出现，解决了前面两种纯软件方案进行 X86 虚拟化时，CPU Full-Virtualization 性能低和 Para-Virtualization 的 Guest OS 兼容性差问题。</p>
+<p>随着服务器 CPU 两三年一换代的更新速度，当前的主流 X86 服务器已经都可以支持 VT-X/AMD-V 等技术因此 HVM 成为当前云计算 IAAS 服务器虚拟化的主流。主要的几款 VMM 产品 Xen/VMware ESXi/KVM/Hyper-V 都已经能够支持 HVM 功能。</p>
+<h2 id="3-内存虚拟化">3. 内存虚拟化</h2>
+<hr>
+<p>大型操作系统（比如 Linux）的都是通过虚拟内存进行内存管理，内存虚拟化需要对虚拟内存再进行虚拟化。</p>
+<p>内存虚拟化技术主要包含两个方面：内存地址转换和内存虚拟化管理。</p>
+<p>关于虚拟内存的相关内容大家可以查看 <a href="http://flowlet.net/2023/05/07/cs-virtual-memory/">计算机系统 Lecture 1：虚拟内存</a> 这篇文章。</p>
+<h3 id="31-内存虚拟化地址转换">3.1 内存虚拟化地址转换</h3>
+<hr>
+<p>在 Linux 这种使用虚拟地址的 OS 中，虚拟地址经过 Page table 转换可得到物理地址。</p>
+<p>
+  <img src="/img/2023-03-19-intel-vt/2023-06-11-memory-virtual-01.png" alt="">
+
+</p>
+<p>如果这个操作系统运行在虚拟机上，就需要进行两次地址转换。</p>
+<p>Guest OS 先将 GVA（Guest Virtual Address）转换为 GPA（Guest Phyical Address），从 VMM/Hypervisor 的角度来看 GPA 是一个中间的物理地址（Intermediate Phyical Address，IPA），然后 VMM/hypervisor 再将 GPA（Guest Phyical Address）转换为 HPA（Host Phyical Address）。</p>
+<p>为了实现上述映射和转换关系，主要有两种解决方案：软件解决方案（影子页表）和硬件辅助方案（Intel-EPT 和 AMD-RVI）。</p>
+<h4 id="311-影子页表spt">3.1.1 影子页表（SPT）</h4>
+<hr>
+<p>影子页表（Shadow Page Table，SPT）包括以下两种映射关系：</p>
+<ul>
+<li><strong>GVA -&gt; GPA</strong>，虚拟机操作系统负责维护从虚拟机逻辑地址到虚拟机物理地址的映射关系，VMM 可以从虚拟机主页表中获取这种映射关系。</li>
+<li><strong>GPA -&gt; HPA</strong>，VMM 负责维护从虚拟机物理地址到物理机物理地址的映射关系。</li>
+</ul>
+<p>通过这种两级映射的方式，VMM 为 Guest OS 的每个页表（Guest Page Table，GPT）维护一个影子页表，并将 GVA -&gt; HPA 的映射关系写入影子页表。然后，VMM 将影子页表写入 MMU。同时，又对虚拟机可访问的内存边界进行了有效控制。并且，使用 TLB 缓存影子页表的内容可以大大提高虚拟机问内存的速度。</p>
+<p>影子页表的维护将带来时间和空间上的较大开销：</p>
+<ul>
+<li><strong>时间开销</strong>：主要体现在 Guest OS 构造页表时不会主动通知 VMM，VMM 必须等到 Guest OS 发生缺页错误时（必须 Guest OS 要更新主页表），才会分析缺页原因再为其补全影子页表。</li>
+<li><strong>空间开销</strong>：主要体现在 VMM 需要支持多台虚拟机同时运行，每台虚拟机的 Guest OS 通常会为其上运行的每个进程创建一套页表系统，因此影子页表的空间开销会随着进程数量的增多而迅速增大。</li>
+</ul>
+<p>为权衡时间开销和空间开销，现在一般采用影子页表缓存（Shadow Page Table Cache）技术，即 VMM 在内存中维护部分最近使用过的影子页表，只有当影子页表在缓存中找不到时，才构建一个新的影子页表。</p>
+<p>当前主要的虚拟化技术都采用了影子页表缓存技术。</p>
+<h4 id="312-硬件辅助intel-eptamd-rvi">3.1.2 硬件辅助（Intel EPT/AMD RVI）</h4>
+<hr>
+<p>为了解决影子页表导致的上述开销问题，除了使用影子页表缓存技术外（这项技术虽然能避免时间上的一部分开销，但是空间开销还是实实在在存在的），Intel 与 AMD 公司都针对 MMU 虚拟化给出了各自的解决方案：Intel 公司在Nehalem 微架构 CPU 中推出扩展页表（Extended Page Table，EPT）技术；AMD 公司在四核皓龙 CPU 中推出快速虚拟化索引（Rapid Virtualization Index，RVI）技术。</p>
+<p>RVI 与 EPT 尽管在具体实现细节上有所不同，但是在设计理念上却完全一致：通过在物理 MMU 中保存两个不同的页表，使得内存地址的两次映射都在硬件中完成，进而达到提高性能的目的。</p>
+<p>
+  <img src="/img/2023-03-19-intel-vt/2023-06-12-ept.png" alt="">
+
+</p>
+<p>具体来说，MMU 中管理管理了两个页表，第一个是 GVA -&gt; GPA，由虚拟机决定；第二个是 GPA -&gt; HPA，对虚拟机透明，由 VMM 决定。根据这两个映射页表，CPU 中的 page walker 就可以生成最近访问过 key-value 键值对 ，并缓存在TLB中（类似影子页表缓存技术思路）。</p>
+<p>另外，原来在影子页表中由 VMM 维持的 GPA -&gt; HPA映射关系，则由一组新的数据结构扩展页表（Extended Page Table，也称为 Nested Page Table）来保存。由于 GPA -&gt; HPA 的映射关系非常定，并在虚拟机创建或修改页表时无需更新，因此 VMM 在虚拟机更新页表的时候无需进行干涉。VMM 也无需参与到虚拟机上下文切换，虚拟机可以自己修改 GVA -&gt; GPA的页表。</p>
+<p>Intel EPT 是Intel VT-x 提供的内存虚拟化支持技术，其基本原理下图所示。在原有的 CR3 页表地址映射的基础上，EPT 引入 EPT 页表来实现另一次映射。比如：假设客户机页表和 EPT 页表都是 4 级页表，CPU 完成一次地址转换的基本过程如下：</p>
+<p>
+  <img src="/img/2023-03-19-intel-vt/2023-06-12-ept-mmu.png" alt="">
+
+</p>
+<p>客户机 CR3 寄存器给出的是 GPA，所以，CP U通过 EPT 页表将客户机 CR3 中的 GPA 转换为 HPA：CPU 首先查找 EPT TLB，如果没有相应的记录，就进一步查找 EPT 页表，如果还没有，CPU 则抛出 EPT Violation 异常交给 VMM 处理。</p>
+<p>CPU 获得 L4 页表地址（指的是HPA）后，CPU 根据 GVA 和 L4 页表项的内容来获取 L3 页表项的 GPA。如果 L4 页表中 GVA 对应的表项显示为“缺页”，那么 CPU 产生 Page Fault，直接交由客户机操作系统处理。获得 L3 页表项的GPA 后，CPU 通过查询 EPT 页表来将 L3 的 GPA 转换为 HPA。同理，CPU 会依次完成 L2、L1 页表的查询，获得 GVA 所对应的 GPA，然后进行最后一次查询 EPT 页表获得 HPA。</p>
+<p>正如上图所示，CPU 需要 5 次查询 EPT 页表，每次查询都需要 4 次内存访问。这样，在最坏的情况下总共需要 20 次内存访问。EPT 硬件通过增大 EPT TLB 尽量减少内存访问。</p>
+<h3 id="32-内存虚拟化管理技术">3.2 内存虚拟化管理技术</h3>
+<hr>
+<p>在虚拟化环境中，内存是保证虚拟机工作性能的关键因素。如何尽可能提高虚拟机的性能、提高内存利用率、降低虚拟机上下文切换的内存开销，依然非常复杂，这就引入了内存虚拟化管理的问题。</p>
+<h4 id="321-内存复用技术">3.2.1 内存复用技术</h4>
+<hr>
+<p>在虚拟化内存管理 上，ESXi实现了主机内存超分配的目标：即多个虚拟机总的内存分配量大于物理机的实际内存容量。如下图所示，一个物理内存只有 4GB 的 Host，可以同时运行三个内存配置为 2GB 的 Guest。</p>
+<p>
+  <img src="/img/2023-03-19-intel-vt/2023-06-12-memory-overcommitment.jpg" alt="">
+
+</p>
+<p>主机内存超分配功能意味着 VMM 必须能够有效地回收虚拟机中不断释放的内存，并在有限的内存容量中尽能 地提高内存利用率。</p>
+<p>因为，Host Memory 与 Guest Memory 并不是一一对应的关系，通过 Host Memory 超配技术可以实现某一个 Host 上某一个虚拟机内存大于主机内存，这一点与 CPU 虚拟化不一样。但是，在执行超配技术时，需要考虑主机性能问题，不能过大。一般的超配限额是主机内存的 50%。要实现主机内存超配，必须通过内存复用技术实现。</p>
+<p>目前常用的内存复用技术有：零页共享技术、内存气球回收技术和内存置换技术三种，我们这里主要介绍内存气球回收技术。</p>
+<h4 id="322-内存气球回收技术">3.2.2 内存气球回收技术</h4>
+<hr>
+<p>内存气球回收技术也称为内存气泡技术。在虚拟化环境中，VMM 会一次性在虚拟机启动后分配给虚拟机内存，由于虚拟机并没有意识到自己运行于虚拟化平台上，之后它会一直运行在分配好的内存空间，而不主动释放分配的物理内存给其他虚拟机。因此 VMM 需要一种机制使得虚拟机能够主动释放空闲内存归还给物理机，再由 VMM 分配给其他有需求的虚拟机。并且，在内存资源需求紧张时还能从物理机中“拿回”自己释放的那部分内存。</p>
+<p>原理如下：Hypervisor 通过利用预装在用户虚拟机中的前端驱动程序，“偷取” Guest OS 的内存贡献给 VMM，以供其他虚拟机使用，反向时由 VMM “偷取”气泡中的内存给特定虚拟机使用。内存气泡本质是将较为空闲的虚拟机内存释放给内存使用率较高的虚拟机，从而提升内存利用率。</p>
+<p>
+  <img src="/img/2023-03-19-intel-vt/2023-06-12-Memory-Ballooning.jpg" alt="">
+
+</p>
+<p>在上图（a）中，VMM 有四个页面被映射到虚拟机的内存页面空间中，其中左侧两个页面被应用程序占用，而另两个被打上星号的页面则是在内存空闲列表中。</p>
+<p>当 VMM 要从虚拟机中回收内存时，比如要回收两个内存页面，VMM 就会将 Balloon 驱动的目标膨胀大小设置为两个页面。</p>
+<p>Balloon 驱动获得了目标膨胀值之后，就会在虚拟机内部申请两个页面空间的内存，并如上图（b）所示，调用虚拟机操系统的接口标示这两个页面被“钉住”，即不能再被分配出去。</p>
+<p>内存申请完毕后，Balloon 驱动会通知 VMM 这两个页面的页号，这样 VMM 就可以找到相应的物理页号并进行回收。在上（b）中虚线就标示了这两个页面从虚拟机分配出去的状态。</p>
+<p>由于被释放的页面在释放前已经在虚拟机的空闲列表中，因此没有进程会对该页面进行读写操作。如果虚拟机的进程接下来要重新访问这些页面，那么 VMM 可以像平常分配内存一样，再分配新的物理内存给这台虚拟机。当 VMM 决定收缩气球膨胀大小时，通过设置更小的目标膨胀值，balloon 驱动会将已经被“钉住” 的页面归还给虚拟机。</p>
+<p>
+  <img src="/img/2023-03-19-intel-vt/2023-06-12-ballooning-in-action.jpg" alt="">
+
+</p>
+<p>通过气球回收法，尽管虚拟机的负载略微增加，但 VMM 却成功地将系统内存压力转移到各个虚拟机上。当 balloon 驱动发起申请内存的请求时，由虚拟机操作系统决定了是否要将虚拟机物理内存换出来满足 balloon 驱动的申请内存请求。</p>
+<p>如果虚拟机有充足的空闲内存，那么 balloon 驱动申请内存并不会对虚拟机的性能造成影响；</p>
+<p>如果虚拟机内存已经吃紧，那么就需要由虚拟机的操作系统决定换出哪些内存页面，满足 balloon 驱动的请求。因此，气球回收法巧妙地利用了各个虚拟机操作系统的内存换页机制来确定哪些页面要被释放给物理机，而不是由 VMM 来决定。</p>
+<p>气球回收法要求虚拟机操作系统必须安装 balloon 驱动，在 VMware 的 ESXi 产品中，就是 VMware Tool。另外，气球回收法回收内存需要一段时间，不能马上满足系统的需求。</p>
+<h2 id="参考">参考</h2>
+<hr>
+<ul>
+<li><a href="https://www.intel.com/content/www/us/en/virtualization/virtualization-technology/intel-virtualization-technology.html">Intel® Virtualization Technology (Intel® VT)</a></li>
+<li><a href="https://course.ece.cmu.edu/~ece845/docs/vt-overview-itj06.pdf">Intel® Virtualization Technology</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/95288037">CPU硬件辅助虚拟化技术</a></li>
+<li><a href="https://www.thomas-krenn.com/en/wiki/Overview_of_the_Intel_VT_Virtualization_Features">Overview of the Intel VT Virtualization Features</a></li>
+<li><a href="http://www.valleytalk.org/wp-content/uploads/2012/05/%E4%BB%8E%E5%8D%8A%E7%A9%BA%E7%9C%8B%E8%99%9A%E6%8B%9F%E5%8C%96.pdf">从半空看虚拟化</a></li>
+<li><a href="https://www.iaik.tugraz.at/wp-content/uploads/2022/09/slides-6.pdf">Cloud Operating Systems</a></li>
+<li><a href="https://www.51cto.com/article/666964.html">NFV关键技术：计算虚拟化概述</a></li>
+<li><a href="https://michielkalkman.com/posts/virtualization-cpu-io-isolation-modeling/#intel-cpu-virtualization">Intel/AMD virtualization isolation and containment</a></li>
+<li><a href="https://www.51cto.com/article/696129.html">NFV关键技术：计算虚拟化之内存虚拟化</a></li>
+</ul>
+<h2 id="公众号flowlet">公众号：Flowlet</h2>
+<hr>
+<img src="/img/qrcode_flowlet.jpg" width = 30% height = 30% alt="Flowlet" align=center/>
+<hr>
+
+
+                
+                
+<div class="entry-shang text-center">
+    
+	    <p> 「如果这篇文章对你有用,请随意打赏」</p>
+	
+	<button class="zs show-zs btn btn-bred">赞赏支持</button>
+</div>
+<div class="zs-modal-bg"></div>
+<div class="zs-modal-box">
+	<div class="zs-modal-head">
+		<button type="button" class="close">×</button>
+		<span class="author"><a href="https://flowlet.net"><img src="/img/favicon.png" />ZhangShuai&#39;s Blog</a></span>
+        
+	        <p class="tip"><i></i><span>如果这篇文章对你有用,请随意打赏</span></p>
+		
+ 
+	</div>
+	<div class="zs-modal-body">
+		<div class="zs-modal-btns">
+			<button class="btn btn-blink" data-num="2">2元</button>
+			<button class="btn btn-blink" data-num="5">5元</button>
+			<button class="btn btn-blink" data-num="10">10元</button>
+			<button class="btn btn-blink" data-num="50">50元</button>
+			<button class="btn btn-blink" data-num="100">100元</button>
+			<button class="btn btn-blink" data-num="1">任意金额</button>
+		</div>
+		<div class="zs-modal-pay">
+			<button class="btn btn-bred" id="pay-text">2元</button>
+			<p>使用<span id="pay-type">微信</span>扫描二维码完成支付</p>
+			<img src="/img/reward/wechat-2.png"  id="pay-image"/>
+		</div>
+	</div>
+	<div class="zs-modal-footer">
+		<label><input type="radio" name="zs-type" value="wechat" class="zs-type" checked="checked"><span ><span class="zs-wechat"><img src="/img/reward/wechat-btn.png"/></span></label>
+		<label><input type="radio" name="zs-type" value="alipay" class="zs-type" class="zs-alipay"><img src="/img/reward/alipay-btn.png"/></span></label>
+	</div>
+</div>
+<script type="text/javascript" src="/js/reward.js"></script>
+
+                
+
+                
+                <hr>
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2023/03/18/virtio/" data-toggle="tooltip" data-placement="top" title="I/O虚拟化 102：Virtio - 一种 Linux I/O 半虚拟化框架 [译]">&larr;
+                            Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2023/03/21/virtio-vhost-net/" data-toggle="tooltip" data-placement="top" title="I/O虚拟化 105：virtio 与 vhost-net 架构">Next
+                            Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+                
+
+                
+
+
+
+            </div>
+
+            
+            
+            <div class="
+                col-lg-2 col-lg-offset-0
+                visible-lg-block
+                sidebar-container
+                catalog-container">
+                <div class="side-catalog">
+                    <hr class="hidden-sm hidden-xs">
+                    <h5>
+                        <a class="catalog-toggle" href="#">CATALOG</a>
+                    </h5>
+                    <ul class="catalog-body"></ul>
+                </div>
+            </div>
+            
+
+            
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/ebtables" title="ebtables">
+                            ebtables
+                        </a>
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/iptables" title="iptables">
+                            iptables
+                        </a>
+                        
+                        
+                        
+                        <a href="/tags/netfilter" title="netfilter">
+                            netfilter
+                        </a>
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/virtio" title="virtio">
+                            virtio
+                        </a>
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                    </div>
+                </section>
+                
+
+                
+                
+                <section>
+                    <hr>
+                    <h5>FRIENDS</h5>
+                    <ul class="list-inline">
+                        
+                        <li><a target="_blank" href="https://www.zhaohuabing.com/">Huabing Blog</a></li>
+                        
+                    </ul>
+                </section>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">                  
+                    
+                    <li>
+                        <a href="mailto:1171570958@qq.com">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fas fa-envelope fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		           
+                    
+                    <li>
+                        <a href="https://twitter.com/ShuaiZhang_CN">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    
+                    
+
+		            
+                    
+                    <li>
+                        <a target="_blank" href="/img/wechat_qrcode.jpg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-weixin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		            
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/ZhangShuai-CN">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		            
+                    
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://www.linkedin.com/in/flowlet">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		           
+                    
+                    
+                    
+                    
+                    
+                    
+            
+            
+            
+           
+                   <li>
+                       <a href='' rel="alternate" type="application/rss+xml" title="ZhangShuai&#39;s Blog" >
+                           <span class="fa-stack fa-lg">
+                               <i class="fas fa-circle fa-stack-2x"></i>
+                               <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                           </span>
+                       </a>
+                   </li>
+            
+             </ul>
+		<p class="copyright text-muted">
+                    Copyright &copy; ZhangShuai&#39;s Blog 2023
+                    <br>
+                    <a href="https://themes.gohugo.io/hugo-theme-cleanwhite">CleanWhite Hugo Theme</a> by <a href="https://zhaohuabing.com">Huabing</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=zhaohuabing&repo=hugo-theme-cleanwhite&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+
+
+<script>
+    function loadAsync(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+
+
+
+
+<script>
+    
+    if($('#tag_cloud').length !== 0){
+        loadAsync("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+
+<script>
+    loadAsync("https://cdn.jsdelivr.net/npm/fastclick@1.0.6/lib/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+
+
+
+
+<script type="text/javascript">
+    function generateCatalog(selector) {
+
+        
+        
+        
+        
+            _containerSelector = 'div.post-container'
+        
+
+        
+        var P = $(_containerSelector), a, n, t, l, i, c;
+        a = P.find('h1,h2,h3,h4,h5,h6');
+
+        
+        $(selector).html('')
+
+        
+        a.each(function () {
+            n = $(this).prop('tagName').toLowerCase();
+            i = "#" + $(this).prop('id');
+            t = $(this).text();
+            c = $('<a href="' + i + '" rel="nofollow">' + t + '</a>');
+            l = $('<li class="' + n + '_nav"></li>').append(c);
+            $(selector).append(l);
+        });
+        return true;
+    }
+
+    generateCatalog(".catalog-body");
+
+    
+    $(".catalog-toggle").click((function (e) {
+        e.preventDefault();
+        $('.side-catalog').toggleClass("fold")
+    }))
+
+    
+
+
+    loadAsync("\/js\/jquery.nav.js", function () {
+        $('.catalog-body').onePageNav({
+            currentClass: "active",
+            changeHash: !1,
+            easing: "swing",
+            filter: "",
+            scrollSpeed: 700,
+            scrollOffset: 0,
+            scrollThreshold: .2,
+            begin: null,
+            end: null,
+            scrollChange: null,
+            padding: 80
+        });
+    });
+</script>
+
+
+
+
+
+
+</body>
+</html>

@@ -57,6 +57,15 @@
     </item>
     
     <item>
+      <title>Intel 虚拟化技术（Intel® VT）：CPU 虚拟化与内存虚拟化</title>
+      <link>https://flowlet.net/2023/03/19/intel-vt/</link>
+      <pubDate>Sun, 19 Mar 2023 01:01:01 +0000</pubDate>
+      
+      <guid>https://flowlet.net/2023/03/19/intel-vt/</guid>
+      <description>关于作者 张帅，网络从业人员，公众号：Flowlet 个人博客：https://flowlet.net/ 序言 虚拟化技术允许多个工作负载共享一组公</description>
+    </item>
+    
+    <item>
       <title>I/O虚拟化 102：Virtio - 一种 Linux I/O 半虚拟化框架 [译]</title>
       <link>https://flowlet.net/2023/03/18/virtio/</link>
       <pubDate>Sat, 18 Mar 2023 01:01:01 +0000</pubDate>

@@ -101,5 +101,23 @@
       <description></description>
     </item>
     
+    <item>
+      <title>Intel EPT/AMD RVI</title>
+      <link>https://flowlet.net/tags/intel-ept/amd-rvi/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://flowlet.net/tags/intel-ept/amd-rvi/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>VT-x/VT-i</title>
+      <link>https://flowlet.net/tags/vt-x/vt-i/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://flowlet.net/tags/vt-x/vt-i/</guid>
+      <description></description>
+    </item>
+    
   </channel>
 </rss>
