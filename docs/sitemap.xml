@@ -4,31 +4,46 @@
   
   <url>
     <loc>https://flowlet.net/categories/</loc>
-    <lastmod>2023-05-07T01:01:01+00:00</lastmod>
+    <lastmod>2023-07-30T01:01:01+00:00</lastmod>
   </url>
   
   <url>
     <loc>https://flowlet.net/post/</loc>
-    <lastmod>2023-05-07T01:01:01+00:00</lastmod>
+    <lastmod>2023-07-30T01:01:01+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://flowlet.net/tags/reentrant/</loc>
+    <lastmod>2023-07-30T01:01:01+00:00</lastmod>
   </url>
   
   <url>
     <loc>https://flowlet.net/tags/</loc>
-    <lastmod>2023-05-07T01:01:01+00:00</lastmod>
+    <lastmod>2023-07-30T01:01:01+00:00</lastmod>
   </url>
   
   <url>
     <loc>https://flowlet.net/categories/tech/</loc>
-    <lastmod>2023-05-07T01:01:01+00:00</lastmod>
+    <lastmod>2023-07-30T01:01:01+00:00</lastmod>
   </url>
   
   <url>
-    <loc>https://flowlet.net/tags/virtual-memory/</loc>
-    <lastmod>2023-05-07T01:01:01+00:00</lastmod>
+    <loc>https://flowlet.net/tags/thread-safe/</loc>
+    <lastmod>2023-07-30T01:01:01+00:00</lastmod>
   </url>
   
   <url>
     <loc>https://flowlet.net/</loc>
+    <lastmod>2023-07-30T01:01:01+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://flowlet.net/2023/07/30/writing-reentrant-threadsafe-code/</loc>
+    <lastmod>2023-07-30T01:01:01+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://flowlet.net/tags/virtual-memory/</loc>
     <lastmod>2023-05-07T01:01:01+00:00</lastmod>
   </url>
   

@@ -6,10 +6,28 @@
     <description>Recent content in Tags on ZhangShuai&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 07 May 2023 01:01:01 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 30 Jul 2023 01:01:01 +0000</lastBuildDate>
     
 	<atom:link href="https://flowlet.net/tags/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>reentrant</title>
+      <link>https://flowlet.net/tags/reentrant/</link>
+      <pubDate>Sun, 30 Jul 2023 01:01:01 +0000</pubDate>
+      
+      <guid>https://flowlet.net/tags/reentrant/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>thread-safe</title>
+      <link>https://flowlet.net/tags/thread-safe/</link>
+      <pubDate>Sun, 30 Jul 2023 01:01:01 +0000</pubDate>
+      
+      <guid>https://flowlet.net/tags/thread-safe/</guid>
+      <description></description>
+    </item>
     
     <item>
       <title>virtual memory</title>

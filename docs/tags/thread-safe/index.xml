@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>thread-safe on ZhangShuai&#39;s Blog</title>
+    <link>https://flowlet.net/tags/thread-safe/</link>
+    <description>Recent content in thread-safe on ZhangShuai&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 30 Jul 2023 01:01:01 +0000</lastBuildDate>
+    
+	<atom:link href="https://flowlet.net/tags/thread-safe/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>如何编写可重入（Reentrant）且线程安全（Thread-safe）的代码 [译]</title>
+      <link>https://flowlet.net/2023/07/30/writing-reentrant-threadsafe-code/</link>
+      <pubDate>Sun, 30 Jul 2023 01:01:01 +0000</pubDate>
+      
+      <guid>https://flowlet.net/2023/07/30/writing-reentrant-threadsafe-code/</guid>
+      <description>关于作者 张帅，网络从业人员，公众号：Flowlet 个人博客：https://flowlet.net/ 序言 本文翻译自文章 Writing reentrant and threadsafe code，由于</description>
+    </item>
+    
+  </channel>
+</rss>

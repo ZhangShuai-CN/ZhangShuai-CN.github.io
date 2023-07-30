@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    
+    <meta property="og:site_name" content="ZhangShuai&#39;s Blog">
+    <meta property="og:type" content="article">
+
+    
+    <meta property="og:image" content="/img/2023-07-30-writing-reentrant-threadsafe-code/background.jpg">
+    <meta property="twitter:image" content="/img/2023-07-30-writing-reentrant-threadsafe-code/background.jpg" />
+    
+
+    
+    <meta name="title" content="如何编写可重入（Reentrant）且线程安全（Thread-safe）的代码 [译]" />
+    <meta property="og:title" content="如何编写可重入（Reentrant）且线程安全（Thread-safe）的代码 [译]" />
+    <meta property="twitter:title" content="如何编写可重入（Reentrant）且线程安全（Thread-safe）的代码 [译]" />
+    
+
+    
+    <meta name="description" content="Writing reentrant and threadsafe code">
+    <meta property="og:description" content="Writing reentrant and threadsafe code" />
+    <meta property="twitter:description" content="Writing reentrant and threadsafe code" />
+    
+
+    
+    <meta property="twitter:card" content="summary" />
+    
+    
+
+    <meta name="keyword"  content="张帅, zhangshuai, ZhangShuai, , 张帅的网络日志, 张帅的博客, ZhangShuai&#39;s Blog, 博客, 个人网站, 互联网, Web, 云原生, PaaS, Iaas, Kubernetes">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>如何编写可重入（Reentrant）且线程安全（Thread-safe）的代码 [译] | 张帅的博客 | ZhangShuai&#39;s Blog</title>
+
+    <link rel="canonical" href="/2023/07/30/writing-reentrant-threadsafe-code/">
+
+    
+    
+    
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    
+    <link rel="stylesheet" href="/css/hugo-theme-cleanwhite.min.css">
+
+    
+    <link rel="stylesheet" href="/css/zanshang.css">
+
+    
+    <link href="https://cdn.jsdelivr.net/gh/FortAwesome/Font-Awesome@5.15.1/css/all.css" rel="stylesheet" type="text/css">
+
+    
+    
+
+    
+    <script src="/js/jquery.min.js"></script>
+
+    
+    <script src="/js/bootstrap.min.js"></script>
+
+    
+    <script src="/js/hux-blog.min.js"></script>
+
+    
+    <script src="/js/lazysizes.min.js"></script>
+
+    
+    
+
+</head>
+
+
+
+
+
+
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+
+    <div class="container-fluid">
+        
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">ZhangShuai&#39;s Blog</a>
+        </div>
+
+        
+        
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">All Posts</a>
+                    </li>
+                    
+                        
+                        <li>
+                            <a href="/categories/tech/">tech</a>
+                        </li>
+                        
+                    
+                    
+		    
+                        <li><a href="/archive//">ARCHIVE</a></li>
+                    
+                        <li><a href="/notes//">NOTES</a></li>
+                    
+                        <li><a href="/about//">ABOUT</a></li>
+                    
+		            <li>
+                        <a href="/search"><i class="fa fa-search"></i></a>
+		           </li>
+                </ul>
+            </div>
+        </div>
+        
+    </div>
+    
+</nav>
+<script>
+    
+    
+    
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        
+            $navbar.className = " ";
+            
+            setTimeout(function(){
+                
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+
+
+<style type="text/css">
+    header.intro-header {
+        background-image: url('/img/2023-07-30-writing-reentrant-threadsafe-code/background.jpg')
+    }
+</style>
+
+<header class="intro-header" >
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/reentrant" title="reentrant">
+                            reentrant
+                        </a>
+                        
+                        <a class="tag" href="/tags/thread-safe" title="thread-safe">
+                            thread-safe
+                        </a>
+                        
+                    </div>
+                    <h1>如何编写可重入（Reentrant）且线程安全（Thread-safe）的代码 [译]</h1>
+                    <h2 class="subheading">编写可重入（Reentrant）且线程安全（Thread-safe）的代码</h2>
+                    <span class="meta">
+                        
+                            Posted by 
+                            
+                                张帅
+                             
+                            on 
+                            Sunday, July 30, 2023
+                            
+                            
+                            
+                            
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+
+
+<article>
+    <div class="container">
+        <div class="row">
+
+            
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                
+                <hr>
+<h6 id="关于作者">关于作者</h6>
+<blockquote>
+<p><strong><code>张帅，网络从业人员，公众号：Flowlet</code></strong></p>
+<p><strong><code>个人博客：https://flowlet.net/</code></strong></p>
+</blockquote>
+<hr>
+<h2 id="序言">序言</h2>
+<hr>
+<p>本文翻译自文章 <a href="https://www.ibm.com/docs/ar/aix/7.1?topic=programming-writing-reentrant-threadsafe-code">Writing reentrant and threadsafe code</a>，由于译者水平有限，本文不免存在遗漏或错误之处。如有疑问，请查阅原文。</p>
+<blockquote>
+<p><strong>译者注：</strong></p>
+<p>文中 AIX 指：AIX（Advanced Interactive eXecutive）操作系统，是 IBM 公司开发的一款 UNIX 操作系统。</p>
+</blockquote>
+<h2 id="前言">前言</h2>
+<hr>
+<p>单线程的进程中仅有一个控制流。这种进程执行的代码无需可重入或线程安全。在多线程的程序中，同一函数或资源可能被多个控制流并发访问。为保护资源完整性，多线程程序编码必须可重入且线程安全。</p>
+<p>本节提供了一些编写可重入和线程安全程序的（指导）信息，但不包括编写线程高效程序的主题。线程高效程序是高效并行化的程序，仅可在程序设计中实现。现有的单线程程序可变得线程高效，但这需要完全地重新设计和重写。</p>
+<h2 id="1-理解可重入和线程安全">1. 理解可重入和线程安全</h2>
+<hr>
+<p>可重入和线程安全与函数处理资源的方式有关。可重入和线程安全是两个相互独立的概念：一个函数可以仅是可重入的，可以仅是线程安全的，可以两者皆是或两者皆不是。</p>
+<h3 id="11-可重入">1.1 可重入</h3>
+<hr>
+<p>可重入函数不能为后续的调用保持静态（或全局）数据，也不能返回指向静态（或全局）数据的指针。函数中用到的所有数据，都应由函数调用者提供（不包括栈上的局部数据）。可重入函数不能调用不可重入的函数。</p>
+<p>不可重入的函数经常（但不总是）可以通过其外部接口和用法识别。例如 strtok 是不可重入的，因为它保存着将被分隔为子串的字符串。ctime 也是不可重入的，它返回一个指向静态数据的指针，每次调用都会覆盖这些数据。</p>
+<h3 id="12-线程安全">1.2 线程安全</h3>
+<hr>
+<p>线程安全的函数通过“锁”来保护共享资源不被并发地访问。“线程安全”仅关心函数的实现，而不影响其外部接口。</p>
+<p>在 C 中，局部变量在栈上动态分配，因此，任何不使用静态数据和其它共享资源的函数就是最普通的线程安全（函数）。例如，以下函数就是线程安全的：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#6272a4">/* threadsafe function */</span>
+<span style="color:#8be9fd">int</span> <span style="color:#50fa7b">diff</span>(<span style="color:#8be9fd">int</span> x, <span style="color:#8be9fd">int</span> y)
+{
+        <span style="color:#8be9fd">int</span> delta;
+
+        delta <span style="color:#ff79c6">=</span> y <span style="color:#ff79c6">-</span> x;
+        <span style="color:#ff79c6">if</span> (delta <span style="color:#ff79c6">&lt;</span> <span style="color:#bd93f9">0</span>)
+                delta <span style="color:#ff79c6">=</span> <span style="color:#ff79c6">-</span>delta;
+
+        <span style="color:#ff79c6">return</span> delta;
+}
+</code></pre></div><p>使用全局数据是线程不安全的。应为每个线程维护一份全局数据的拷贝或封装全局数据，以使对它的访问变成串行的。线程可能读取另一线程造成的错误对应的错误码。在 AIX 系统中，每个线程拥有属于自己的错误码（errno）值。</p>
+<h2 id="2-如何编写可重入函数">2. 如何编写可重入函数</h2>
+<hr>
+<p>在大部分情况下，不可重入的函数修改为可重入函数时，必须修改函数的对外接口。不可重入的函数不能用于多线程。此外，也许不可能让某个不可重入的函数是线程安全的。</p>
+<h3 id="21-返回数据">2.1 返回数据</h3>
+<hr>
+<p>很多不可重入的函数返回一个指向静态数据的指针。这可通过两种方法避免：</p>
+<ul>
+<li>返回从堆中动态分配的数据（即内存空间地址）。在这种情况下，调用者负责释放堆中的存储空间。其优点是不必修改函数的外部接口，但不能保证向后兼容。现有的单线程程序若不修改而直接使用修改后的函数，将不会释放存储空间，进而导致内存泄露。</li>
+<li>由调用者提供存储空间。尽管函数的外部接口需要改变，仍然推荐使用这种方法。</li>
+</ul>
+<p>例如，将字符串转换为大写的 strtoupper 函数实现可能如下代码片段所示：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#6272a4">/* non-reentrant function */</span>
+<span style="color:#8be9fd">char</span> <span style="color:#ff79c6">*</span><span style="color:#50fa7b">strtoupper</span>(<span style="color:#8be9fd">char</span> <span style="color:#ff79c6">*</span>string)
+{
+        <span style="color:#ff79c6">static</span> <span style="color:#8be9fd">char</span> buffer[MAX_STRING_SIZE];
+        <span style="color:#8be9fd">int</span> index;
+
+        <span style="color:#ff79c6">for</span> (index <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">0</span>; string[index]; index<span style="color:#ff79c6">++</span>)
+                buffer[index] <span style="color:#ff79c6">=</span> toupper(string[index]);
+        buffer[index] <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">0</span>
+
+        <span style="color:#ff79c6">return</span> buffer;
+}
+</code></pre></div><p>该函数既不是可重入的，也不是线程安全的。使用第一种方法将其改写为可重入的，函数将类似于如下代码片段：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#6272a4">/* reentrant function (a poor solution) */</span>
+<span style="color:#8be9fd">char</span> <span style="color:#ff79c6">*</span><span style="color:#50fa7b">strtoupper</span>(<span style="color:#8be9fd">char</span> <span style="color:#ff79c6">*</span>string)
+{
+        <span style="color:#8be9fd">char</span> <span style="color:#ff79c6">*</span>buffer;
+        <span style="color:#8be9fd">int</span> index;
+
+        <span style="color:#6272a4">/* error-checking should be performed! */</span>
+        buffer <span style="color:#ff79c6">=</span> malloc(MAX_STRING_SIZE);
+
+        <span style="color:#ff79c6">for</span> (index <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">0</span>; string[index]; index<span style="color:#ff79c6">++</span>)
+                buffer[index] <span style="color:#ff79c6">=</span> toupper(string[index]);
+        buffer[index] <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">0</span>
+
+        <span style="color:#ff79c6">return</span> buffer;
+}
+</code></pre></div><p>更好的解决方案是修改接口。调用者须为输入和输出字符串提供存储空间，如下代码片段所示：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#6272a4">/* reentrant function (a better solution) */</span>
+<span style="color:#8be9fd">char</span> <span style="color:#ff79c6">*</span><span style="color:#50fa7b">strtoupper_r</span>(<span style="color:#8be9fd">char</span> <span style="color:#ff79c6">*</span>in_str, <span style="color:#8be9fd">char</span> <span style="color:#ff79c6">*</span>out_str)
+{
+        <span style="color:#8be9fd">int</span> index;
+
+        <span style="color:#ff79c6">for</span> (index <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">0</span>; in_str[index]; index<span style="color:#ff79c6">++</span>)
+        out_str[index] <span style="color:#ff79c6">=</span> toupper(in_str[index]);
+        out_str[index] <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">0</span>
+
+        <span style="color:#ff79c6">return</span> out_str;
+}
+</code></pre></div><p>通过使用第二种方法，不可重入的C标准库子例程被改写为可重入的。见下文讨论。</p>
+<h3 id="22-为连续调用保持数据">2.2 为连续调用保持数据</h3>
+<hr>
+<p>（可重入函数）不应为后续调用保持数据，因为不同线程可能相继调用同一函数。若函数需要在连续调用期间维持某些数据，如工作缓存区或指针，则该数据（资源）应由调用方函数提供调用者应该提供。</p>
+<p>考虑如下示例。函数返回字符串中的连续的小写字符。字符串仅在第一次调用时提供，类似 strtok 。当遍历至字符串末尾时，函数返回 0。函数实现可能如下代码片段所示：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#6272a4">/* non-reentrant function */</span>
+<span style="color:#8be9fd">char</span> <span style="color:#50fa7b">lowercase_c</span>(<span style="color:#8be9fd">char</span> <span style="color:#ff79c6">*</span>string)
+{
+        <span style="color:#ff79c6">static</span> <span style="color:#8be9fd">char</span> <span style="color:#ff79c6">*</span>buffer;
+        <span style="color:#ff79c6">static</span> <span style="color:#8be9fd">int</span> index;
+        <span style="color:#8be9fd">char</span> c <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">0</span>;
+
+        <span style="color:#6272a4">/* stores the string on first call */</span>
+        <span style="color:#ff79c6">if</span> (string <span style="color:#ff79c6">!=</span> <span style="color:#8be9fd;font-style:italic">NULL</span>) {
+                buffer <span style="color:#ff79c6">=</span> string;
+                index <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">0</span>;
+        }
+
+        <span style="color:#6272a4">/* searches a lowercase character */</span>
+        <span style="color:#ff79c6">for</span> (; c <span style="color:#ff79c6">=</span> buffer[index]; index<span style="color:#ff79c6">++</span>) {
+                <span style="color:#ff79c6">if</span> (islower(c)) {
+                        index<span style="color:#ff79c6">++</span>;
+                        <span style="color:#ff79c6">break</span>;
+                }
+        }
+        <span style="color:#ff79c6">return</span> c;
+}
+</code></pre></div><p>该函数是不可重入的。为使它可重入，静态数据（即index变量）需由调用者来维护。该函数的可重入版本实现可能如下代码片段所示：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#6272a4">/* reentrant function */</span>
+<span style="color:#8be9fd">char</span> <span style="color:#50fa7b">reentrant_lowercase_c</span>(<span style="color:#8be9fd">char</span> <span style="color:#ff79c6">*</span>string, <span style="color:#8be9fd">int</span> <span style="color:#ff79c6">*</span>p_index)
+{
+        <span style="color:#8be9fd">char</span> c <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">0</span>;
+
+        <span style="color:#6272a4">/* no initialization - the caller should have done it */</span>
+
+        <span style="color:#6272a4">/* searches a lowercase character */</span>
+        <span style="color:#ff79c6">for</span> (; c <span style="color:#ff79c6">=</span> string[<span style="color:#ff79c6">*</span>p_index]; (<span style="color:#ff79c6">*</span>p_index)<span style="color:#ff79c6">++</span>) {
+                <span style="color:#ff79c6">if</span> (islower(c)) {
+                        (<span style="color:#ff79c6">*</span>p_index)<span style="color:#ff79c6">++</span>;
+                        <span style="color:#ff79c6">break</span>;
+                  }
+        }
+        <span style="color:#ff79c6">return</span> c;
+}
+</code></pre></div><p>函数的接口和用法均发生改变。调用者每次调用时必须提供该字符串，并在首次调用前将索引（index）初始化为0，如下代码片段所示：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#8be9fd">char</span> <span style="color:#ff79c6">*</span>my_string;
+<span style="color:#8be9fd">char</span> my_char;
+<span style="color:#8be9fd">int</span> my_index;
+...
+my_index <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">0</span>;
+<span style="color:#ff79c6">while</span> (my_char <span style="color:#ff79c6">=</span> reentrant_lowercase_c(my_string, <span style="color:#ff79c6">&amp;</span>my_index)) {
+        ...
+}
+</code></pre></div><h2 id="3-如何编写线程安全的函数">3. 如何编写线程安全的函数</h2>
+<hr>
+<p>在多线程程序中，所有被多线程调用的函数都必须是线程安全的。然而，在多线程程序中可变通地使用线程不安全的子例程。注意，不可重入的函数通常都是线程不安全的，但将其改写为可重入时，一般也会使其线程安全。</p>
+<h3 id="31-对共享资源加锁">3.1 对共享资源加锁</h3>
+<hr>
+<p>使用静态数据或其它任何共享资源(如文件或终端)的函数，必须对这些资源加“锁”来串行访问，以使该函数线程安全。例如，以下函数是线程不安全的：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#6272a4">/* thread-unsafe function */</span>
+<span style="color:#8be9fd">int</span> <span style="color:#50fa7b">increment_counter</span>()
+{
+        <span style="color:#ff79c6">static</span> <span style="color:#8be9fd">int</span> counter <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">0</span>;
+
+        counter<span style="color:#ff79c6">++</span>;
+        <span style="color:#ff79c6">return</span> counter;
+}
+</code></pre></div><p>为使该函数线程安全，静态变量 counter 需要被静态锁保护，如下例（伪代码）所示：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#6272a4">/* pseudo-code threadsafe function */</span>
+<span style="color:#8be9fd">int</span> <span style="color:#50fa7b">increment_counter</span>();
+{
+        <span style="color:#ff79c6">static</span> <span style="color:#8be9fd">int</span> counter <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">0</span>;
+        <span style="color:#ff79c6">static</span> lock_type counter_lock <span style="color:#ff79c6">=</span> LOCK_INITIALIZER;
+
+        pthread_mutex_lock(counter_lock);
+        counter<span style="color:#ff79c6">++</span>;
+        pthread_mutex_unlock(counter_lock);
+        <span style="color:#ff79c6">return</span> counter;
+}
+</code></pre></div><p>在使用线程库的多线程应用程序中，应使用信号量互斥锁（mutex）来串行访问共享资源，独立库可能需要工作于线程上下文之外，因此使用其他类型的锁。</p>
+<h3 id="32-线程不安全函数的变通方案">3.2 线程不安全函数的变通方案</h3>
+<hr>
+<p>多线程变通地调用线程不安全函数是可能的。这在多线程程序使用线程不安全库时尤其有用，如用于测试或待该库的线程安全版本可用时再予以替换。该变通方案会带来一些开销，因为需对整个函数甚至一组函数进行串行化。</p>
+<ul>
+<li>对该库使用全局锁，每次使用库（调用库内子例程或使用库内全局变量）时均对其加锁，如下伪代码片段所示：</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#6272a4">/* this is pseudo code! */</span>
+
+lock(library_lock);
+library_call();
+unlock(library_lock);
+
+lock(library_lock);
+x <span style="color:#ff79c6">=</span> library_var;
+unlock(library_lock);
+</code></pre></div><p>该方案可能产生性能瓶颈，因为任一时刻仅有一个线程可访问库的任一部分。仅当不常访问库，或作为初步快速实现的权宜之计时可以采用该方案。</p>
+<ul>
+<li>对每个库组件（例程或全局变量）或一组组件使用锁，如下例伪代码片段所示：</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#6272a4">/* this is pseudo-code! */</span>
+
+lock(library_moduleA_lock);
+library_moduleA_call();
+unlock(library_moduleA_lock);
+
+lock(library_moduleB_lock);
+x <span style="color:#ff79c6">=</span> library_moduleB_var;
+unlock(library_moduleB_lock);
+</code></pre></div><p>该方案实现相比前者稍微复杂，但可提高性能。</p>
+<p>该方案应仅用于应用程序而非库，故可用互斥锁对库加锁。</p>
+<h2 id="4-可重入和线程安全库">4. 可重入和线程安全库</h2>
+<hr>
+<p>可重入和线程安全库广泛应用于并行（和异步）编程环境，而不仅仅用于线程内。因此，总是使用和编写可重入和线程安全的函数是良好的编程实践。</p>
+<h3 id="41-使用函数库">4.1 使用函数库</h3>
+<hr>
+<p>AIX 操作系统附带的几个代码库是线程安全的。在 AIX 当前版本中，以下库是线程安全的。</p>
+<ul>
+<li>C 标准函数库（libc.a）</li>
+<li>BSD兼容函数库（libbsd.a）</li>
+</ul>
+<p>某些标准 C 函数是不可重入的，如 ctime 和 strtok 。它们的可重入版本函数名是原始子例程名添加“_r”后缀。</p>
+<p>在编写多线程程序时，应使用子例程的可重入版本来替代原有版本。例如，以下代码片段：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">token[<span style="color:#bd93f9">0</span>] <span style="color:#ff79c6">=</span> strtok(string, separators);
+i <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">0</span>;
+<span style="color:#ff79c6">do</span> {
+        i<span style="color:#ff79c6">++</span>;
+        token[i] <span style="color:#ff79c6">=</span> strtok(<span style="color:#8be9fd;font-style:italic">NULL</span>, separators);
+} <span style="color:#ff79c6">while</span> (token[i] <span style="color:#ff79c6">!=</span> <span style="color:#8be9fd;font-style:italic">NULL</span>);
+</code></pre></div><p>在多线程程序中应替换为以下代码片段：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#8be9fd">char</span> <span style="color:#ff79c6">*</span>pointer;
+...
+token[<span style="color:#bd93f9">0</span>] <span style="color:#ff79c6">=</span> strtok_r(string, separators, <span style="color:#ff79c6">&amp;</span>pointer);
+i <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">0</span>;
+<span style="color:#ff79c6">do</span> {
+        i<span style="color:#ff79c6">++</span>;
+        token[i] <span style="color:#ff79c6">=</span> strtok_r(<span style="color:#8be9fd;font-style:italic">NULL</span>, separators, <span style="color:#ff79c6">&amp;</span>pointer);
+} <span style="color:#ff79c6">while</span> (token[i] <span style="color:#ff79c6">!=</span> <span style="color:#8be9fd;font-style:italic">NULL</span>);
+</code></pre></div><p>线程不安全库可用于单线程程序中。程序员必须确保使用该库的线程唯一性；否则，程序行为不可预料，甚至可能崩溃。</p>
+<h3 id="42-改写函数库">4.2 改写函数库</h3>
+<hr>
+<p>以下几点展示了将现有库转换为可重入和线程安全库的主要步骤（仅适用于 C 语言代码库）。</p>
+<ul>
+<li>
+<p>识别对外的全局变量。这些变量通常在头文件中用 extern 关键字定义。</p>
+<p>应封装对外的全局变量。该变量应改为私有（在库源代码内用 static 关键字定义）。应创建（读写）该变量的子程序。</p>
+</li>
+<li>
+<p>识别静态变量和其他共享资源。静态变量通常用 static 关键字定义。</p>
+<p>任一共享资源均应与锁关联。锁的粒度及数目会影响库的性能。可使用“一次性初始化”特性（如 pthread_once ）来方便地初始化锁。</p>
+</li>
+<li>
+<p>识别不可重入函数并使之变为可重入函数。见“编写可重入函数”。</p>
+</li>
+<li>
+<p>识别线程不安全函数并使之变为线程安全函数。见“编写线程安全函数”。</p>
+</li>
+</ul>
+<h2 id="参考">参考</h2>
+<hr>
+<ul>
+<li><a href="https://www.ibm.com/docs/ar/aix/7.1?topic=programming-writing-reentrant-threadsafe-code">Writing reentrant and threadsafe code</a></li>
+</ul>
+<h2 id="公众号flowlet">公众号：Flowlet</h2>
+<hr>
+<img src="/img/qrcode_flowlet.jpg" width = 30% height = 30% alt="Flowlet" align=center/>
+<hr>
+
+
+                
+                
+<div class="entry-shang text-center">
+    
+	    <p> 「如果这篇文章对你有用,请随意打赏」</p>
+	
+	<button class="zs show-zs btn btn-bred">赞赏支持</button>
+</div>
+<div class="zs-modal-bg"></div>
+<div class="zs-modal-box">
+	<div class="zs-modal-head">
+		<button type="button" class="close">×</button>
+		<span class="author"><a href="https://flowlet.net"><img src="/img/favicon.png" />ZhangShuai&#39;s Blog</a></span>
+        
+	        <p class="tip"><i></i><span>如果这篇文章对你有用,请随意打赏</span></p>
+		
+ 
+	</div>
+	<div class="zs-modal-body">
+		<div class="zs-modal-btns">
+			<button class="btn btn-blink" data-num="2">2元</button>
+			<button class="btn btn-blink" data-num="5">5元</button>
+			<button class="btn btn-blink" data-num="10">10元</button>
+			<button class="btn btn-blink" data-num="50">50元</button>
+			<button class="btn btn-blink" data-num="100">100元</button>
+			<button class="btn btn-blink" data-num="1">任意金额</button>
+		</div>
+		<div class="zs-modal-pay">
+			<button class="btn btn-bred" id="pay-text">2元</button>
+			<p>使用<span id="pay-type">微信</span>扫描二维码完成支付</p>
+			<img src="/img/reward/wechat-2.png"  id="pay-image"/>
+		</div>
+	</div>
+	<div class="zs-modal-footer">
+		<label><input type="radio" name="zs-type" value="wechat" class="zs-type" checked="checked"><span ><span class="zs-wechat"><img src="/img/reward/wechat-btn.png"/></span></label>
+		<label><input type="radio" name="zs-type" value="alipay" class="zs-type" class="zs-alipay"><img src="/img/reward/alipay-btn.png"/></span></label>
+	</div>
+</div>
+<script type="text/javascript" src="/js/reward.js"></script>
+
+                
+
+                
+                <hr>
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2023/05/07/cs-virtual-memory/" data-toggle="tooltip" data-placement="top" title="计算机系统 Lecture 1：虚拟内存">&larr;
+                            Previous Post</a>
+                    </li>
+                    
+                    
+                </ul>
+                
+
+                
+
+
+
+            </div>
+
+            
+            
+            <div class="
+                col-lg-2 col-lg-offset-0
+                visible-lg-block
+                sidebar-container
+                catalog-container">
+                <div class="side-catalog">
+                    <hr class="hidden-sm hidden-xs">
+                    <h5>
+                        <a class="catalog-toggle" href="#">CATALOG</a>
+                    </h5>
+                    <ul class="catalog-body"></ul>
+                </div>
+            </div>
+            
+
+            
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/ebtables" title="ebtables">
+                            ebtables
+                        </a>
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/iptables" title="iptables">
+                            iptables
+                        </a>
+                        
+                        
+                        
+                        <a href="/tags/netfilter" title="netfilter">
+                            netfilter
+                        </a>
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/virtio" title="virtio">
+                            virtio
+                        </a>
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                    </div>
+                </section>
+                
+
+                
+                
+                <section>
+                    <hr>
+                    <h5>FRIENDS</h5>
+                    <ul class="list-inline">
+                        
+                        <li><a target="_blank" href="https://www.zhaohuabing.com/">Huabing Blog</a></li>
+                        
+                    </ul>
+                </section>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">                  
+                    
+                    <li>
+                        <a href="mailto:1171570958@qq.com">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fas fa-envelope fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		           
+                    
+                    <li>
+                        <a href="https://twitter.com/ShuaiZhang_CN">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    
+                    
+
+		            
+                    
+                    <li>
+                        <a target="_blank" href="/img/wechat_qrcode.jpg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-weixin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		            
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/ZhangShuai-CN">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		            
+                    
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://www.linkedin.com/in/flowlet">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		           
+                    
+                    
+                    
+                    
+                    
+                    
+            
+            
+            
+           
+                   <li>
+                       <a href='' rel="alternate" type="application/rss+xml" title="ZhangShuai&#39;s Blog" >
+                           <span class="fa-stack fa-lg">
+                               <i class="fas fa-circle fa-stack-2x"></i>
+                               <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                           </span>
+                       </a>
+                   </li>
+            
+             </ul>
+		<p class="copyright text-muted">
+                    Copyright &copy; ZhangShuai&#39;s Blog 2023
+                    <br>
+                    <a href="https://themes.gohugo.io/hugo-theme-cleanwhite">CleanWhite Hugo Theme</a> by <a href="https://zhaohuabing.com">Huabing</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=zhaohuabing&repo=hugo-theme-cleanwhite&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+
+
+<script>
+    function loadAsync(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+
+
+
+
+<script>
+    
+    if($('#tag_cloud').length !== 0){
+        loadAsync("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+
+<script>
+    loadAsync("https://cdn.jsdelivr.net/npm/fastclick@1.0.6/lib/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+
+
+
+
+<script type="text/javascript">
+    function generateCatalog(selector) {
+
+        
+        
+        
+        
+            _containerSelector = 'div.post-container'
+        
+
+        
+        var P = $(_containerSelector), a, n, t, l, i, c;
+        a = P.find('h1,h2,h3,h4,h5,h6');
+
+        
+        $(selector).html('')
+
+        
+        a.each(function () {
+            n = $(this).prop('tagName').toLowerCase();
+            i = "#" + $(this).prop('id');
+            t = $(this).text();
+            c = $('<a href="' + i + '" rel="nofollow">' + t + '</a>');
+            l = $('<li class="' + n + '_nav"></li>').append(c);
+            $(selector).append(l);
+        });
+        return true;
+    }
+
+    generateCatalog(".catalog-body");
+
+    
+    $(".catalog-toggle").click((function (e) {
+        e.preventDefault();
+        $('.side-catalog').toggleClass("fold")
+    }))
+
+    
+
+
+    loadAsync("\/js\/jquery.nav.js", function () {
+        $('.catalog-body').onePageNav({
+            currentClass: "active",
+            changeHash: !1,
+            easing: "swing",
+            filter: "",
+            scrollSpeed: 700,
+            scrollOffset: 0,
+            scrollThreshold: .2,
+            begin: null,
+            end: null,
+            scrollChange: null,
+            padding: 80
+        });
+    });
+</script>
+
+
+
+
+
+
+</body>
+</html>
