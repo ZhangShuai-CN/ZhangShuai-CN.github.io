@@ -61,7 +61,7 @@ home = ["HTML", "RSS", "Algolia"]
   reward = true 
   reward_guide = "如果这篇文章对你有用,请随意打赏" 
 
-  friends = true
+  friends = false
   bookmarks = true
   about_me = true
   
@@ -118,6 +118,19 @@ home = ["HTML", "RSS", "Algolia"]
   [[params.addtional_menus]]
   title =  "ABOUT"
   href =  "/about/"
+
+  # CERTIFIED/MY BOOKS
+  [params.publications]
+  title = "CERTIFIED"
+
+  [[params.publications.items]]
+  href = "Tencent Cloud Practitioner"
+  image = "/img/certified_tencent_cloud_practitioner.jpg"
+
+  # [[params.publications.items]]
+  # href = "Open Atom Open Source Ambassador"
+  # image = ""
+
 
 [outputFormats.Algolia]
 baseName = "algolia"
