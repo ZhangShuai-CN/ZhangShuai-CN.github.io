@@ -124,7 +124,7 @@ home = ["HTML", "RSS", "Algolia"]
   title = "CERTIFIED"
 
   [[params.publications.items]]
-  href = "Tencent Cloud Practitioner"
+  href = "https://flowlet.net/img/certified_tencent_cloud_practitioner.jpg"
   image = "/img/certified_tencent_cloud_practitioner.jpg"
 
   # [[params.publications.items]]
