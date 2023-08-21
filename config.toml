@@ -40,10 +40,9 @@ home = ["HTML", "RSS", "Algolia"]
   # Sidebar settings
   sidebar_about_description = "Cloud Network Engineer, Open Source Enthusiast"
   sidebar_avatar = "img/avatar_zhangshuai.jpg"      # use absolute URL, seeing it's used in both `/` and `/about/`
-  #sidebar_avatar = "img/zhangshuai.jpg"      # use absolute URL, seeing it's used in both `/` and `/about/`
 
   featured_tags = true 
-  featured_condition_size = 1 
+  featured_condition_size = 1
 
   # Baidu Analytics
   ba_track_id = ""
@@ -119,17 +118,19 @@ home = ["HTML", "RSS", "Algolia"]
   title =  "ABOUT"
   href =  "/about/"
 
-  # CERTIFIED/MY BOOKS
-  [params.publications]
-  title = "CERTIFIED"
-
-  [[params.publications.items]]
-  href = "https://flowlet.net/img/certified_tencent_cloud_practitioner.jpg"
-  image = "/img/certified_tencent_cloud_practitioner.jpg"
+  # # CERTIFIED/MY BOOKS
+  # [params.publications]
+  # title = "CERTIFIED"
 
   # [[params.publications.items]]
-  # href = "Open Atom Open Source Ambassador"
-  # image = ""
+  # href = "https://www.openatom.org/"
+  # image = "/img/certified/open_atom_ambassador.jpg"
+
+  # [[params.publications.items]]
+  # href = "https://flowlet.net/img/certified/tencent_cloud_practitioner.jpg"
+  # image = "/img/certified/open_atom_ambassador.jpg"
+
+
 
 
 [outputFormats.Algolia]
