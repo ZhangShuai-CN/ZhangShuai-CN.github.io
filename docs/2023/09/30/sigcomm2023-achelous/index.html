@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    
+    <meta property="og:site_name" content="ZhangShuai&#39;s Blog">
+    <meta property="og:type" content="article">
+
+    
+    <meta property="og:image" content="/img/2023-09-30-sigcomm2023-achelous/background.jpg">
+    <meta property="twitter:image" content="/img/2023-09-30-sigcomm2023-achelous/background.jpg" />
+    
+
+    
+    <meta name="title" content="Achelous：超大规模云网络中如何实现网络的可编程性、弹性和可靠性 [SIGCOMM 2023]" />
+    <meta property="og:title" content="Achelous：超大规模云网络中如何实现网络的可编程性、弹性和可靠性 [SIGCOMM 2023]" />
+    <meta property="twitter:title" content="Achelous：超大规模云网络中如何实现网络的可编程性、弹性和可靠性 [SIGCOMM 2023]" />
+    
+
+    
+    <meta name="description" content="Achelous：Enabling Programmability, Elasticity, and Reliability in Hyperscale Cloud Networks">
+    <meta property="og:description" content="Achelous：Enabling Programmability, Elasticity, and Reliability in Hyperscale Cloud Networks" />
+    <meta property="twitter:description" content="Achelous：Enabling Programmability, Elasticity, and Reliability in Hyperscale Cloud Networks" />
+    
+
+    
+    <meta property="twitter:card" content="summary" />
+    
+    
+
+    <meta name="keyword"  content="张帅, zhangshuai, ZhangShuai, , 张帅的网络日志, 张帅的博客, ZhangShuai&#39;s Blog, 博客, 个人网站, 互联网, Web, 云原生, PaaS, Iaas, Kubernetes">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>Achelous：超大规模云网络中如何实现网络的可编程性、弹性和可靠性 [SIGCOMM 2023] | 张帅的博客 | ZhangShuai&#39;s Blog</title>
+
+    <link rel="canonical" href="/2023/09/30/sigcomm2023-achelous/">
+
+    
+    
+    
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    
+    <link rel="stylesheet" href="/css/hugo-theme-cleanwhite.min.css">
+
+    
+    <link rel="stylesheet" href="/css/zanshang.css">
+
+    
+    <link href="https://cdn.jsdelivr.net/gh/FortAwesome/Font-Awesome@5.15.1/css/all.css" rel="stylesheet" type="text/css">
+
+    
+    
+
+    
+    <script src="/js/jquery.min.js"></script>
+
+    
+    <script src="/js/bootstrap.min.js"></script>
+
+    
+    <script src="/js/hux-blog.min.js"></script>
+
+    
+    <script src="/js/lazysizes.min.js"></script>
+
+    
+    
+
+</head>
+
+
+
+
+
+
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+
+    <div class="container-fluid">
+        
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">ZhangShuai&#39;s Blog</a>
+        </div>
+
+        
+        
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">All Posts</a>
+                    </li>
+                    
+                        
+                        <li>
+                            <a href="/categories/tech/">tech</a>
+                        </li>
+                        
+                    
+                    
+		    
+                        <li><a href="/archive//">ARCHIVE</a></li>
+                    
+                        <li><a href="/notes//">NOTES</a></li>
+                    
+                        <li><a href="/about//">ABOUT</a></li>
+                    
+		            <li>
+                        <a href="/search"><i class="fa fa-search"></i></a>
+		           </li>
+                </ul>
+            </div>
+        </div>
+        
+    </div>
+    
+</nav>
+<script>
+    
+    
+    
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        
+            $navbar.className = " ";
+            
+            setTimeout(function(){
+                
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+
+
+<style type="text/css">
+    header.intro-header {
+        background-image: url('/img/2023-09-30-sigcomm2023-achelous/background.jpg')
+    }
+</style>
+
+<header class="intro-header" >
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/sigcomm-2023" title="SIGCOMM 2023">
+                            SIGCOMM 2023
+                        </a>
+                        
+                    </div>
+                    <h1>Achelous：超大规模云网络中如何实现网络的可编程性、弹性和可靠性 [SIGCOMM 2023]</h1>
+                    <h2 class="subheading">超大规模云网络中如何实现网络的可编程性、弹性和可靠性</h2>
+                    <span class="meta">
+                        
+                            Posted by 
+                            
+                                张帅
+                             
+                            on 
+                            Saturday, September 30, 2023
+                            
+                            
+                            
+                            
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+
+
+<article>
+    <div class="container">
+        <div class="row">
+
+            
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                
+                <hr>
+<h6 id="关于作者">关于作者</h6>
+<blockquote>
+<p><strong><code>张帅，网络从业人员，公众号：Flowlet</code></strong></p>
+<p><strong><code>个人博客：https://flowlet.net/</code></strong></p>
+</blockquote>
+<hr>
+<h2 id="序言">序言</h2>
+<hr>
+<p>笔者认为云网络中最核心的两点是：高性能与大规模。关于高性能网络的研究目前已经很多，在大规模网络方面早期 Google 云网络 Andromeda 提出了 Hoverboard 的解决方案。</p>
+<p>国内各大云厂商基于 Andromeda 的理念都衍生出了适合各自技术架构演进的高密度 VPC 解决方案，大规模网络由于涉及的组件较多，流量治理复杂，更能体现一家云厂商的综合工程能力。</p>
+<p>在刚刚过去的 SIGCOMM&rsquo;23，阿里云洛神云网络团队发表的《Achelous: Enabling Programmability, Elasticity, and Reliability in Hyperscale Cloud Networks》被主会录用，该论文阐述了阿里云在大规模云网络平台构建方面的经验。</p>
+<p>该论文基本上也是目前主流互联网云厂商应对大规模网络的解决方案，笔者认为很具有参考与学习意义，因此对该论文进行了翻译。</p>
+<h2 id="前言">前言</h2>
+<hr>
+<p>本文为译者根据原文意译，非逐词逐句翻译。由于译者水平有限，本文不免存在遗漏或错误之处。如有疑问，请查阅<a href="https://dl.acm.org/doi/10.1145/3603269.3604859">原文</a>。</p>
+<h2 id="摘要">摘要</h2>
+<hr>
+<p>云计算取得了巨大的增长，促使企业迁移到云端以获得可靠且按需购买的计算力。在单个 VPC 内，计算实例（如虚拟机、裸金属、容器）的数量已达到数百万级别，VPC 实例规模达到百万量级，将会对云网络的热迁移、高弹性、高性能和高可靠性都带来了前所未有的挑战。然而，学术届主要集中在高速数据平面和虚拟路由基础设施等具体问题上的研究上，而工业届现有的网络技术无法充分应对这些挑战。</p>
+<p>在本文中，我们将阐述阿里云网络虚拟化平台 Achelous 的相关设计和经验。Achelous 包含三个实现超大规模 VPC 的关键设计：</p>
+<ul>
+<li>
+<p>(𝑖) 一种基于数据平面和控制平面协同设计的新颖的分层编程架构；</p>
+</li>
+<li>
+<p>(𝑖𝑖) 分别用于无缝纵向扩展（scale-up）和横向扩展（scale-out）的弹性性能策略和分布式 ECMP 方案；</p>
+</li>
+<li>
+<p>(𝑖𝑖𝑖) 健康检查方案和透明的虚拟机实时迁移机制，可以确保故障转移期间的状态流（stateful flow）的连续性。</p>
+</li>
+</ul>
+<p>评估结果表明，Achelous 可以在减少 25 倍的编程时间（配置变更）的前提下，将单个 VPC 中将虚拟机的规模扩展到超过 1,500,000，并且 99% 的配置更新都可以在 1 秒内完成。</p>
+<p>对于故障转移（failover），它将虚拟机热迁移期间的停机时间压缩了 22.5 倍，并确保了 99.99% 的应用程序不会出现停顿。更重要的是，三年的运营经验证明了 Achelous 的耐用性，以及独立于任何特定硬件平台的多功能性。</p>
+<h2 id="1-介绍">1. 介绍</h2>
+<hr>
+<p>多年来，云计算持续增长，有前景的新兴云服务（如无服务（serverless）、AI 训练和数字办公）更加强化了这一趋势。大型企业将业务迁移至云端，以寻求灵活的扩展能力来应对不断变化的业务需求，这往往会带来网络峰谷现象。同时，租户期望云中的网络服务能像物理网络一样可靠。这些综合需求对云网络的设计提出了重大挑战。然而，学术研究主要集中在高速数据平面和虚拟路由基础设施等具体问题上，而现有的工业网络技术难以支持超大规模的云网络。例如，Google 在其虚拟云网络 Andromeda 中提出了 Hoverboard，以便在其云网络中能够提供高性能、隔离的超大规模 VPC。然而，这些技术不足以解决现代云中应用带来的网络可扩展性和突发性的性能问题等更重大挑战。</p>
+<p>我们的经验告诉我们，整个云网络系统（控制器、网关和 vSwitches 等）构成一个集成系统一起协调工作。在控制器、网关和 vSwitches 等网络基础设施之间如何分配云网络系统的功能非常重要。下面，我们将重点介绍下现代云环境中遇到的三个主要挑战。</p>
+<h3 id="挑战一百万级别实例的配置更新时间为亚秒级sub-second">挑战一：百万级别实例的配置更新时间为亚秒级（sub-second）</h3>
+<hr>
+<p>第一个重大挑战源于电子商务业务（例如淘宝）在向云迁移的过程中，导致在单个 VPC 中部署了大量实例（例如VM、BM 和 Container）。</p>
+<p>
+  <img src="/img/2023-09-30-sigcomm2023-achelous/figure1.png" alt="">
+
+</p>
+<p>图 1 展示了阿里巴巴单个 VPC 内电子商务实例呈现指数级增长的典型例子，到 2022 年单个 VPC 内将达到 1,500,000 个实例。超大规模网络呈现出两个关键特征：<strong>实例部署密度</strong>和<strong>实例创建/销毁频繁</strong>。例如，在流量高峰期间，我们可能需要额外启动 20,000 个容器实例，每个容器实例的生命周期只有几分钟。</p>
+<p>现有的网络编程方法无法同时处理如此大批量实例的创建和准备工作。例如，Andromeda 在论文中提出了一种可扩展到 100,000个（十万级别） 实例的设计，根据最新报告，AWS 支持每个 VPC 最多 256,000 个（二十五万级别）实例。然而，在阿里云内部，单个 VPC 需要支持的实例数量比任何现有技术所能容纳实例数量都要高出一个数量级。这些超大规模 VPC 的激增导致路由条目大幅增加以及高频率的网络变化，对网络收敛速度提出了挑战。具体来说，云供应商必须能够在有限的时间内提供服务，例如能够在 1 秒内启动大量网络连接准备就绪的 serverless 容器。</p>
+<h3 id="挑战二适合大流量网络中间设备middle-box云网关部署的高弹性网络">挑战二：适合大流量网络中间设备（middle-box/云网关）部署的高弹性网络</h3>
+<hr>
+<p>第二个重大挑战来自于将传统的重负载网络应用（例如 middle-box），迁移到云中的虚拟机 (VM) 上。最初，这些中间件（例如负载均衡器、NAT 网关和防火墙）部署在物理网络内的专用硬件上。将它们迁移到 VM 中可以提供网络按需弹性和进行企业成本优化的优势。然而，这种转换破坏了最初通过专用网络设备提供的隔离性，可能导致与同一主机上的其他实例发生资源争抢（网络和 CPU 资源）。此外，middle-box VM 必须表现出弹性可扩展性（包括纵向扩展（scale-up）和横向扩展（scale-out）），以有效处理因为客户的容量需求变换而导致的流量变化。</p>
+<p>不幸的是，现有的研究未能考虑到资源争抢的情况，因此不适合在多租户云主机上提供隔离但弹性的资源分配。在横向扩展（scale-out）场景方面，负载均衡和传统的 ECMP 路由机制引入了新的瓶颈。由于它们处理来自数百万个虚拟机的流量，集中式负载均衡器和 ECMP 转发节点成为网络可扩展的主要限制因素。</p>
+<h3 id="挑战三云服务高可用性和高可靠性">挑战三：云服务高可用性和高可靠性</h3>
+<hr>
+<p>对于云厂商来说，资源利用率和可靠性是云平台的重要指标。然而，检测故障并快速实现故障转移对云网络提出了重大挑战。虚拟网络和物理设备之间的动态映射使得建立精确的拓扑变得非常困难，这反过来又阻碍了故障遥测。现有的故障遥测技术要么关注于物理网络，要么缺乏实时性，无法保证虚拟网络的可靠性。更加复杂的是，大多数热迁移技术忽视了有状态流的流量连续性，从而导致租户服务中断。</p>
+<p>考虑到上述挑战，我们在三年前就开始重新构建我们的网络架构。我们发现当前无法通过独立的网络组件设计（即控制器、网关或 vSwitch）来满足这些要求。于是我们提出了阿里云的网络虚拟化平台 Achelous，可以在超大规模云网络中实现网络的可编程性、弹性和可靠性。我们重点介绍下基于我们丰富的运营经验总结出的三个主要设计点：</p>
+<p><strong>首先</strong>，为了解决转发表较大和收敛速度较慢的挑战，我们提出了一种新颖的编程机制，该机制按需主动从网关而不是从控制器学习转发信息。控制器只需将转发信息下发到网关，而不用下发到每台主机上的 vSwitch 上（§4.1）。我们还设计了一个轻量级的转发缓存，可以对网络进行 IP 粒度的有效管理，以进一步缩小表项结构的大小（§4.3）。</p>
+<p><strong>其次</strong>，为了在保证性能隔离的同时实现主机内的可扩展性，我们提出了一种新颖的弹性策略，以在隔离和突发流量之间取得平衡，并实现带宽和CPU资源的高利用率（§5.1）。此外，我们演示了一种分布式 ECMP 机制，将流量重定向到多个 vSwitch，以实现主机之间服务的无缝横向扩展（§5.2）</p>
+<p><strong>最后</strong>，我们提出了一种链路健康检查方案用来验证 vSwitch 和 VM 之间的网络链路状态，以及一个用于检测 vSwitch 本身状态的监视器（§6.1）。</p>
+<p>此外，我们还介绍了一系列透明的虚拟机实时迁移技术，包括流量重定向、会话重置和会话同步。这些技术缩短了 VM 迁移停机时间，在应用无感知的情况下支持无状态和有状态流的连续性（§6.2）。</p>
+<p>我们的部署和评估结果验证了这些设计选择是有效的。多年来 Achelous 一直是阿里巴巴 VPC 网络的基石，它显着改善了用户的用云体验。值得注意的是，99% 的服务启动延迟小于 1 秒，99.99% 的应用没有出现卡顿。经过多年的运营，我们相信 Achelous 的设计选择不仅可行而且非常有效，该经验教训（§8）可以广泛应用于其他云供应商。</p>
+<p>本文主要做出以下贡献：</p>
+<ul>
+<li>
+<p>我们提出了一种新颖的具有优化的表结构的按需主动学习编程机制，以加速超大规模 VPC 的网络覆盖。在包含超过 150 万 VM 实例的 VPC 中，配置可以在 1.33𝑠 内完成覆盖。与传统部署模式相比，我们的机制将配置收敛时间提高了 25 倍以上。</p>
+</li>
+<li>
+<p>我们提出了弹性网络容量策略和分布式 ECMP 机制，支持主机间隔离的前提下的纵向扩展和无缝横向扩展。对于重载网络服务，我们支持 0.3𝑠 以内无缝扩缩容。</p>
+</li>
+<li>
+<p>我们为 VM 设计了一整套故障检测和避免机制，其中包括丰富的健康检查方法和无缝热迁移方案。通过这些机制，VM 的故障转移延迟约为 100𝑚𝑠，从而不会影响 guest VM 内的应用程序。</p>
+</li>
+</ul>
+<h2 id="2-背景与动机">2. 背景与动机</h2>
+<hr>
+<p>Achelous 是阿里云的网络虚拟化平台，在过去十年中不断发展以支持阿里云虚拟网络。在经历了 Achelous 1.0 和 Achelous 2.0 阶段，它的性能得到了显着改进。</p>
+<p>随着云网络不断扩展，新的挑战不断出现，促使我们增强和迭代 Achelous 2.0。在本节中，我们将讨论 Achelous 的演变、Achelous 2.0 中的 VM 网络数据路径以及遇到的新的挑战。</p>
+<h3 id="21-achelous-在阿里云中的作用">2.1 Achelous 在阿里云中的作用</h3>
+<hr>
+<p>
+  <img src="/img/2023-09-30-sigcomm2023-achelous/figure2.png" alt="">
+
+</p>
+<p>在阿里云中，Achelous 通过三个基本组件提供 VM 网络虚拟化（如图 2 所示）：控制平面的 SDN 控制器，数据平面的vSwitch 和 Gateway。</p>
+<p>在控制平面上，控制器管理实例（例如虚拟机、裸金属）生命周期中的所有网络配置，并将网络规则发布到 vSwitch 和网关。例如，一旦创建了 VM 实例（例如 VM1），控制器会将所有现有 VM1 的网络转发信息发布到 vSwitch 和网关。然后，如果 VM1 的网络发生变化（例如迁移到另一台宿主机、增加新的网卡），控制器将更新并更正数据平面中的相应规则。</p>
+<p>在数据平面上，vSwitch 作为每个 Host 上专用于 VM 流量转发的交换节点。网关作为促进不同域之间的互连的更高层级转发组件。在图 2 中，我们提供了一个示例：</p>
+<p>当 VM1 的数据包被 vSwitch 处理时，它会确定适当的目的地。如果目的 VM 与 VM1位于同一宿主机上（例如 VM2），则vSwitch 直接转发数据包。否则，如果目标 VM 与 VM1 位于不同的宿主机上（例如裸金属），则数据包将通过网关进行中继。有关网关的更多详细信息，请参考阿里云关于 Sailfish 网关的相关论文，Sailfish 支持在各种硬件平台上进行部署。</p>
+<h3 id="22-achelous-的进化">2.2 Achelous 的进化</h3>
+<hr>
+<p>Achelous 的初始版本 Achelous 1.0 的开发始于十多年前，它为阿里云提供了基础的虚拟网络环境。由于其开发时间早于 VXLAN 标准的制定，Achelous 1.0 经历了从 classic 二层网络到标准 VPC overlay 网络的架构转变。这一演进通过 VXLAN 网络标识符 (VNI) 进行 Guest VM 的二层隔离，从而增强了网络的安全性。然而，由于 Achelous 1.0 数据平面通过基于 Linux 内核中的 netfilter 模块实现，这将始终成为网络瓶颈。</p>
+<p>在 Achelous 2.0 中，通过 DPDK 加速和硬件卸载，数据平面性能得到了显着提高。这些加速方法有效地减少了数据路径上的数据包 copy 开销，这对于转发性能来说至关重要。此外，Achelous 2.0 中的优化涉及 offload 东西向流量（VM-VM 流量）以缓解潜在的性能瓶颈。由于东西向流量占总流量的 3/4 以上，在依靠网关进行中继时会带来更明显的转发瓶颈。在 Achelous 2.0 中，控制器向 vSwitch 下发所有的东西向转发规则，以便 vSwitch 之间可以直接转发东西向流量（见图 2）。然而，这会带来<strong>挑战一（§2.4）</strong>，因为当网络发生变化时，每个 vSwitch 都要被下发正确的转发规则。</p>
+<h3 id="23-achelous-20-中的-vm-数据路径">2.3 Achelous 2.0 中的 VM 数据路径</h3>
+<hr>
+<p>为了读者对该平台能有更深入了解，我们简要介绍下 Achelous 2.0 的 VM 网络数据转发路径上的关键流程和数据结构。</p>
+<p>
+  <img src="/img/2023-09-30-sigcomm2023-achelous/figure3.png" alt="">
+
+</p>
+<p>Achelous 2.0 的 VM 网络数据转发路径（图 3）由两部分组成：慢速路径和快速路径。</p>
+<p><strong>慢速路径</strong>：包含一个由各种表组成的数据包处理 pipeline，每个表都提供特定的功能逻辑。这些表包括 ACL、QoS、VXLAN 路由表（VRT）、VM-HOST 映射表（VHT）（即 vm_ip - host_ip 映射关系）等。所有表均由控制器下发配置，其中 VHT 尤其重要。随着 VPC 内虚拟机数量的增加，VHT 大幅扩容，导致条目激增。</p>
+<p><strong>快速路径</strong>：针对快速路径我们首先引入一种称为 <strong>会话（session）</strong> 的新数据结构，它由一条流的两个方向的 flow entry（即原始方向的 oflow 和反向的 rflow）以及数据包所需的所有状态组成。</p>
+<p>flow entry 包含报文的五元组，采用精确匹配算法。报文处理流程如下：</p>
+<ul>
+<li>1）第一个报文通过慢速路径的 pipeline 进行处理；</li>
+<li>2）然后生成五元组 flow entry 表项及其会话，并将其添加到快速路径中；</li>
+<li>3）后续报文可以直接在快速路径上进行匹配和处理。</li>
+</ul>
+<p>Achelous 2.0 中快速路径和慢速路径之间的性能差距很大，快速路径比慢速路径表现出 7-8 倍的性能优势。这会导致专用于网络处理的 CPU 消耗和性能对于来自不同流的数据包有所不同。例如，具有大量短连接的 VM 可能会独占高达 90% 的 vSwitch CPU 资源，从而影响其他 VM 的转发。这加剧了<strong>挑战二</strong>（§2.4）。</p>
+<p>此外，对超大规模 VPC 网络的需求放大了 Achelous 2.0 数据平面和控制平面中设计“缺陷”，特别是在适应电子商务和 middle-box 迁移上云等新业务场景方面。</p>
+<h3 id="24-achelous-20-面临的挑战">2.4 Achelous 2.0 面临的挑战</h3>
+<hr>
+<p>与云厂商管理的有限 VPC 网络规模相比，超大规模 VPC 的新场景下部署下带来了三大严峻挑战：</p>
+<ul>
+<li>（1）<strong>路由表越大，收敛速度越慢。</strong></li>
+</ul>
+<p>最关键考虑因素之一是控制平面的可扩展性。一方面，大型网络的扩展性需要更大的路由表，例如 VHT 和 VRT，从而导致资源受限的 Host 或 DPU/CIPU 上的内存消耗增加。例如，在阿里云中，VPC 可以容纳超过150 万个 VM，从而导致表项数量庞大，并消耗数 GB 内存来实现高效的数据包转发。</p>
+<p>另一方面，还存在管理大量表项并发条目变更请求的问题。我们的实证分析表明，控制平面每天收到超过 1 亿次网络变更请求。如此大量请求的涌入对网络收敛提出了挑战，而网络收敛是网络弹性扩展和故障转移的关键因素。</p>
+<ul>
+<li>（2）<strong>在保证公平性和隔离性的同时平衡闲置资源和突发流量。</strong></li>
+</ul>
+<p>随着 VM 部署密度的不断增加，对网络弹性可扩展能力的需求也日益迫切。通过在阿里云的实际运行情况进行分析，我们揭示了以下发现：</p>
+<p>
+  <img src="/img/2023-09-30-sigcomm2023-achelous/figure4.png" alt="">
+
+</p>
+<ul>
+<li>1）超过 98% 的虚拟机平均吞吐量低于 10Gbps，表明网络资源严重闲置（见图 4a）；</li>
+<li>2）网络流量突发每天都会发生，导致数据平面带宽和 CPU 资源的竞争（见图 4b）；</li>
+</ul>
+<p>例如，视频会议服务在上班时间会出现流量突发的情况，同时在下班时间只有较少的带宽。为了平衡闲置资源和突发流量，在保持公平性和隔离性的同时资源分配实现高弹性势在必行。此外，大流量租户在面临流量突发时需要具有跨多个 Host 的无缝弹性扩展能力。</p>
+<ul>
+<li>(3) <strong>检测网络风险并在租户无感知的情况下逃逸。</strong></li>
+</ul>
+<p>随着 VPC 网络配置的日益复杂，保证网络的高可靠性至关重要。传统上，网络运维严重依赖人工干预，导致缺乏故障预测的能力。</p>
+<p>租户报障通常需要花费大量时间和精力来进行定位和解决。尽管我们已经开发了各种网络故障定位技术，但在租户报障之前进行故障检测仍是一个挑战。</p>
+<p>在超大规模 VPC 的背景下，为了能够不间断地向租户提供服务，网络风险感知方法对于早期故障的检测与避免变得越来越重要。此外，无感知的热迁移技术对于帮助租户将 VM 从故障 Host 或网络进行迁移时确保流量不被中断至关重要。</p>
+<p>上述挑战促使我们重新思考 Achelous 中数据面和控制面的设计，并做出相应的创新。</p>
+<h2 id="3-设计概览">3. 设计概览</h2>
+<hr>
+<p>为了应对规模爆炸带来的挑战，我们在 Achelous 2.1 中进行了创新设计和改进。我们探索数据面和控制面之间的协同设计，避免单个组件过度优化。主要包含以下三个关键改进：</p>
+<ul>
+<li><strong>超大规模网络可编程性。</strong></li>
+</ul>
+<p>为了减少网络收敛时间并提高 Host 中的内存利用率，我们在 Achelous 2.1 中提出了转发信息主动学习机制（§4.1）。在该机制中，vSwitch 仅管理转发缓存，并通过路由同步协议（RSP）主动从网关学习路由信息。</p>
+<p>因此控制器只需要对网关进行网络编程，而不需要对每个 vSwitch 节点进行网络编程。这种方法可以通过高性能数据平面实现网络的快速更新，并确保以最短的收敛时间同步到受影响的 vSwitch。因此，我们可以避免在每台 Host 上存储完整的转发信息，从而将每台服务器的内存利用率和可扩展性提高了一个数量级。</p>
+<ul>
+<li><strong>网络容量弹性。</strong></li>
+</ul>
+<p>Achelous 通过无缝的纵向扩展和横向扩展以实现基于隔离的网络性能的高弹性。在数据面中，网络容量是通过专用 CPU 核心提供的，因此需要考虑所有可用的资源。 Achelous 2.1 采用弹性策略（§5.1）为 Host 内的所有虚拟机分配带宽和CPU 资源，不仅可以充分利用空闲资源应对突发流量，而且可以保证性能隔离。此外，为了在 Host 之间提供服务的无缝扩展，我们在每个 vSwitch（Achelous的边缘节点）中实现了分布式 ECMP 机制（§5.2），消除了与 undelay 网络集中部署相关的转发瓶颈。</p>
+<ul>
+<li><strong>网络风险感知和热迁移。</strong></li>
+</ul>
+<p>Achelous 执行网络链路健康检查，主动感知和预警发生的故障，例如网络发生拥塞或 VM halt（§6.1）。这涉及 vSwitch 根据预配置的检查列表向 VM 周期性的发送运行状况检查数据包。与此同时，vSwitch 自身向控制器报告性能统计数据，从而实现主动干预以减轻网络风险。一旦检测到风险，vSwitch 就会在控制器的指导下提供透明的虚机热迁移以进行故障转移。在迁移过程中，Achelous 实施流量重定向、会话重置和会话复制技术（§6.2），以满足不中断应用服务的网络属性（例如较短的停机时间、无状态流、有状态流和应用程序无感知）。</p>
+<h2 id="4-超大规模网络编程">4. 超大规模网络编程</h2>
+<hr>
+<p>在本节中，我们将介绍 Achelous 2.1 的设计，其目标是 §2.4 中的<strong>挑战一</strong>。我们详细介绍了为超大规模云网络开发的编程机制，命名为主动学习机制（ALM）。</p>
+<h3 id="41-alm-设计">4.1 ALM 设计</h3>
+<hr>
+<p><strong>问题与目标。</strong></p>
+<p>高内存消耗仍然是大规模转发表的关键挑战。在软转架构中，vSwitch 与 VM 共享 Host 的内存，超大规模转发表项使用了大量内存，可能会导致 Host 内存资源紧张。在硬转架构中，专用硬件上可用高速片上存储器的资源十分有限，进一步加剧了存储器资源的紧张。</p>
+<p>更糟糕的是，当大规模转发表遇到高并发的网络变更请求时，控制器无法及时通知到每个受影响的 vSwitch，控制器从而成为配置变更的瓶颈。因此，我们的目标是在 Achelous 中开发一种有效的编程机制用来服务于超大规模网络。</p>
+<p><strong>洞察力。</strong></p>
+<p>我们的主要观点是，数据中心网络为了处理故障、进行部署/升级服务、并适应网络流量的波动，需要不断的进行网络变更。</p>
+<p>因此，虚机或容器的位置可能会因虚机迁移、虚拟故障和虚机创建/释放事件而频繁变化。具体一点，就是 VXLAN 路由表（VRT）和虚机-宿主机映射表（VHT）会经历高频变更。另一方面，vSwitch 上的配置表（例如 ACL 和 QoS）更改频率较低。例如，租户安全组配置保持相对稳定，而 VHT 在业务扩展或收缩的过程中进行更新。因此，我们就可以将经常变更的表项转移到强大的网关上，从而合理的减少 vSwitch 的资源消耗，提高整体效率。</p>
+<p><strong>设计概述。</strong></p>
+<p>我们会根据长期的生产经验，持续对我们的 Achelous 设计进行迭代。</p>
+<p>
+  <img src="/img/2023-09-30-sigcomm2023-achelous/figure5.png" alt="">
+
+</p>
+<p>ALM 是我们在单 VPC 支持百万级 VM，迈向超大规模 VPC 的最新举措。如图 5 所示，ALM 需要对 Achelous 中的所有三个核心组件进行修改。 ALM 的核心思想是将控制器从下发网络变更的繁重负担中解放出来，让 vSwitch 按需主动通过网关同步转发规则。</p>
+<p>据此，我们进行了如下设计：</p>
+<ul>
+<li>1）轻量级转发表，命名为转发缓存（FC）表，以提高内存使用率；</li>
+<li>2）按需转发规则同步机制，以实现更快的网络收敛。</li>
+</ul>
+<h3 id="42-具有数据包分层处理路径的轻量级转发表">4.2 具有数据包分层处理路径的轻量级转发表</h3>
+<hr>
+<p><strong>轻量级转发表。</strong></p>
+<p>我们引入了轻量级转发缓存（FC）表以实现高效的软转发。vSwitch 不依赖 VRT/VHT 转发条目，而是利用从网关获知的紧凑的 “目的 IP -&gt; 下一跳” 映射关系。</p>
+<p>首先，以为目的 IP 为维度的转发 entry 更加紧凑并且可以覆盖更多的 VM-VM 的转发流量，因为 VM-VM 的多个流仅重用一个 entry。</p>
+<p>我们可以将以端口号为维度的流表条目减少到以 IP 为维度的流表条目，在极端情况下这可能会减少 65535 倍的存储空间。</p>
+<p>其次，通过从将基于流的转发表转变为基于 IP 的转发表，我们解决了可能利用元组空间爆炸 (TSE) 进行的漏洞攻击，TSE 是一种针对软件包分类器的 DOS 攻击。</p>
+<p><strong>分层的数据包处理路径。</strong></p>
+<p>如图 5 所示，在解析 VXLAN 数据包的内部报头的目标 IP 后，后续的数据包处理遵循分层的数据路径：</p>
+<ul>
+<li>
+<p>1）快速路径：快速路径与 §2.3 所述相同，作为与业务逻辑无关的高性能加速路径。在快路径中不匹配的报文将被上送到慢路径；</p>
+</li>
+<li>
+<p>2）慢速路径：慢速路径上原来的 VHT 和 VRT（见§2.3）被 FC 替换，但 ACL 和 QoS 表仍然保留。</p>
+</li>
+</ul>
+<p>慢速路径按需从网关获取转发信息更新 FC 表项，该表项很小，只需要占用很小的内存。</p>
+<p>具体来说，慢速路径根据每个数据包的 “Dst IP” 查找 FC。如果 FC 未命中，数据包将被上送到网关 ① ，并最终转发到目的地 ②。而命中 FC 的数据包将生成一条快速路径 entry 添加到快速路径表中，并将数据包直接路由到目的地 ③。</p>
+<p>Achelous 中的分层数据包处理设计简化了 vSwitch 内的转发表数据结构和数据包处理逻辑。通过利用网关存储和管理整套转发规则，vSwitch 可以按需同步转发条目，从而显着减少每个 vSwitch 节点的内存开销。</p>
+<p>这种设计方法还将 vSwitch 与复杂的路由逻辑解耦，从而提高转发性能、增强多功能性并简化维护。</p>
+<h3 id="43-转发规则按需同步机制">4.3 转发规则按需同步机制</h3>
+<hr>
+<p><strong>流量驱动的主动学习机制。</strong></p>
+<p>除了在数据面中的作用之外，Achelous 架构中的网关还充当控制面转发规则调度程序。 vSwitch 节点通过路由同步协议 (RSP)（私有协议）从网关按需学习转发规则。</p>
+<p>
+  <img src="/img/2023-09-30-sigcomm2023-achelous/figure6.png" alt="">
+
+</p>
+<p>如图 6 所示，RSP 有两种报文类型：请求报文和应答报文。请求报文包含流的五元组，应答报文包含相应请求的下一跳信息。</p>
+<p>vSwitch 根据流量时长、吞吐量等因素决定是否学习转发规则还是直接将流量发送到网关。当 vSwitch 需要学习转发规则时，它会构造 RSP 请求报文并发送给网关。网关随后解析请求报文，并收集特定的转发规则写入到回复数据包中。vSwitch 收到回复报文后，将相应的转发条目插入到转发缓存 (FC) 中。</p>
+<p><strong>周期性同步。</strong></p>
+<p>为了保证从网关学习到的 vSwitch FC 中已有表项的及时性，ALM 采用了周期性同步更新的策略。我们在 vSwitch 中创建了一个管理线程，每隔 50𝑚𝑠 遍历一次 FC 条目，用于检查每个条目的生命周期（上次更新与当前之间的间隔）是否超过某个阈值（例如 100𝑚𝑠）。如果生命周期超过阈值，vSwitch 会主动发送 RSP 请求 ④ 与网关进行数据核对。然后，vSwitch 根据网关 ⑤ 的 RSP 回复，在本地 FC 上执行相应的操作。</p>
+<p>例如，如果网关上的条目发生更改或被删除，vSwitch 将更新相应的本地 FC 条目。如果数据核对显示本地 FC 中的 entry 是最新的，则 vSwitch 将不会对 FC 进行操作。</p>
+<p><strong>减少开销。</strong></p>
+<p>为了减少网络中 RSP 数据包的数量，提高 ALM 的效率，我们在 ALM 中采用批处理设计。在 vSwitch 中，我们允许将多个查询请求封装到单个 RSP 数据包中。相应地，网关也可以实现批量处理，将多个响应封装在一个回复包中。</p>
+<p>我们在部署中验证了我们的设计，得到的结果是平均每个 RSP 请求数据包长度约为 200 字节，RSP 报文最大占用 &lt; 4% 的带宽（§7.1）。这与它为虚拟网络带来的更强大的功能相比，这种开销是可以接受的（必要时我们可以通过 RSP 协议协商租户连接的 MTU、加解密参数和其他功能）。</p>
+<h2 id="5-网络容量弹性">5 网络容量弹性</h2>
+<hr>
+<p>在本节中，为了解决 Achelous 2.0 中的<strong>挑战二</strong>（§2.4），我们首先引入单 Host 内的纵向扩展（scale-up）方案，该方案在性能隔离的前提下提供弹性。然后，我们将在 Host 集群中展示我们的横向扩展（scale-out）方案。</p>
+<h3 id="51-host-内的纵向扩展">5.1 Host 内的纵向扩展</h3>
+<hr>
+<p><strong>问题与目标。</strong></p>
+<p>弹性带宽被广泛研究，然而，仅对带宽指标进行监控并不能满足弹性要求。例如，当虚拟机出现突发的短连接时，虽然该虚拟机的带宽没有达到上限，但是反而会消耗更多的 vSwitch 的 CPU 资源。同一主机上的其他虚拟机无法获得足够的 CPU 资源，从而导致带宽下降，主机内租户 CPU 资源隔离被破坏。因此，我们需要在同一主机内的虚拟机 CPU 资源隔离的基础上提供弹性。</p>
+<p><strong>弹性和隔离。</strong></p>
+<p>为了解决这个问题，我们提出了监控两个维度指标的策略。</p>
+<p>第一个指标是虚拟机的 BPS/PPS，用 R<sup>B</sup> 表示，它直接限制了虚拟机的流量速率。
+第二个指标是 vSwitch 为 VM 传输流量所使用的 CPU cycle，用 R<sup>C</sup> 表示。</p>
+<p>这两个指标为每个虚拟机的弹性和隔离性的提供了系统保证。</p>
+<p><strong>弹性策略。</strong></p>
+<p>
+  <img src="/img/2023-09-30-sigcomm2023-achelous/algorithm1.png" alt="">
+
+</p>
+<p>如 Algorithm 1 所示，我们提出了一种弹性 credit 算法，用以实现带宽和 CPU 资源的高利用率。其核心思想是平衡 Host 内虚拟机的空闲 CPU 资源和突发流量之间的关系，使虚拟机可以利用主机的空闲 CPU 资源来处理短时的突发流量。</p>
+<p>主机上所有虚拟机的总带宽资源（CPU 资源）用 𝑅<sup>B</sup><sub>𝑇</sub> (𝑅<sup>C</sup><sub>𝑇</sub>) 表示。 VM 的实际带宽资源（CPU 资源）使用率用 𝑅<sup>B</sup><sub>vm</sub> (𝑅<sup>C</sup><sub>vm</sub>) 表示。我们为每个虚拟机设置的默认资源限制用 𝑅<sup>B</sup><sub>base</sub> (𝑅<sup>C</sup><sub>base</sub>) 表示。此外，每个虚拟机都有自己的信用值 𝐶𝑟𝑒𝑑𝑖𝑡<sup>B</sup> (𝐶𝑟𝑒𝑑𝑖𝑡<sup>C</sup>)。</p>
+<p>VM 可以消耗或累积其信用值。例如，如果 𝑅<sup>B</sup><sub>vm</sub> &lt; 𝑅<sup>B</sup><sub>base</sub> ，在空闲状态下，vSwitch 将给 VM 累积 𝐶𝑟𝑒𝑑𝑖𝑡<sup>B</sup> = 𝐶𝑟𝑒𝑑𝑖𝑡<sup>B</sup> + ( 𝑅<sup>B</sup><sub>base</sub> - 𝑅<sup>B</sup><sub>vm</sub>）的信用值。</p>
+<p>如果 𝑅<sup>B</sup><sub>vm</sub> &gt; 𝑅<sup>B</sup><sub>base</sub> ，在流量突发的情况下，vSwitch 将消耗 𝐶𝑟𝑒𝑑𝑖𝑡<sup>B</sup> = 𝐶𝑟𝑒𝑑𝑖𝑡<sup>B</sup> - ( 𝑅<sup>B</sup><sub>vm</sub> - 𝑅<sup>B</sup><sub>base</sub> ) × 𝐶，其中 0 &lt; 𝐶 ≤ 1 是 VM 的 credit 消耗率。</p>
+<p><strong>与令牌桶法的比较。</strong></p>
+<p>我们的信用算法优于的令牌桶算法。首先，信用消耗有特定的上限，这是信用算法与令牌桶的重要区别之一。
+其次，信用算法的通信开销低于令牌桶，因为它不需要在信用桶之间交换信息。此外，我们的方法可以抵御由于长时间大量资源占用而导致的 VM 隔离被破坏，例如 DDoS 攻击。</p>
+<h3 id="52-host-横向扩展">5.2 Host 横向扩展</h3>
+<hr>
+<p><strong>问题。</strong></p>
+<p>单主机内的纵向扩展无法满足租户不断增长的服务扩展需求。因此，利用 ECMP 来横向扩展主机间的服务能力势在必行。然而，ECMP 部署中的引入的集中式网关将成为阻碍网络扩展的新瓶颈。为此，我们在每个 vSwitch 节点上设计了分布式 ECMP 机制，以提供无缝的横向扩展。</p>
+<p><strong>分布式 ECMP。</strong></p>
+<p>
+  <img src="/img/2023-09-30-sigcomm2023-achelous/figure7.png" alt="">
+
+</p>
+<p>在此机制中，虚拟机可以创建 bonding vNIC 以实现 VPC 间的安全通信。如图 7 所示，Host1 上的租户 VM 创建了三个 bonding vNIC ，并将它们挂载到 service VPC 的 VM 中（如 “Middlebox” VPC 的 Host2、3 和 4 中的 VM 所示）。</p>
+<p>所有 bonding vNIC 共享一个主 IP （图中的 “192.168.1.2” ）和相同的安全组。然后控制器将相应的 ECMP 路由条目发布到 Host1 上的 vSwitch 中。这确保租户虚拟机的数据包可以发送到 “Middlebox” VPC 中相应的虚拟机进行处理。</p>
+<p>为了横向平滑扩容，如果 “Middlebox” VPC 中的虚拟机资源耗尽，则会自动创建额外的虚拟机并挂载到 bonding vNIC。随后，将会更新源 vSwitch 相应的 ECMP 条目，从而将流量重定向到新添加的虚拟机。值得注意的是，每个虚拟机都能够挂在来自不同 VPC 的多个 bonding vNIC。这使得 “Middlebox” VPC 中的虚拟机能够为来自不同 VPC 的大量虚拟机提供服务。</p>
+<p>分布式 ECMP 机制通过确保每个源虚拟机都与一个 vSwitch 关联来消除潜在的瓶颈，从而有效地重新分配流量。这种方法显着的增强了大流量需求服务的弹性能力。例如，阿里云云防火墙可以通过在其 VPC 上暴露 bonding vNIC 接口，为数百万租户提供安全检测服务。借助分布式 ECMP 机制提供的水平可扩展性，租户可以无缝地从增加的资源中受益，无需主动管理或调整 Middlebox 的可用性。</p>
+<p><strong>相比负载平衡的好处。</strong></p>
+<p>尽管 LB 架构可以提供与分布式 ECMP 机制类似的功能，但它们通常需要更多的租户配置。例如，随着流量的增加，中心化的 LB 节点可能会成为性能瓶颈，需要进行横向扩展，这伴随着租户侧 proxy 配置的变化。此外，LB 架构不支持每个租户单独安全组。假设多个租户使用同一个 LB 节点，但每个租户都需要特定的安全组规则，唯一的选择就是在 LB 节点后面的 vSwitch 上手动配置这些安全组规则。相比之下，分布式 ECMP 机制通过统一配置 bonding vNIC，可以实现网络配置的无缝同步，从而更容易实现企业服务的横向扩展。</p>
+<p><strong>分布式 ECMP 中的故障转移。</strong></p>
+<p>为了防止租户 VPC 的大量遥测流量导致服务 VPC 中的虚拟机崩溃，我们利用集中式的管理节点在分布式 ECMP 中进行健康检查。如图 7 所示，管理节点定期遥测 “Middlebox” 虚拟机所在的 vSwitch。然后管理节点维护 VM 的全局状态并与源侧 vSwitch 进行同步。一旦 vSwitch 出现故障（例如 Host4 上的 vSwitch），管理节点会通知源侧 vSwitch 更新相应的 ECMP 表（即删除 ECMP 表中的 Host4 表项），以避免出现丢包。</p>
+<h2 id="6-网络风险感知和热迁移">6 网络风险感知和热迁移</h2>
+<hr>
+<p>在本节中，我们将解决 Achelous 数据平面的最后一个挑战（§2.4）。我们首先介绍网络风险感知方案。具体来说，我们探测主机内部和主机之间的网络链路状态，并向控制平面上送即将到来的网络风险的警报。然后，我们提出用于故障恢复的无缝热迁移方案。</p>
+<h2 id="61-网络风险感知">6.1 网络风险感知</h2>
+<hr>
+<p><strong>问题与目标。</strong></p>
+<p>由于物理网络探测不涉及虚拟网络，因此许多虚拟网络错误无法通过以前的物理遥测方法发现。然而，超大规模 VPC 中异常网络事件非常频繁并且不可避免。如果不能及时、适当地解决这些问题，可能会导致小故障升级为严重的网络拥塞或应用故障。为此，我们在 Achelous 上设计了链路健康检查模块，用于监控超大规模网络的状态，以主动感知故障并进行早期预警。</p>
+<p>本模块重点关注两种类型的网络风险：</p>
+<ul>
+<li>1）网络链路运行状况，包括 VM-vSwitch、vSwitch-vSwitch 和 vSwitch-gateway 链路；</li>
+<li>2）虚拟网络设备状态信息，用于指示网络设备本身的运行状态。</li>
+</ul>
+<p>下面将两者的设计细节进行介绍：</p>
+<p><strong>链接健康检查。</strong></p>
+<p>
+  <img src="/img/2023-09-30-sigcomm2023-achelous/figure8.png" alt="">
+
+</p>
+<p>VM-vSwitch 健康检查和 vSwitch-vSwtich 健康检查分别是图 8 中的红色路径和蓝色路径。</p>
+<p>VM-vSwitch 表示从 vSwitch 到主机中 VM 的链路。 vSwitch 向虚拟机发送 ARP 请求，并获取虚拟机的 ARP 响应，以检查虚拟机的网络状态。</p>
+<p>vSwitch-vSwitch 是从一个 Host 上的 vSwitch 到其他主机上的 vSwitch 的链路。监控控制器系统配置检查表（即IP地址）后，链路健康检查模块向检查表中的虚拟机发送健康检查报文。然后，链路运行状况监视器分析响应的延迟并向控制面报告潜在的风险（例如，虚拟机故障和链路拥塞）。</p>
+<p>为了最大限度地减少健康检查数据包对数据面的侵入，我们将健康检查频率设置为 30𝑠 以减少额外的开销。同时，Achelous 以特定格式封装健康检查报文，仅将健康检查报文转发给链路健康监控器。</p>
+<p><strong>设备状态健康检查。</strong></p>
+<p>Achelous 除了检查链路的健康状态外，还检查虚拟网络设备的健康状态。</p>
+<p>首先，Achelous 监视设备的 CPU 负载和内存使用情况。同时，Achelous 监控网络性能，例如虚拟和物理网卡的丢包率。如果网络设备存在风险（例如 CPU 负载高、NIC 掉线率高、内存耗尽等），我们会将这些异常情况报告给控制器。然后，控制器将介入并启动故障恢复机制。健康检查机制让网络具有风险感知的能力，能够改变潜在风险，主动干预风险。</p>
+<h2 id="62-虚拟机透明热迁移">6.2 虚拟机透明热迁移</h2>
+<hr>
+<p><strong>问题与目标。</strong></p>
+<p>我们通过热迁移来执行故障恢复。然而，传统的热迁移机制没有考虑到有状态流量的连续性和租户无感。为了解决这个挑战，我们首先引入四个属性来保证虚拟机热迁移过程中的流量连续性。然后，我们将展示 Achelous 中为了满足这些特性热迁移方案的演变过程。</p>
+<p><strong>VM 热迁移的属性。</strong></p>
+<p>
+  <img src="/img/2023-09-30-sigcomm2023-achelous/table1.png" alt="">
+
+</p>
+<p>如表 1 所示，通过热迁移来进行故障恢复应满足以下属性：
+- 1）低停机时间：意味着热迁移过程中应实现流量的持续高吞吐量和毫秒级的停机时间。秒级宕机无法满足超大规模场景的需求；
+- 2）无状态流：我们应该快速重定向无状态流（例如 UDP 和 ICMP）；
+- 3）有状态流：意味着热迁移方案支持有状态流（例如 TCP 和 NAT），即流状态、会话信息甚至 ACL 安全组状态的自适应处理；
+- 4）应用无感知：是指热迁移方案要适应各种应用，原生应用不需要感知迁移过程。</p>
+<p><strong>VM 热迁移方案。</strong></p>
+<p>我们首先设计了一种流量重定向（TR）方案来转发无状态流量并满足低停机时间的要求。为了扩展 TR 方案以确保无状态流的连续性，我们提出了会话重置（SR）方案。然而，SR 方案需要修改 VM 中的客户端应用程序以响应热迁移期间的 TCP 重连接请求，这降低了厂商的服务的兼容性。</p>
+<p>最后，我们在 Achelous 中开发会话同步 (SS)方案，它可以按需同步必要的会话，并在迁移过程中保持会话连接状态。SS 方案确保了本机应用程序无感知的情况下保证状态流的连续性。</p>
+<p>
+  <img src="/img/2023-09-30-sigcomm2023-achelous/figure9.png" alt="">
+
+</p>
+<p>我们在图 9 中展示了这些所有方案。由于篇幅限制，我们将这些方案的热迁移详细步骤，放到了附录 B。</p>
+<p>我们的热迁移方案只有几毫秒的停机时间。因此，Achelous 数据面可以快速恢复无状态和有状态流，而无需感知本机客户端的应用服务。基于健康监控和故障预警，我们可以将虚拟机平滑的迁移到其他主机，避免可能发生的故障或快速从故障中进行恢复，极大提高了云网络的可靠性。</p>
+<h2 id="7-评估">7 评估</h2>
+<hr>
+<p>在本节中，我们首先介绍 ALM 在实际部署性能评估。然后，我们将评估弹性信用算法的有效性和鲁棒性。最后，我们测量热迁移方案的停机时间和数据流的连续性。在我们的评估中，我们收集了阿里云中部署 Achelous 的五个典型 region 的数据。这些 region 的实例规模从数百到数千万个不等。</p>
+<h3 id="71-alm-的有效性">7.1 ALM 的有效性</h3>
+<hr>
+<p><strong>编程时间。</strong></p>
+<p>
+  <img src="/img/2023-09-30-sigcomm2023-achelous/figure10.png" alt="">
+
+</p>
+<p>图 10 展示了 Achelous 在不同规模 region 的编程时间。我们可以看到：</p>
+<ul>
+<li>1）ALM 在我们的生产场景中收敛时间较短。例如，在含有 10<sup>6</sup> 个虚拟机的 VPC 中，平均编程时间为 1.334 秒，而预编程网关模型为 28.5 秒，比 ALM 大了 21.36 倍；</li>
+<li>2）ALM具有更好的可扩展性。随着虚拟机数量从 10 个增加到 10<sup>6</sup> 个，预编程网关模型的平均编程时间从 2.61s 变为 28.50s，增加了 10.9 倍。然而，ALM 的平均编程时间从 1.03 秒增加到 1.33 秒，仅增加了 0.3 秒。这表明 Achelous 有能力支持更高数量级的网络规模。</li>
+</ul>
+<p><strong>ALM 流量和 FC 条目。</strong></p>
+<p>
+  <img src="/img/2023-09-30-sigcomm2023-achelous/figure11.png" alt="">
+
+</p>
+<p>图 11 展示了 ALM 流量在不同 region 网络总流量中的占比（总流量从数百 Gbps 到数十 Tbps 的）。我们可以看到：
+- 1）ALM 流量占比非常低，不超过 4%，相较于其所带来的编程时间的降低来说是可以接受的；
+- 2）含有较小实例的 Region 相关路由规则也较少，因此 Region 越小，ALM 流量比例越低。</p>
+<p>
+  <img src="/img/2023-09-30-sigcomm2023-achelous/figure12.png" alt="">
+
+</p>
+<p>图 12 显示了典型 region 中 FC 表 entry 的 CDF（cumulative distribution function）统计。</p>
+<p>内存开销：使用 ALM 时，每个 vSwitch 平均消耗 1,900 个缓存条目。拥有 150 万虚拟机 VPC 的 FC 存储峰值为 3,700 个，远小于 𝑂（N<sup>2</sup>）。我们可以发现 ALM 节省了 95% 以上的内存，并且几乎不需要额外的开销就解决了超大规模云网络路由表的存储问题。</p>
+<h3 id="72-网络弹性能力">7.2 网络弹性能力</h3>
+<hr>
+<p><strong>弹性信用算法的效果。</strong></p>
+<p>
+  <img src="/img/2023-09-30-sigcomm2023-achelous/figure13.png" alt="">
+
+
+
+  <img src="/img/2023-09-30-sigcomm2023-achelous/figure14.png" alt="">
+
+</p>
+<p>为了验证弹性信用算法的效果，我们在同一台 Host 上设置了 VM1 和 VM2 的弹性网络实验，如图 13 和图 14 所示。我们将这两个 VM 中任意一个的 base 带宽限制为 1000 Mbps。</p>
+<p>共分为三个阶段：</p>
+<ul>
+<li>
+<p>1）在前 30 秒内，我们使用另一台主机上的两个 VM 分别向 VM1 和 VM2 发送稳定的 300 Mbps 流量。VM1 与 VM2 的 CPU 使用率均为 20%；</p>
+</li>
+<li>
+<p>2）之后，向 VM1 发送持续 30s 到 60s 的突发流。我们观察到 VM1 的带宽可以短暂达到 1500Mbps 左右。然后，VM1 消耗掉所有信用值，带宽并被限制到到 1000Mbps。 VM1 的 CPU 使用率短时间内达到 55%，随后回落至 40%；</p>
+</li>
+<li>
+<p>3）60秒后，我们向 VM2 发送小包（这将消耗更多的 CPU 资源），因此 VM2 的 CPU 利用率将达到 60%。 VM2 带宽可以达到 1200Mbps，而基于 CPU 的弹性信用算法则可以将其带宽限制在 1000Mbps。</p>
+</li>
+</ul>
+<p>因此，我们观察到 vSwitch 总是严格保证 VM1 分配的 CPU 资源至少为 40%（在资源抢夺的情况下），因此可以保证 VM1 的带宽基本不变。在实践中，我们基于 BPS-Based + CPU-Based 的方法也可以通过消除资源竞争来保证时延，99%的流量延迟在 300𝜇s 以内。</p>
+<p>
+  <img src="/img/2023-09-30-sigcomm2023-achelous/figure15.png" alt="">
+
+</p>
+<p>自从我们部署此机制以来，如图 15 所示，遭受资源（CPU/带宽）抢夺的主机平均数量减少了 86%。综上所述，我们采用基于 BPS-Based + CPU-Based 的弹性信用算法方法，无论在简单还是复杂的 VPC 场景下都可以保证隔离性并具有较高的弹性性能。</p>
+<p><strong>分布式ECMP机制的有效性。</strong></p>
+<p>关于分布式 ECMP 机制，我们将其部署在所有生产 region 中。通过无缝横向扩展，我们实现了在 0.3 秒内网络服务即可完成扩展和收缩。</p>
+<p>基于这些技术，我们已经实现阿里云 80% 的网络 middlebox（如 LB、NAT、VPN 网关等）以 NFV 的形式迁移到云上VM 。VM 的这些 middlebox 为数百万租户提供了高级网络服务。</p>
+<h3 id="73-健康检查和热迁移的有效性">7.3 健康检查和热迁移的有效性</h3>
+<hr>
+<p><strong>健康检查发现的异常情况。</strong></p>
+<p>如 §6.1 所述，Achelous 可以检测出链路故障和设备故障。通过健康检查预警，Achelous 可以提前让租户意识到可能发生的故障。</p>
+<p>
+  <img src="/img/2023-09-30-sigcomm2023-achelous/table2.png" alt="">
+
+</p>
+<p>表 2 说明 Achelous 能够检测出多类硬件故障（表 2 的第一部分）。其中，CPU 异常是最常见的故障类型，因为很多虚拟网络设备都是基于 CPU 进行转发（例如 vSwitch、网关）。</p>
+<p>此外，Achelous 可以检测出资源争夺情况（表 2 的第二部分），这可能会导致 VM 的网络发生抖动或性能下降。 Achelous 的健康检查机制可以进行扩展，未来我们可以添加更多监控指标，以快速发现其他类型的故障。</p>
+<p><strong>热迁移期间的停机时间。</strong></p>
+<p>我们测量 ICMP 和 TCP 流量的停机时间、热迁移和重新连接之间的时间间隔。</p>
+<p>具体来说，我们首先顺序发送 ICMP 探测。通过统计热迁移过程中数据包的丢包量，来计算停机时间。其次，我们在虚拟机之间建立 TCP 连接，我们通过检查 TCP 序列号来得出停机时间。</p>
+<p>
+  <img src="/img/2023-09-30-sigcomm2023-achelous/figure16.png" alt="">
+
+</p>
+<p>图16 展示了 TR 方案和传统无重定向方案的停机时间。我们观察到 TR 可以大大减少热迁移过程中的停机时间，TR 的停机时间为 400ms，在 ICMP 和 TCP 场景下分别比传统方法快 22.5 倍和 32.5 倍。</p>
+<p><strong>会话重置和会话同步的有效性。</strong></p>
+<p>
+  <img src="/img/2023-09-30-sigcomm2023-achelous/figure17.png" alt="">
+
+</p>
+<p>在图 17 中，如果应用程序具有自动重连功能（见绿线），它将在 32s（Linux 系统配置的默认值）内重启应用程序连接。</p>
+<p>否则（见红线），在虚拟机热迁移过程中连接将会被丢失。相比之下，我们 TR + SR 仅引入 1 秒的停机时间。因此，我们的 TR + SR 可以成功减少应用程序重连之前的等待时间。</p>
+<p>
+  <img src="/img/2023-09-30-sigcomm2023-achelous/figure18.png" alt="">
+
+</p>
+<p>在目标虚拟机配置了 ACL 规则的场景中，该规则仅允许源虚拟机进入并拒绝任何其他虚拟机的流量。如图 18 所示，我们观察到由于热迁移后新的 vSwitch 中缺少 ACL 规则，TR + SR 下的连接将被阻塞，导致报文无法进行转发。</p>
+<p>相比之下，我们的 TR + SS 方案使 vSwitch 能够进行会话同步，连接不会被阻止。该方案仅引入了约 100𝑚𝑠 的故障恢复延迟。我们的结论是，Achelous 热迁移方案不仅实用而且低延迟，同时保证有状态流的连续性。</p>
+<h2 id="8-经验">8 经验</h2>
+<hr>
+<p>Achelous 已在我们的超大规模 VPC 中部署多年，提高了阿里云可服务性。即使面临网络规模不断扩大，突发流量和恶意攻击不断等生产挑战，它仍然为租户提供了良好的体验。除了论文中的设计之外，我们将在本节分享我们积累的云网络研发经验。</p>
+<h3 id="81-部署问题">8.1 部署问题</h3>
+<hr>
+<p><strong>Achelous 设计是否可以用于硬件卸载架构？</strong></p>
+<p>随着硬件卸载已经成为趋势，各大云厂商都通过部署 SmartNIC 或基于 CIPU 的 vSwitch 来提升 VM 的网络性能。然而事实是，FPGA 等非 CPU 硬件由于迭代效率问题，并且缺乏足够的灵活性，无法独立实现云中 vSwitch 的所有功能。所以对于 Achelous 来说，硬件扮演着加速缓存的角色（就像 §2.3 中提到的快速路径）。CIPU 的硬件卸载不会影响本文的协同设计，阿里巴巴近年来在硬件卸载加速方面的经验也证明了这些协同设计可以很好地服务于基于 SoC 的 vSwitch。</p>
+<p><strong>Achelous 可以在不基于阿里云的架构提供服务吗</strong></p>
+<p>Achelous 2.0 的主要致力于解决超大规模 VPC 所遇到的难题。这些设计都不是基于阿里云专用硬件平台或软件框架来实现。因此可以在任何硬件和软件平台上轻松实现。随着云计算市场的增长，其他中小型云供应商很快就会面临像我们一样规模的问题，他们将从我们的经验中受益。</p>
+<h3 id="82-得到教训">8.2 得到教训</h3>
+<hr>
+<p><strong>协同设计是云网络的趋势。</strong></p>
+<p>由于摩尔定律失效，单个模块的过度设计很难获得良好的效益。硬件卸载也并不意味着在复杂场景下能始终提供稳定的高性能。因此，不同网络组件之间的协同设计对于更高质量的虚拟网络来说是极其必要的。以 ALM 机制（§4.1）为例，在如此庞大且多变的网络中，如果没有网关、控制器和 vSwitch 的配合，就无法实现快速收敛。我们相信，在未来，协同设计将发挥更加关键的作用，并且超越通过简单堆叠硬件资源所能实现的性能目标。</p>
+<p><strong>除了性能之外，快速迭代和灵活性对于网络转发组件来说至关重要。</strong></p>
+<p>转发组件的迭代速度将直接决定我们能够以多快的速度支持租户的新需求并修复现有的问题。这些功能对于云基础设施的发展至关重要。在实现过程中，我们需要兼顾架构设计的灵活性和高性能。在 Achelous 中，经过几年的迭代，我们采用了服务逻辑与加速路径解耦的设计。这使得我们能够在同一套业务逻辑下实现软件、硬件等不同形式架构的加速。</p>
+<h2 id="9-相关工作">9 相关工作</h2>
+<hr>
+<p>网络虚拟化一直是过去十年的研究热点。在数据面，最流行的开源项目 Open vSwitch 首先提出了快慢路径分离的设计理念。之后，又提出了一系列性能优化方法，例如用户态加速和硬件卸载。对于控制面，Google 提出了 B4，Azure 提出了 VFP，进一步丰富了 SDN 理论。随着云计算发展逐渐进入新的阶段，单方面的优化已经无法支撑日益增长的租户需求。因此，Achelous 提出了数据面和控制面的协同设计来支持 hyperscsale VPC 网络。我们将简要讨论与 Achelous 最相关的工作。</p>
+<p><strong>超大规模网络编程。</strong></p>
+<p>预编程模型是第一个用于 SDN 编程的模型。然而，它的编程开销随着 VPC 的大小呈平方增加，这对于超大型集群来说是不能接受的。 Andromeda 和 Zeta 结合了网关模型和按需模型的优点，使用中心化节点来执行卸载策略，它们选择的流粒度将使网关成为潜在的被重击者，而且也比 Achelous 更加繁重。</p>
+<p><strong>弹性。</strong></p>
+<p>关于网络带宽分配策略已经有许多深入研究的著作，然而，传统的带宽分配策略忽略了虚拟网络中多种资源的消耗。 Picnic 的作者提到有必要为租户分配网络专属 CPU 资源，但其缺乏统一的系统管理。 Achelous 对不同资源采用统一的资源分配算法，既保证了隔离性又适应了网络突发状况。另一方面，我们注意到目前还没有关于如何在虚拟网络中部署 ECMP 路由的论文。因此，我们提出分布式 ECMP 机制来克服集中式部署带来的性能瓶颈，并为租户提供轻松横向扩展的能力。</p>
+<p><strong>可靠性。</strong></p>
+<p>对于故障遥测，目前已经有很多论文致力于物理网络中的故障遥测，但由于它们大多数不能直接在虚拟网络中进行使用。因此，我们在 Achelous 中开发了一种虚拟网络遥测方法，以在租户感知之前感知故障并进行故障转移。对于热迁移，大多数现有工作都集中在主机资源迁移，例如裸金属云上的内存脏页或 SR-IOV 网络设备。khai 等人提出了一种通过多步迁移来减少停机时间并确保迁移过程中的流量连续性的方案，但其无法解决有状态流的连续性。在Achelous 中，采用基于 “TR + SS” 机制的热迁移来保证租户有状态服务的不中断。</p>
+<h2 id="10-结论">10 结论</h2>
+<hr>
+<p>随着云计算需求的不断增长，云供应商需要在单个 VPC 中托管数百万个实例。因此网络配置的快速收敛、高弹性、高可靠性变得极具挑战性。为此，我们提出了 Achelous，它为阿里云中的超大规模 VPC 已经提供了多年的高可服务性。</p>
+<p>在 Achelous 中，我们详细展示了它通过 ALM 机制、弹性网络容量策略、分布式 ECMP 机制和网络故障避免方案来实现超大规模 VPC。与数据面上现有的经过充分研究的设计相比，Achelous 开辟了一些关于如何确保云网络可服务性的研究方向，我们认为这是云供应商成功的关键指标。 Achelous 不依赖任何定制硬件，因此其他中小型云供应商可以从我们的设计和本文介绍的部署经验中受益。</p>
+<h2 id="参考">参考</h2>
+<hr>
+<ul>
+<li><a href="https://conferences.sigcomm.org/sigcomm/2023/program.html">Achelous：Enabling Programmability, Elasticity, and Reliability in Hyperscale Cloud Networks</a></li>
+</ul>
+<h2 id="公众号flowlet">公众号：Flowlet</h2>
+<hr>
+<img src="/img/qrcode_flowlet.jpg" width = 30% height = 30% alt="Flowlet" align=center/>
+<hr>
+
+
+                
+                
+<div class="entry-shang text-center">
+    
+	    <p> 「如果这篇文章对你有用,请随意打赏」</p>
+	
+	<button class="zs show-zs btn btn-bred">赞赏支持</button>
+</div>
+<div class="zs-modal-bg"></div>
+<div class="zs-modal-box">
+	<div class="zs-modal-head">
+		<button type="button" class="close">×</button>
+		<span class="author"><a href="https://flowlet.net"><img src="/img/favicon.png" />ZhangShuai&#39;s Blog</a></span>
+        
+	        <p class="tip"><i></i><span>如果这篇文章对你有用,请随意打赏</span></p>
+		
+ 
+	</div>
+	<div class="zs-modal-body">
+		<div class="zs-modal-btns">
+			<button class="btn btn-blink" data-num="2">2元</button>
+			<button class="btn btn-blink" data-num="5">5元</button>
+			<button class="btn btn-blink" data-num="10">10元</button>
+			<button class="btn btn-blink" data-num="50">50元</button>
+			<button class="btn btn-blink" data-num="100">100元</button>
+			<button class="btn btn-blink" data-num="1">任意金额</button>
+		</div>
+		<div class="zs-modal-pay">
+			<button class="btn btn-bred" id="pay-text">2元</button>
+			<p>使用<span id="pay-type">微信</span>扫描二维码完成支付</p>
+			<img src="/img/reward/wechat-2.png"  id="pay-image"/>
+		</div>
+	</div>
+	<div class="zs-modal-footer">
+		<label><input type="radio" name="zs-type" value="wechat" class="zs-type" checked="checked"><span ><span class="zs-wechat"><img src="/img/reward/wechat-btn.png"/></span></label>
+		<label><input type="radio" name="zs-type" value="alipay" class="zs-type" class="zs-alipay"><img src="/img/reward/alipay-btn.png"/></span></label>
+	</div>
+</div>
+<script type="text/javascript" src="/js/reward.js"></script>
+
+                
+
+                
+                <hr>
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2023/07/30/writing-reentrant-threadsafe-code/" data-toggle="tooltip" data-placement="top" title="如何编写可重入（Reentrant）且线程安全（Thread-safe）的代码 [译]">&larr;
+                            Previous Post</a>
+                    </li>
+                    
+                    
+                </ul>
+                
+
+                
+
+
+
+            </div>
+
+            
+            
+            <div class="
+                col-lg-2 col-lg-offset-0
+                visible-lg-block
+                sidebar-container
+                catalog-container">
+                <div class="side-catalog">
+                    <hr class="hidden-sm hidden-xs">
+                    <h5>
+                        <a class="catalog-toggle" href="#">CATALOG</a>
+                    </h5>
+                    <ul class="catalog-body"></ul>
+                </div>
+            </div>
+            
+
+            
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/ebtables" title="ebtables">
+                            ebtables
+                        </a>
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/iptables" title="iptables">
+                            iptables
+                        </a>
+                        
+                        
+                        
+                        <a href="/tags/netfilter" title="netfilter">
+                            netfilter
+                        </a>
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/virtio" title="virtio">
+                            virtio
+                        </a>
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                    </div>
+                </section>
+                
+
+                
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">                  
+                    
+                    <li>
+                        <a href="mailto:1171570958@qq.com">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fas fa-envelope fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		           
+                    
+                    <li>
+                        <a href="https://twitter.com/ShuaiZhang_CN">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    
+                    
+
+		            
+                    
+                    <li>
+                        <a target="_blank" href="/img/wechat_qrcode.jpg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-weixin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		            
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/ZhangShuai-CN">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		            
+                    
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://www.linkedin.com/in/flowlet">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		           
+                    
+                    
+                    
+                    
+                    
+                    
+            
+            
+            
+           
+                   <li>
+                       <a href='' rel="alternate" type="application/rss+xml" title="ZhangShuai&#39;s Blog" >
+                           <span class="fa-stack fa-lg">
+                               <i class="fas fa-circle fa-stack-2x"></i>
+                               <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                           </span>
+                       </a>
+                   </li>
+            
+             </ul>
+		<p class="copyright text-muted">
+                    Copyright &copy; ZhangShuai&#39;s Blog 2023
+                    <br>
+                    <a href="https://themes.gohugo.io/hugo-theme-cleanwhite">CleanWhite Hugo Theme</a> by <a href="https://zhaohuabing.com">Huabing</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=zhaohuabing&repo=hugo-theme-cleanwhite&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+
+
+<script>
+    function loadAsync(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+
+
+
+
+<script>
+    
+    if($('#tag_cloud').length !== 0){
+        loadAsync("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+
+<script>
+    loadAsync("https://cdn.jsdelivr.net/npm/fastclick@1.0.6/lib/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+
+
+
+
+<script type="text/javascript">
+    function generateCatalog(selector) {
+
+        
+        
+        
+        
+            _containerSelector = 'div.post-container'
+        
+
+        
+        var P = $(_containerSelector), a, n, t, l, i, c;
+        a = P.find('h1,h2,h3,h4,h5,h6');
+
+        
+        $(selector).html('')
+
+        
+        a.each(function () {
+            n = $(this).prop('tagName').toLowerCase();
+            i = "#" + $(this).prop('id');
+            t = $(this).text();
+            c = $('<a href="' + i + '" rel="nofollow">' + t + '</a>');
+            l = $('<li class="' + n + '_nav"></li>').append(c);
+            $(selector).append(l);
+        });
+        return true;
+    }
+
+    generateCatalog(".catalog-body");
+
+    
+    $(".catalog-toggle").click((function (e) {
+        e.preventDefault();
+        $('.side-catalog').toggleClass("fold")
+    }))
+
+    
+
+
+    loadAsync("\/js\/jquery.nav.js", function () {
+        $('.catalog-body').onePageNav({
+            currentClass: "active",
+            changeHash: !1,
+            easing: "swing",
+            filter: "",
+            scrollSpeed: 700,
+            scrollOffset: 0,
+            scrollThreshold: .2,
+            begin: null,
+            end: null,
+            scrollChange: null,
+            padding: 80
+        });
+    });
+</script>
+
+
+
+
+
+
+</body>
+</html>
