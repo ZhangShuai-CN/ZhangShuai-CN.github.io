@@ -27,7 +27,7 @@ URL: "/2023/11/21/SymbolicExecution-ConstraintSloving/"
 ## 序言
 - - -
 
-笔者最近在做通过符号执行（Symbolic Execution）与约束求解器（Constraint Solver）来自动生成 P4 程序的测试用例，符号执行属于形式化验证（Formal Verification）分类方法中的技术之一。
+笔者最近在做通过符号执行（Symbolic Execution）与约束求解器（Constraint Solver）来自动生成 P4 程序的测试用例，符号执行属于形式化验证（Formal Verification）类型的方法技术。
 
 根据软件测试 7 项基本原则中的第一条：Testing can show that defects are present, but cannot prove that there are no defects（测试只能证明软件有 Bug，但不能证明软件没 Bug），因此有必要针对软件程序通过形式验证（Formal Verification）的方式（即通过数学方法）来严格的证明系统没 Bug。
 
