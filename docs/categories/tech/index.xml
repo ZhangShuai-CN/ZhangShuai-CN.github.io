@@ -6,10 +6,19 @@
     <description>Recent content in Tech on ZhangShuai&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 30 Sep 2023 01:01:01 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 21 Nov 2023 01:01:01 +0000</lastBuildDate>
     
 	<atom:link href="https://flowlet.net/categories/tech/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>符号执行 (Symbolic Execution) 与约束求解 (Constraint Solving)</title>
+      <link>https://flowlet.net/2023/11/21/symbolicexecution-constraintsloving/</link>
+      <pubDate>Tue, 21 Nov 2023 01:01:01 +0000</pubDate>
+      
+      <guid>https://flowlet.net/2023/11/21/symbolicexecution-constraintsloving/</guid>
+      <description>关于作者 张帅，网络从业人员，公众号：Flowlet 个人博客：https://flowlet.net/ 序言 笔者最近在做通过符号执行（Symbo</description>
+    </item>
     
     <item>
       <title>Achelous：超大规模云网络中如何实现网络的可编程性、弹性和可靠性 [SIGCOMM 2023]</title>

@@ -8,7 +8,7 @@ date:       2023-11-21 01:01:01
 author:     "张帅"
 image: "/img/2023-11-21-SymbolicExecution-ConstraintSloving/background.jpg"
 showtoc: true
-draft: true
+draft: false
 tags:
     - Symbolic Execution
     - Constraint Sloving
@@ -31,7 +31,7 @@ URL: "/2023/11/21/SymbolicExecution-ConstraintSloving/"
 
 根据软件测试 7 项基本原则中的第一条：Testing can show that defects are present, but cannot prove that there are no defects（测试只能证明软件有 Bug，但不能证明软件没 Bug），因此有必要针对软件程序通过形式验证（Formal Verification）的方式（即通过数学方法）来严格的证明系统没 Bug。
 
-![](/img/2023-11-21-SymbolicExecution-ConstraintSolving/figure1-7-Testing-Principles.png)
+![](/img/2023-11-21-SymbolicExecution-ConstraintSloving/figure1-7-Testing-Principles.png)
 
 本文为**软件分析学科**中符号执行（Symbolic Execution）与约束求解（Constraint Solving）子系统的概念论述。
 
@@ -49,7 +49,7 @@ URL: "/2023/11/21/SymbolicExecution-ConstraintSloving/"
 
 经典符号执行的核心思想是通过使用符号值来代替具体值作为程序输入，并用符号表达式来表示与符号值相关的程序变量的值。在遇到程序分支指令时，程序的执行也相应地搜索每个分支，分支条件被加入到符号执行保存的程序状态 π 中，π 表示当前路径的约束条件。在收集了路径约束条件之后，使用约束求解器来验证约束的可解性，以确定该路径是否可达。若该路径约束可解，则说明该路径是可达的；反之，则说明该路径不可达，结束对该路径的分析。
 
-![](/img/2023-11-21-SymbolicExecution-ConstraintSolving/figure2.png)
+![](/img/2023-11-21-SymbolicExecution-ConstraintSloving/figure2.png)
 
 以图１中的示例代码为例来阐述符号执行的原理，程序第９行存在错误，我们的目标是要找到合适的测试用例来触发该错误。若使用随机生成测试用例对程序实行具体测试的方法，对于整型输入变量 x,y,z 而言，其取值分别有 2<sup>32</sup> 种，通过随机生成 x,y,z 取值作为程序测试的输入，则能够触发程序错误的可能性较小。而符号执行的处理是，使用符号值代替具体值，在符号执行的过程中，符号执行引擎始终保持一个状态信息，这个状态信息表示为 (pc,π,σ)，其中：
 
@@ -57,7 +57,7 @@ URL: "/2023/11/21/SymbolicExecution-ConstraintSloving/"
 ２) π 代指路径约束信息，表示为执行到程序特定语句需要经过的条件分支，以及各分支处关于符号值 α_i 的表达式。在分析的过程中，将其初始定义为 π＝true。
 ３) σ 表示与程序变量相关的符号值集，包括含有具体值和符号值 α<sup>i</sup> 的表达式。
 
-![](/img/2023-11-21-SymbolicExecution-ConstraintSolving/figure3.png)
+![](/img/2023-11-21-SymbolicExecution-ConstraintSloving/figure3.png)
 符号执行算法具体如算法１所示。
 
 首先，由于 x,y,z 是程序的输入，将 x,y,z 的值定义为符号变量 σ:α,β,γ，且由于还未执行到任何的条件分支，因此初始状态为 σ:{x→α,y→β,z→γ}；π＝true。
@@ -72,7 +72,7 @@ URL: "/2023/11/21/SymbolicExecution-ConstraintSloving/"
 
 传统符号执行在原理上是可以对程序路径进行全覆盖的，而且可以针对每一路径都生成符合该路径的测试用例。
 
-![](/img/2023-11-21-SymbolicExecution-ConstraintSolving/figure4.png)
+![](/img/2023-11-21-SymbolicExecution-ConstraintSloving/figure4.png)
 示例代码的程序执行树如图２所示。
 
 程序中有３个分支判断点，总共有６条路径，即符号执行引擎需要进行６次约束求解，并得到针对６条路径的测试用例。其中，求解约束 x≤０ ∩ y＜５ ∩ y＋z＞０得到的测试用例，执行结果为 a＝０,b＝１,c＝２，将触发程序错误。
@@ -87,7 +87,7 @@ URL: "/2023/11/21/SymbolicExecution-ConstraintSloving/"
 - - -
 混合执行结合使用具体执行和符号执行的软件测试技术，是动态符号执行的一种。其主要思想是用具体输入执行程序，在程序运行的过程中，通过程序插桩手段收集路径约束条件，按顺序搜索程序路径，利用约束求解器求解上一执行中收集到的约束集，从而得到下一次执行的测试用例；在下一次执行结束后，按一定的策略选择其中某一分支判断点进行约束取反，得到新的约束集，再用约束求解器对其进行求解，得到下一执行的测试用例。如此反复，可以避免执行重复路径，从而以尽可能少的测试集达到高测试覆盖的目的。
 
-![](/img/2023-11-21-SymbolicExecution-ConstraintSolving/figure5.png)
+![](/img/2023-11-21-SymbolicExecution-ConstraintSloving/figure5.png)
 
 以图１中给出的示例代码为例，解释混合测试的测试流程。图３给出了该程序的路径约束树，可以看出，该程序共有６条不同的路径，对于每一条路径，都有其对应的约束集。从路径约束树可以看出，该代码有５条正常执行结束的路径和１条错误路径。通过约束集确定程序执行的轨迹，引导程序沿设定的路径执行。对于示例程序而言，能够触发程序错误的约束集为 (x≤０)&(y＜５)&(y＋z＞０)，在程序执行过程中，收集并保存该执行路径的约束。为了对该代码路径进行全覆盖，程序将被执行６次，并且每次执行都是通过选取一个约束条件进行取反后再求解出新的测试用例，以测试另一路径。
 
@@ -136,7 +136,7 @@ URL: "/2023/11/21/SymbolicExecution-ConstraintSloving/"
 
 在该代码区域内的符号分析与全程序的符号分析过程一致，可以根据不同的约束信息求解生成不同的测试用例来对目标程序进行执行，在执行完第７行代码后，将符号变量 y 和 z 变换为具体值，即 y→０和 z→０，继续具体执行剩余代码，则本次执行完成。之后，依据符号分析的结果，随机对 x 取值，生成测试用例，如 x＝２,y＝６,z＝０，执行程序结果为 a＝－２,b＝０,c＝０，未触发程序错误，并继续生成测试用，例如 x＝－１,y＝２,z＝－３，执行程序，依据符号执行区域内的分支约束求解执行不同路径的测试用例，直到将目标符号分析区域的路径都执行完毕。由于 x 的取值始终是随机的，因此可能导致即使遍历了符号执行区域内的所有路径，最终也无法触发程序错误。唯有当符号执行区域执行到路径 y＜５ & y＋z＞０时，x 的取值刚好满足 x＜０，则会触发程序错误，即程序错误触发的情况仅以一定的概率发生。
 
-![](/img/2023-11-21-SymbolicExecution-ConstraintSolving/figure6.png)
+![](/img/2023-11-21-SymbolicExecution-ConstraintSloving/figure6.png)
 
 选择性符号执行的关键挑战在于使这种将符号方式和具体方式表示的数据与执行混合，同时须兼顾到分析的正确性和高效性。因此，需要在具体区域和符号区域设置明确的界限，并且数据必须能够在执行越过所设置的区域界限时，完成符号值域具体值间的转换，这也是选择性符号执行的贡献所在：正确执行一个真实系统及其必要的状态转换任务，在一定程度上达到了最大化本地执行的目的。
 
@@ -226,7 +226,7 @@ SMT（Satisfiability Module Theories， 可满足性模理论），是在SAT问�
 
 下面列举几种比较常见的SMT求解器（支持C/C++、Java、Python等主流编程语言的API）：
 
-![](/img/2023-11-21-SymbolicExecution-ConstraintSolving/figure7.png)
+![](/img/2023-11-21-SymbolicExecution-ConstraintSloving/figure7.png)
 
 ## 参考
 - - -
