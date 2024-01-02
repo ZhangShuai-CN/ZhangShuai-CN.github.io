@@ -4,16 +4,16 @@ title:      "使用 RDMA 增强微软 Azure 的云存储能力 [NSDI 2023]"
 subtitle:   "使用 RDMA 增强微软 Azure 的云存储能力"
 description: "Empowering Azure Storage with RDMA"
 excerpt: ""
-date:       2024-01-01 01:01:01
+date:       2024-01-03 01:01:01
 author:     "张帅"
-image: "/img/2024-01-01-empowering-azure-storage-with-rdma/background.jpg"
+image: "/img/2024-01-03-empowering-azure-storage-with-rdma/background.jpg"
 showtoc: true
 draft: true
 tags:
     - RDMA
     - Storage
 categories: [ Tech ]
-URL: "/2024/01/01/empowering-azure-storage-with-rdma/"
+URL: "/2024/01/03/empowering-azure-storage-with-rdma/"
 ---
 
 - - -
@@ -27,7 +27,7 @@ URL: "/2024/01/01/empowering-azure-storage-with-rdma/"
 ## 序言
 - - -
 
-NSDI 的全称是 Networked Systems Design and Implementation，是 USENIX 旗下的旗舰会议之一，也是计算机网络系统领域久负盛名的顶级会议。与网络领域的另一顶会 Sigcomm 相比，NSDI更加侧重于网络系统的设计与实现。
+NSDI 的全称是 Networked Systems Design and Implementation，是 USENIX 旗下的旗舰会议之一，也是计算机网络系统领域久负盛名的顶级会议。与网络领域的另一顶会 SIGCOMM 相比，NSDI更加侧重于网络系统的设计与实现。
 
 RDMA 在数据中心的主要应用场景是存储与 HPC/AI，微软目前在所有服务器上都部署了 RDMA 网卡，在微软 Azure 云中 RDMA 流量已经占到了整个数据中心流量的 70%，超过了传统的以太网流量。
 
