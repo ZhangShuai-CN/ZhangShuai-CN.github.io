@@ -6,10 +6,19 @@
     <description>Recent content in Categories on ZhangShuai&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 21 Nov 2023 01:01:01 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 02 Jan 2024 01:01:01 +0000</lastBuildDate>
     
 	<atom:link href="https://flowlet.net/categories/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>STARTUP</title>
+      <link>https://flowlet.net/categories/startup/</link>
+      <pubDate>Tue, 02 Jan 2024 01:01:01 +0000</pubDate>
+      
+      <guid>https://flowlet.net/categories/startup/</guid>
+      <description></description>
+    </item>
     
     <item>
       <title>Tech</title>

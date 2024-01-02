@@ -6,9 +6,9 @@ description: "How to become a professional CEO"
 excerpt: ""
 date:       2024-01-02 01:01:01
 author:     "张帅"
-image: "/img/2024-01-02-XiangLi-how-to-become-a-professional-CEO/background.jpg"
+image: "/img/2024-01-02-XiangLi-how-to-become-a-professional-CEO/background.png"
 showtoc: true
-draft: true
+draft: false
 tags:
     - XiangLi
     - Mogul
@@ -208,11 +208,11 @@ URL: "/2024/01/02/XiangLi-how-to-become-a-professional-CEO/"
 - - -
 
 **Bilibili (B站)：**
-{{< bilibili BV1kZ4y137gv >}}
+{{< bilibili BV1Ea4y1q78j >}}
 
 
 **Youtube：**
-{{< youtube cllc1ZGlhsQ >}}
+{{< youtube JqB48jthVPM >}}
 
 ## 参考
 - - -
