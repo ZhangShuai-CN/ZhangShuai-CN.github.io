@@ -4,16 +4,41 @@
   
   <url>
     <loc>https://flowlet.net/categories/</loc>
-    <lastmod>2024-01-02T01:01:01+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://flowlet.net/tags/mogul/</loc>
-    <lastmod>2024-01-02T01:01:01+00:00</lastmod>
+    <lastmod>2024-01-03T01:01:01+00:00</lastmod>
   </url>
   
   <url>
     <loc>https://flowlet.net/post/</loc>
+    <lastmod>2024-01-03T01:01:01+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://flowlet.net/tags/rdma/</loc>
+    <lastmod>2024-01-03T01:01:01+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://flowlet.net/tags/</loc>
+    <lastmod>2024-01-03T01:01:01+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://flowlet.net/categories/tech/</loc>
+    <lastmod>2024-01-03T01:01:01+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://flowlet.net/</loc>
+    <lastmod>2024-01-03T01:01:01+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://flowlet.net/2024/01/03/empowering-azure-storage-with-rdma/</loc>
+    <lastmod>2024-01-03T01:01:01+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://flowlet.net/tags/mogul/</loc>
     <lastmod>2024-01-02T01:01:01+00:00</lastmod>
   </url>
   
@@ -23,17 +48,7 @@
   </url>
   
   <url>
-    <loc>https://flowlet.net/tags/</loc>
-    <lastmod>2024-01-02T01:01:01+00:00</lastmod>
-  </url>
-  
-  <url>
     <loc>https://flowlet.net/tags/xiangli/</loc>
-    <lastmod>2024-01-02T01:01:01+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://flowlet.net/</loc>
     <lastmod>2024-01-02T01:01:01+00:00</lastmod>
   </url>
   
@@ -49,11 +64,6 @@
   
   <url>
     <loc>https://flowlet.net/tags/symbolic-execution/</loc>
-    <lastmod>2023-11-21T01:01:01+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://flowlet.net/categories/tech/</loc>
     <lastmod>2023-11-21T01:01:01+00:00</lastmod>
   </url>
   

@@ -6,10 +6,19 @@
     <description>Recent content in Posts on ZhangShuai&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 02 Jan 2024 01:01:01 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 03 Jan 2024 01:01:01 +0000</lastBuildDate>
     
 	<atom:link href="https://flowlet.net/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>使用 RDMA 提升微软 Azure 云的存储性能 [NSDI&#39;23]</title>
+      <link>https://flowlet.net/2024/01/03/empowering-azure-storage-with-rdma/</link>
+      <pubDate>Wed, 03 Jan 2024 01:01:01 +0000</pubDate>
+      
+      <guid>https://flowlet.net/2024/01/03/empowering-azure-storage-with-rdma/</guid>
+      <description>关于作者 张帅，网络从业人员，公众号：Flowlet 个人博客：https://flowlet.net/ 序言 NSDI 的全称是 Networked Systems Design and Implement</description>
+    </item>
     
     <item>
       <title>如何成为一个专业的 CEO [李想]</title>
