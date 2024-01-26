@@ -26,12 +26,13 @@ URL: "/2024/01/27/linux-conntrack-part1/"
 ## 序言
 - - -
 
-Linux 连接跟踪子系统（Linux Conntrack）是实现有状态包过滤与 NAT 功能的基础，一般工作中我们都将 Linux Conntrack 称之为 “CT”。此前也有很多关于 Linux Conntrack 内容的文章介绍，但这些文章都是基于较老的 kernel 版本，内容有点过时。本文基于 Linux kernel 5.10 LTS 版本对 Conntrack 的底层运作方式进行一个系统的介绍。
+Linux 连接跟踪子系统（Linux Conntrack）是实现带状态的包过滤与 NAT 功能的基础，一般工作中我们都将 Linux Conntrack 称之为 “CT”。此前也有很多关于 Linux Conntrack 的文章介绍，但这些文章都是基于较老的 kernel 版本进行讲解，内容有点过时了。本文基于 Linux kernel 5.10 LTS 对 Conntrack 的底层运作方式进行详细介绍。
 
-本文翻译自文章 [Connection tracking (conntrack)](https://thermalcircle.de/doku.php?id=blog:linux:connection_tracking_1_modules_and_hooks)，该文章主要分为三部分：
-* 第一部分：CT 系统概述，并详细说明了 CT 与 Netfilter 和 Nftables 等其他内核组件的关系。
-* 第二部分：源码级别介绍 CT 系统底层实现，并解释了连接跟踪表、连接查找和连接生命周期管理是如何工作的。
-* 第三部分：如何通过 IPtables/Nftables 分析和跟踪连接状态，并展示了 ICMP、UDP 和 TCP 等一些常见协议的 CT 示例。
+本文翻译自系列文章 [Connection tracking (conntrack)](https://thermalcircle.de/doku.php?id=blog:linux:connection_tracking_1_modules_and_hooks)，由于该系列文章篇幅过长，笔者打算分为以下三篇内容进行讲解：
+
+* 第一部分：CT 系统（CT System's）概述，详细说明了 CT 系统与 Netfilter 和 Nftables 等其他内核组件的关系。
+* 第二部分：CT 系统（CT System's）底层实现，详细说明了连接跟踪表（conntrack table）、连接查找和连接生命周期管理是如何工作的。
+* 第三部分：如何通过 IPtables/Nftables 分析和跟踪连接状态，并通过 ICMP、UDP 和 TCP 等一些常见协议示例进行说明。
 
 ## 前言
 - - -
@@ -41,24 +42,23 @@ Linux 连接跟踪子系统（Linux Conntrack）是实现有状态包过滤与 N
 ## 1. 概述
 - - -
 
-Conntrack 有什么作用？当 Linux 开启连接跟踪，连接跟踪（Linux kernel 内的 ct 系统）就会检查 IPv4/IPv6 数据包及其 payload，以确定哪些数据包之间彼此关联。ct 系统对于 endpoint 之间通信的过程来说是一个透明观测系统。连接的 endpoint 是 local 还是 remote，与 ct 系统无关。
+Conntrack 有什么作用？当 Linux 一旦激活连接跟踪，CT 系统就会检查 IPv4/IPv6 报文及其 payload，以确定哪些报文之间彼此关联。CT 系统并不参与端到端通信，而是透明的执行观测检查。一条连接的端点是本地还是远端都与 CT 系统无关。当端点位于远程主机上时，CT 系统仅在路由或桥接该报文的主机上进行观测。CT 系统维护其所有跟踪的连接实时列表。CT 系统为每个报文提供一个到其连接跟踪实例的引用（指针），在报文经过内核协议栈的时候对报文进行“分类”。其他内核组件可以根据此引用访问该报文所关联的连接跟踪实例并据此做出处理决策。
 
-endpoint 可能位于远程主机上，在这种情况下，ct 系统仅在路由或桥接特定连接数据包的主机上进行观测。或者，一个甚至两个 endpoint 都可以是同一主机上的本地套接字。ct 系统维护所有跟踪连接的最新（实时）列表。ct 系统为每个数据包提供一个到其连接跟踪实例的引用，在数据包遍历内核网络协议栈时对数据包进行“分类”。因此，其他内核组件可以访问该关联的连接跟踪实例并据此做出响应决策。
+Conntrack 最主要的应用是 NAT 子系统以及 Iptables 和 Nftables 的带状态包过滤/带状态包检测 (SPI：stateful packet inspection) 模块。CT 系统本身并不修改/操纵报文，因此 CT 系统一般不会主动丢包。在进行报文检查时主要检查报文的 3 层和 4 层信息，因此它能够跟踪 TCP、UDP、ICMP、ICMPv6、SCTP、DCCP 和 GRE 等连接。
 
-Conntrack 最主要的应用是 NAT 子系统以及 Iptables 和 Nftables 的有状态数据包过滤/有状态数据包检测 (SPI：stateful packet inspection) 模块。 ct 系统本身并不修改/操纵数据包，它通常并不会主动丢包。在检查报文内容时，其主要重点是 OSI 3 层和 4 层。它能够跟踪 TCP、UDP、ICMP、ICMPv6、SCTP、DCCP 和 GRE 连接。
-
-显然，ct 系统对“连接”的定义并不局限于面向连接的协议，因为刚才提到的几个协议都不是面向连接的。它例如将 ICMP echo-request 加 echo-reply  (ping) 视为“连接”并进行处理。 ct 系统提供了几个帮助/扩展组件，将其跟踪能力扩展到应用层，例如跟踪 FTP、TFTP、IRC、PPTP、SIP 等协议，这是实现诸如应用层网关的基础。
+CT 系统对“连接”的定义并不局限于面向连接的协议，例如，它将 ICMP echo-request 与 echo-reply (ping) 视为一条“连接”。CT 系统同时提供了一些扩展组件，可以将其连接跟踪能力扩展到应用层，例如，跟踪 FTP、TFTP、IRC、PPTP、SIP 等应用层协议，该能力是实现应用层网关的基础。
 
 ## 2. 模块自动加载
 - - -
 
-内核组件的实现细节很大程度上取决于内核实际的构建配置。我在这里描述的内容适用于在 Debian 上的内核配置；围绕 Netfilter 框架并在之上构建整个基础设施，该设施由大量相互独立的内核模块组成，这些模块之间具有复杂的依赖关系。其中许多模块会在需要时按需自动加载。因此，通常不需要管理员使用 modprobe 或 insmod 命令显式加载它们。为了实现这一点，Netfilter 基础设施使用内核模块 auto loader，它提供 request_module() 函数。当调用该函数时，它执行一个用户空间进程，该进程运行 modprobe (kmod) 命令来加载所请求的模块，包括该模块所依赖的所有其他模块。
+内核的实现细节很大程度上取决于内核的编译构建配置，本文以 Debian 系统为例进行讲解。
 
+围绕 Netfilter 框架并在其之上构建的整个基础设施由大量相互独立的内核模块组成，模块与模块之间具有复杂的依赖关系。其中许多模块通常不需要管理员使用 modprobe 或 insmod 命令显式加载，它们会按需自动加载。为了实现模块按需自动加载，Netfilter 通过调用 auto loader 内核模块提供的 request_module() 函数来实现这一点。当该函数被调用时，它通过执行一个运行 modprobe (kmod) 命令的用户态进程来加载所请求的模块以及该模块所依赖的所有模块。
 
 ## 3. nft_ct 模块
 - - -
 
-无论何时需要，ct 系统都会以这种方式按需加载。一些内核组件需要连接跟踪作为操作的基础，并且可以触发 ct 系统的加载。其中之一是 nft_ct 内核模块，它是 Nftables 的有状态包过滤模块。该模块在 Nftables 规则的数据包匹配部分提供所谓的 CONNTRACK EXPRESSIONS；有关详细信息，请参阅 man 8 nft。这些表达式始终以关键字 ct 开头，并且可以例如：用于根据数据包与 ct 系统连接跟踪的关系（ct state ...）来匹配数据包。让我们看一些例子。
+CT 系统会按模块自动加载的方式按需加载。一些内核组件需要使用连接跟踪特性，并能够触发 CT 系统模块的自动加载。以 nft_ct 内核模块为例，它是 Nftables 的带状态包过滤模块。该模块为 Nftables 数据包匹配规则提供连接跟踪表达式（CONNTRACK EXPRESSIONS）；这些表达式始终以关键字 ct 开头，并且可以例如：用于根据数据包与 ct 系统连接跟踪的关系（ct state ...）来匹配数据包。让我们看一些例子。
 
 ```shell
 nft add rule ip filter forward iif eth0 ct state new drop
