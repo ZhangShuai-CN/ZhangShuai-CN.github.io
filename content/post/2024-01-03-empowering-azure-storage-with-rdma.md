@@ -8,7 +8,7 @@ date:       2024-01-03 01:01:01
 author:     "张帅"
 image: "/img/2024-01-03-empowering-azure-storage-with-rdma/background.jpg"
 showtoc: true
-draft: true
+draft: false
 tags:
     - RDMA
 categories: [ Tech ]
