@@ -58,15 +58,18 @@ CT 系统对“连接”的定义并不局限于面向连接的协议，例如�
 ## 3. nft_ct 模块
 - - -
 
-CT 系统会按模块自动加载的方式按需加载。一些内核组件需要使用连接跟踪特性，并能够触发 CT 系统模块的自动加载。以 nft_ct 内核模块为例，它是 Nftables 的带状态包过滤模块。该模块为 Nftables 数据包匹配规则提供连接跟踪表达式（CONNTRACK EXPRESSIONS）；这些表达式始终以关键字 ct 开头，并且可以例如：用于根据数据包与 ct 系统连接跟踪的关系（ct state ...）来匹配数据包。让我们看一些例子。
+CT 系统会按模块自动加载的方式按需加载。一些内核组件需要使用连接跟踪特性，并能够触发 CT 系统模块的自动加载。以 nft_ct 内核模块为例，它是 Nftables 的带状态包过滤模块。该模块为 Nftables 提供基于连接跟踪表达式（CONNTRACK EXPRESSIONS）的报文匹配规则；这些表达式以 ct 关键字作为开头，并且可以根据 ct 的状态（ct state ...）来匹配报文。
 
 ```shell
 nft add rule ip filter forward iif eth0 ct state new drop
 nft add rule ip filter forward iif eth0 ct state established accept
 ```
-> 图 1：示例，将带有 CONNTRACK EXPRESSIONS 的 Nftables 规则添加到名为forward的链中
+> 图 1：示例，将基于连接跟踪表达式（CONNTRACK EXPRESSIONS）的 Nftables 规则添加到 forward 链中
 
-第一个 Nftables 规则匹配在接口 eth0 上收到的转发的 IPv4 数据包，这些数据包代表新跟踪连接的第一个数据包（ct state new），例如TCP SYN 数据包，将丢弃它们。第二条规则匹配在接口 eth0 上收到的转发的 IPv4 数据包，这些数据包是已建立的连接（ct state established）的一部分，并接受这些数据包。第一次将包含 CONNTRACK EXPRESSION 的 Nftables 规则添加到规则集中时，这会按照上述方式触发 Nftables 内核模块 nft_ct 的自动加载。由于该模块的依赖关系（如图 2 所示），现在会自动加载一大堆模块，包括代表实际 ct 系统的模块 nf_conntrack，以及其他模块（如 nf_defrag_ipv4 和 nf_defrag_ipv6）。
+第一条 Nftables 规则：匹配在 eth0 接口上收到进行 IPv4 转发的一条新的连接跟踪（ct state new）的第一个报文，比如，TCP SYN 包，该规则将对其进行丢弃。
+第二条 Nftables 规则：匹配在 eth0 接口上收到进行 IPv4 转发的已建立连接跟踪（ct state established）的报文，该规则将接收该报文。
+
+在第一次将包含连接跟踪表达式（CONNTRACK EXPRESSIONS）的 Nftables 规则添加到规则集时，会触发 nft_ct 内核模块自动加载。该模块的依赖关系如图 2 所示，因此会自动加载一大堆其所依赖的模块，包括代表实际 ct 系统的 nf_conntrack 模块，以及 nf_defrag_ipv4/nf_defrag_ipv6 等其他模块。
 
 ```shell
 nft_ct                  # Nftables ct expressions and statements
@@ -78,26 +81,23 @@ nft_ct                  # Nftables ct expressions and statements
       libcrc32c
 ```
 
-> 图2：nft_ct 内核模块的依赖树
+> 图 2：nft_ct 内核模块的依赖树
 
-
-请注意，我在这里描述的只是 ct 系统可能加载的多种方式之一。正如我所说，有几个内核组件使用 ct 系统。但是，涉及自动加载器和模块依赖项的整体模式在所有情况下都应该相同。
-
-## 4. 网络 namespace
+## 4. 网络命名空间（Network Namespace）
 - - -
 
-加载并不一定会导致所有这些模块立即变为活动状态。这是一个需要理解的重要细节。与内核网络协议栈的许多其他部分一样，ct 系统 nf_conntrack 以及 nf_defrag_ipv4 和 nf_defrag_ipv6 模块的任务需要在每个网络 namespace 内独立执行。
+这些模块加载后并不会导致所有模块立刻被激活。与内核网络协议栈的许多其他部分一样，ct 系统 nf_conntrack 以及 nf_defrag_ipv4/nf_defrag_ipv6 模块在每个网络命名空间内独立执行。
 
-> 快速回顾网络 namespace
+> 网络命名空间
 >
-> 通过网络 namespace，在每个网络 namesapce 内运行完全独立的网络协议栈。它们中的每一个都有自己的一组网络设备、设置和状态，例如 IP 地址、路由、邻居表、Netfilter hooks、Iptables/Nftables rulesets……，从而拥有自己的单独网络流量。默认情况下，启动后，仅存在名为“init_net”的默认网络 namesapce，并且所有网络都发生在该 namesapce 内，但可以在运行时随时添加或删除其他网络 namesapce。例如 Docker 和 LXC 等容器解决方案使用网络 namesapce为每个容器提供隔离的网络资源。
+> 每个网络命名空间运行完全独立的网络协议栈，每个网络命名空间都有一组自己的网络设备、独立的网络配置和设备状态，例如 IP 地址、路由、邻居表、Netfilter hook 点、Iptables/Nftables rulesets 等，因此，每个网络命名空间都拥有自己独立的网络流量。默认情况下，系统启动后，仅存在名为 “init_net” 的默认网络命名空间，并且所有网络都发生在该网络命名空间内。可以在运行时添加或删除其他网络命名空间，例如 Docker 和 LXC 等容器解决方案使用网络命名空间为每个容器提供隔离的网络资源。
 
-ct 系统被设计为仅在当前 namespace 中生效。在我们的示例中，这意味着在网络 namespace 中，Nftables 规则集至少包含一条 CONNTRACK EXPRESSION 规则。因此，一旦添加该类型的第一条规则，它将自动在某个网络命名空间中启用，并且一旦删除该类型的最后一条规则，它将自动在该网络命名空间中禁用。由于每个网络命名空间都有自己的网络流量，因此有自己的要跟踪的连接，因此 ct 系统必须能够清楚地区分它们。对于它检查的每个网络数据包和它跟踪的每个连接，必须清楚该数据包属于哪个网络命名空间。
+ct 系统被设计为仅在当前网络命名空间中生效。
 
-## 5. Netfilter hooks
+## 5. Netfilter hook 点
 - - -
 
-与 Iptables 和 Nftables 一样，ct 系统构建在 Netfilter 框架之上。它实现了钩子函数，以便能够观察网络数据包并将其注册到 Netfilter 钩子中。从鸟瞰图来看，图 3 所示的 Netfilter 数据流图。
+与 Iptables 和 Nftables 一样，ct 系统在 Netfilter 框架之上构建。它实现了钩子函数，以便能够观察网络数据包并将其注册到 Netfilter 钩子中。从鸟瞰图来看，图 3 所示的 Netfilter 数据流图。
 
 ![](/img/2024-01-27-linux-conntrack/figure3.png)
 
