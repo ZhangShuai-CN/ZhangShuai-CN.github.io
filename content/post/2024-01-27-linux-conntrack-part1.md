@@ -97,47 +97,60 @@ ct 系统被设计为仅在当前网络命名空间中生效。
 ## 5. Netfilter hook 点
 - - -
 
-与 Iptables 和 Nftables 一样，ct 系统在 Netfilter 框架之上构建。它实现了钩子函数，以便能够观察网络数据包并将其注册到 Netfilter 钩子中。从鸟瞰图来看，图 3 所示的 Netfilter 数据流图。
+与 Iptables 和 Nftables 一样，ct 系统基于 Netfilter 框架进行构建。ct 系统将能够观测网络报文的钩子函数，注册到 Netfilter hook 点上。Netfilter 数据流图如图 3 所示：
 
 ![](/img/2024-01-27-linux-conntrack/figure3.png)
 
 > 图 3：Netfilter 数据流图
 
-该图中名为 conntrack 的块代表 ct 系统的钩子函数。虽然这可能提供了一个足够的模型，但在编写用于状态数据包过滤的 Iptables/Nftables 规则时需要记住，但实际的实现更为复杂。完全相同的 Netfilter 挂钩，如预路由、输入、转发、输出和后路由，都独立存在于每个网络命名空间中。因此，它们代表实际的“on”/“off”开关，以在网络命名空间内单独启用/禁用 ct 系统：ct 系统的钩子函数仅使用该特定网络命名空间的钩子进行注册/取消注册，其中应启用/禁用 CT 系统。因此，ct 系统只能“看到”它应该看到的网络命名空间的网络数据包。
+图中名为 conntrack 的方块代表 ct 系统的钩子函数。每个独立的网络命名空间都有完全相同的 Netfilter hook 点，如：Prerouting, Input, Forward, Output 和 Postrouting。该 hook 点代表网络命名空间内 ct 系统的启用/禁用开关。因此，ct 系统只能“看到”自己所在网络命名空间上的报文。
 
 ## 6. nf_conntrack 模块
 - - -
 
-我们回到上面的例子，看一下ct系统本身的内核模块。当包含 CONNTRACK EXPRESSION 的第一个 Nftables 规则添加到当前网络命名空间的规则集中时，Nftables 代码会触发 nf_conntrack 内核模块的加载（如果尚未加载）。之后，Nftables 代码调用 nf_ct_netns_get()。该函数由刚刚加载的 nf_conntrack 模块提供。调用该函数时，它将 ct 系统的钩子函数注册到当前网络命名空间的 Netfilter 钩子上。图 1 所示的 Nftables 规则指定 ip 地址族。因此，在这种情况下，ct 系统会向注册图 4 中所示的 IPv4 Netfilter 挂钩四个挂钩函数。对于 ip6 地址族 ，ct 系统会向 IPv6 的 Netfilter 挂钩注册相同的四个挂钩函数。对于 inet 地址族 ，它将向 IPv4 和 IPv6 Netfilter 挂钩注册其挂钩函数。
+当第一条带有连接跟踪表达式（CONNTRACK EXPRESSION）的 Nftables 规则添加到当前网络命名空间的规则集（ruleset）中时，Nftables 代码会触发 nf_conntrack 内核模块被自动加载（如果该模块尚未加载）。随后，Nftables 代码调用 nf_ct_netns_get() 函数，该函数由刚刚加载的 nf_conntrack 内核模块提供（export）。当该函数被调用时，它将 ct 系统的钩子函数注册到当前网络命名空间的 Netfilter hook 点上。
+
+图 1 所示的 Nftables 规则指定了 ip 地址族。因此，ct 系统会向图 4 所示的 IPv4 Netfilter hook 点注册四个钩子函数。对于 ip6 地址族，ct 系统会向 IPv6 的 Netfilter hook 点注册相同的四个挂钩函数。对于 inet 地址族，ct 系统会同时向 IPv4 和 IPv6 Netfilter hook 点注册其挂钩函数。
 
 ![](/img/2024-01-27-linux-conntrack/figure4.png)
 
-> 图 4：使用 Netfilter IPv4 hook 注册的四个 conntrack hook函数。请参阅 net/netfilter/nf_conntrack_proto.c
+> 图 4：四个 conntrack 钩子函数注册到 Netfilter IPv4 hook 点。具体代码请参阅 net/netfilter/nf_conntrack_proto.c
 
-函数 nf_ct_netns_get() 的目的是注册 ct 系统的钩子函数，而函数 nf_ct_netns_put() 的目的是取消注册。这两个函数在内部都使用引用计数。这意味着在当前的网络 namespace 中，可能有一个，也可能有几个内核组件在某个时刻需要连接跟踪，从而调用 nf_ct_netns_get()。然而，该函数仅在第一次调用时注册 ct 钩子函数，连续调用时仅增加引用计数器。如果组件在某个时刻不再需要连接跟踪，它将调用 nf_ct_netns_put()，这会减少引用计数器。如果它达到零，nf_ct_netns_put() 取消注册 ct 挂钩函数。在我们的例子中，例如如果您删除当前命名空间中规则集中包含 CONNTRACK EXPRESSIONS 的所有 Nftables 规则，就会发生这种情况。这种机制确保 ct 系统确实只在需要时启用。
+ct 系统使用 nf_ct_netns_get() 函数是注册钩子函数，通过使用 nf_ct_netns_put() 函数可以取消注册。如果在当前网络命名空间中，同时有几个内核组件都需要使用连接跟踪而调用 nf_ct_netns_get() 函数，nf_ct_netns_get()/nf_ct_netns_put() 通过在内部使用引用计数解决这个问题。
 
-### 6.1 主要的ct钩子函数
+nf_ct_netns_get() 函数仅在第一次被调用时注册 ct 系统的钩子函数，当被连续调用时仅增加引用计数。如果某个内核组件在某个时刻不再需要使用连接跟踪，它通过调用 nf_ct_netns_put() 来减少引用计数。如果引用计数为零，nf_ct_netns_put() 则取消 ct 钩子函数注册。例如，如果当前网络命名空间规则集中包含跟踪表达式（CONNTRACK EXPRESSION）的所有 Nftables 规则被删除，就会发生这种情况。该机制确保 ct 系统只在需要时才被启用。
+
+### 6.1 主要的 ct 钩子函数
 - - -
 
-图 4 中的 Prerouting 钩子和 Output 钩子中以优先级 -200 注册的两个钩子函数与图 3 中的官方 Netfilter 数据流图中所示的 conntrack 钩子函数完全相同。在内部，它们都做同样的事。由一些做一些略有不同的事情的外部函数包装，它们调用的主要函数是 nf_conntrack_in()。因此，两者之间的主要区别仅在于它们的位置，Prerouting hook 处理网络上接收的数据包，而 Output hook 处理该主机上生成的输出数据包。这两个可以被认为是 ct 系统的“主要”钩子函数，因为 ct 系统遍历网络数据包的大部分操作都发生在这些钩子函数内部，分析数据包并将其与连接跟踪关联起来，然后为这些数据包提供引用（指针）到连接跟踪实例。
+以 -200 优先级注册到图 4 Prerouting hook 点和 Output hook 点的两个钩子函数基本完全相同。在内部，它们都做差不多同样的事情。它们调用的主要函数是 nf_conntrack_in()，两者之间的主要区别仅在于 hook 点的位置，Prerouting hook 用于处理网络上接收的报文，而 Output hook 用于处理本地主机上产生的输出报文。这两个 hook 可以被认为是 ct 系统的“主要”钩子函数，ct 系统遍历网络数据包的大部分操作都发生在两个钩子函数内部，分析报文并将报文与其连接跟踪关联起来，然后为这些报文提供到连接跟踪实例的引用（指针）。
 
-### 6.2 help+confirm 钩子函数
+### 6.2 help + confirm 钩子函数
 - - -
 
-在图 4 中的另外两个钩子函数在 Input 钩子和 Postrouting 钩子中以 MAX 优先级注册。优先级 MAX 表示可能的最高无符号整数值。具有此优先级的钩子函数将作为 Netfilter 钩子中的最后一个函数进行遍历，并且在它之后不能注册任何其他钩子函数。这里的这两个钩子函数没有在图3中显示，可以认为是一些内部的东西，在鸟瞰图上不值得一提。它们都对遍历数据包执行相同的操作。两者之间的唯一区别是它们在 Netfilter 钩子中的位置，这确保所有网络数据包，无论传入/传出/转发的数据包，在遍历所有其他钩子函数后，最后遍历其中一个 conntrak hook。在本系列文章中，我将它们称为 conntrack“help+confirm”钩子函数，暗示它们有两个独立的用途。一个是执行“helper”代码，这是一项高级功能，仅在某些特定用例中使用，我不会在第一篇文章的范围内讨论该主题。二是“confirm”新跟踪的连接；请参阅 __nf_conntrack_confirm()。
+另外两个钩子函数以 MAX 优先级注册到图 4 中的 Input 和 Postrouting hook 点。MAX 表示最高无符号整数，具有此优先级的钩子函数将作为 Netfilter hook 点中的最后一个函数进行遍历，并且在它之后不能注册任何其他钩子函数。
 
-> 此处为内核 v5.10.19 中，两个提到的功能“helper”和“confirm”才组合存在于同一钩子函数中。不久前，两者仍然以单独的 ct 钩子函数的形式存在于 Input 和 Postrouting Netfilter 钩子中：优先级为 300 的“helper”钩子函数和优先级为 MAX 的“confirm”钩子函数。参见例如LTS 内核 v4.19。在从内核 v5.0 迁移到 v5.1 期间，它们已合并在此 git commit 中。
+这两个钩子函数并没有在图 3 中体现，它们都对遍历的报文执行相同的操作。两者的唯一区别在于它们在 Netfilter hook 点中的位置不同，这确保了所有报文，无论是进入/输出/转发的报文，在遍历完所有其他钩子函数之后，最后都能遍历这两个钩子函数中的其中一个。
+
+在本文中，我将其称为连接跟踪 “help+confirm” 钩子函数。一个是执行 “helper” 代码，这是一项高级功能，仅在某些特定用例中使用。二是 “confirm” 新跟踪的连接，具体代码请参阅 __nf_conntrack_confirm() 函数，后面我们会对其进行详细说明。
+
+> 在 v5.10.19 内核中 “helper” 和 “confirm” 组合存在于同一钩子函数中。在 v4.19 LTS 内核中，优先级为 300 的 “helper” 钩子函数和优先级为 MAX 的 “confirm” 钩子函数以单独的 ct 钩子函数的形式存在于 Netfilter Input 和 Postrouting hook 点
 
 ## 7. nf_defrag_ipv4/6 模块
 - - -
 
-如图2所示，nf_conntrack 模块依赖于nf_defrag_ipv4和nf_defrag_ipv6模块。它们会分别负责 IPv4 和 IPv6 分片重组。通常，分片重组应该发生在接收端，而不是在中间端点。然而，在这种情况下这是必要的。只有当连接的所有数据包都可以被识别并且没有数据包可以从 ct 系统的手指中溜走时，连接跟踪才能完成其工作。分片报文的问题在于，它们并不都包含识别它们并将其与跟踪的连接相关联所需的必要协议标头信息。
+如图 2 所示，nf_conntrack 模块依赖于 nf_defrag_ipv4 和 nf_defrag_ipv6 模块。这两个模块分别负责 IPv4 和 IPv6 报文的分片重组。通常情况下，应该在接收端而不是在中间节点进行分片重组。正常情况下，只有当一条连接的所有报文都能够被识别时，连接跟踪才能正常工作。然而对于分片报文，分片报文并不都包含识别它们所需的必要协议头信息。
 
 ![](/img/2024-01-27-linux-conntrack/figure5.png)
 
-> 图 5：使用 Netfilter IPv4 挂钩注册的 分片重组 hook 函数。请参阅 net/ipv4/netfilter/nf_defrag_ipv4.c5)。
+> 图 5：分片重组钩子函数注册到 Netfilter IPv4 hook 点。具体代码请参阅 net/ipv4/netfilter/nf_defrag_ipv4.c
 
-与 ct 系统本身一样，这些碎片整理模块不会在模块加载时全局激活。它们分别提供函数 nf_defrag_ipv4_enable() 和 nf_defrag_ipv6_enable()，这些函数向 Netfilter 钩子注册自己的钩子函数。图 5 显示了 nf_defrag_ipv4 模块和 IPv4 Netfilter hook 点：该模块在内部提供函数 ipv4_conntrack_defrag() 来处理遍历网络数据包的分片重组。该函数被注册为带有 Netfilter Prerouting 钩子和 Netfilter Output 钩子的钩子函数。在这两个地方，它都以优先级 -400 注册，这确保数据包在遍历以优先级 -200 注册的 conntrack 挂钩函数之前遍历它。在注册 ct 系统的钩子函数之前，上一节中提到的 ct 系统函数 nf_ct_netns_get() 确实会分别调用 nf_defrag_ipv4_enable() 和/或其 IPv6 对应函数。因此，defrag 挂钩函数与 conntrack 挂钩函数一起注册。然而，这里没有实现引用计数，这意味着，一旦注册了这个钩子函数，它就会保持注册状态（直到有人显式删除/卸载内核模块）。
+与 ct 系统本身类似，分片重组模块不会在模块加载时直接全局启用。它们对外提供 nf_defrag_ipv4_enable() 和 nf_defrag_ipv6_enable() 函数，通过调用这些函数向 Netfilter hook 点注册分片重组钩子。
+
+图 5 展示了 nf_defrag_ipv4 分片重组模块及对应的 Netfilter IPv4 hook 点：
+该模块内部通过 ipv4_conntrack_defrag() 函数来进行网络报文的分片重组。该函数以 -400 的优先级注册为 Netfilter Prerouting 和 Netfilter Output hook 点的钩子函数。以确保报文在遍历 -200 优先级注册的 conntrack 钩子函数之前遍历它。
+
+在注册 ct 系统自身的钩子函数之前，ct 系统会调用 nf_ct_netns_get() 函数，该函数会分别调用 nf_defrag_ipv4_enable() 函数或其对应的 IPv6 函数。因此，defrag 钩子函数与 conntrack 钩子函数一起被注册。defrag 钩子函数没有引用计数，一旦注册了该钩子函数，它就会一直保持注册状态（直到有人显式的删除/卸载该内核模块）。
 
 ## 8. hook 概述
 - - -
