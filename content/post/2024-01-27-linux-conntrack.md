@@ -398,13 +398,9 @@ ct 系统使用内核的工作队列机制在内核工作线程内定期运行�
 ### 3.1 概览
 - - -
 
-为了将事情放在上下文中，让我们简短回顾一下我在本系列的前几篇文章中已经详细描述的内容：ct 系统在一个中央表中维护它正在跟踪的所有连接，并且每个跟踪的连接都由一个实例表示结构 nf_conn。对于遍历 Netfilter 挂钩中的 ct 挂钩函数（优先级为 -200；参见图 1）的每个 IPv4/IPv6 数据包，ct 系统确定该数据包属于哪个跟踪连接，并初始化 skb 数据中的指针数据包的结构指向 struct nf_conn 的相应实例。因此，它对数据包进行标记/分类，以便其他组件（例如 Iptables/Nftables）可以据此做出决策。这些概念通常称为状态数据包过滤或状态数据包检查。到目前为止，一切都很好。
-
 ![](/img/2024-01-27-linux-conntrack/figure3.1.png)
 
-> 图 3.1：Conntrack+Defrag 钩子函数和使用 IPv4 Netfilter 钩子注册的 Iptables 链
-
-随着数据包不断流动，ct 系统会不断分析每个连接以确定其当前状态。它通过分析每个数据包的 OSI 第 3 层和第 4 层（在某些情况下还包括更高层）来实现这一点。 ct 系统维护的连接状态当然与通信端点中网络协议（例如 TCP）的实际状态不同，因为 ct 系统只是中间的观察者，无法访问端点或他们的内部状态。然而，这种状态可能是 ct 系统产生的最重要的信息，因为它为 Iptables/Nftables 等组件提供了做出有意义的“状态数据包过滤”决策的基础。我想大多数阅读本文的人都熟悉 Iptables/Nftables 用于匹配跟踪连接状态的常用语法：
+Iptables/Nftables 用于匹配跟踪连接状态的常用语法如下所示：
 
 ```shell
 #Nftables example
@@ -414,22 +410,367 @@ ct state established,related
 -m conntrack --ctstate ESTABLISHED,RELATED
 ```
 
-在本文中，我想更深入地探讨这个主题，将实现（ct 系统中保存状态信息的变量）之间的点联系起来，该实现的行为方式以及从 Iptables 的角度来看事情是怎样的/Nftables 和命令行工具 conntrack。图 2 概述了此处涉及的实现变量。实际上有两个变量保存状态信息，每个变量的语义略有不同。我将详细解释它们。
+在本文中，我们将探讨：保存 CT 系统内状态信息的变量的实现的行为方式以及从 Iptables/Nftables 和命令行工具 conntrack 的角度观测 CT 系统。此处涉及的变量如图 3.2 所述，有两个变量保存状态信息。
 
-> 图 3.2：遍历 ct main钩子函数后的网络数据包（优先级-200），属于被跟踪的连接，status指定内部连接状态，ctinfo指定连接状态，数据包相对于连接的方向以及数据包与连接的关系。
+![](/img/2024-01-27-linux-conntrack/figure3.2.png)
+
+> 图 3.2：遍历 ct main 钩子函数（优先级-200）后的网络报文，属于被跟踪的连接，status 指定内部连接状态，ctinfo 指定连接状态，报文相对于连接的方向以及报文与连接的关系。
 
 ### 3.2 状态变量
 - - -
 
-如图 2 所示，变量 status 是 struct nf_conn 的整数成员，其最低有效 16 位用作所跟踪连接的状态和管理位。类型 enum ip_conntrack_status 为每个位提供了名称和含义。下面图 3 中的表格详细解释了这一含义。其中一些位表示 ct 系统根据分析观察到的网络数据包确定的所跟踪连接的当前状态，而其他位则表示内部管理设置。后面的位指定和组织在特定情况下应为跟踪连接执行的操作，例如 NAT、硬件卸载、用户定义的超时等。 Iptables/Nftables：其中一些位可以通过在 Iptables/Nftables 规则中使用 conntrack 表达式直接匹配。图 3 中的表显示了对可匹配位执行此操作的确切语法。当然，如果您的链位于 Netfilter 预路由或输出挂钩中，并且您的规则使用这些类型的表达式，那么您的链的优先级必须 > -200，以确保网络数据包在 AFTER 之后遍历它ct 主钩子函数（见图 1）。您可能会认识到，这些表达式使用的语法不是在打算编写有状态数据包过滤规则时最常见情况下使用的熟悉语法。我将在下一节中讨论这一点。 Conntrack：当您使用带有选项 -L 的用户空间工具 conntrack 列出当前跟踪的连接或对文件 /proc/net/nf_conntrack 进行 cat 操作以实现相同的效果时，一些状态位将显示在结果输出中。图 3 中的表解释了显示的位及其使用的语法。
+如图 3.2 所示，status 是 struct nf_conn 的整数成员变量，其低 16 bit 用作所跟踪连接的状态和管理 bit，其每个 bit 的名字和含义通过 enum ip_conntrack_status 提供。图 3.3 表格进行详解说明。
 
-> bit 0: IPS_EXPECTED
-> 预期连接：当新连接的第一个数据包遍历 ct main 钩子函数时，将创建一个新的跟踪连接。如果这个新的跟踪连接被识别为预期连接，则该位被设置。这可以例如如果您使用 FTP 协议的 ct 助手，就会发生这种情况；请参阅 FTP 扩展。预期的连接通常是“FTP 数据”TCP 连接，它与已建立的“FTP 命令”TCP 连接相关。如果设置该位，则 ctinfo 将设置为 IP_CT_RELATED。
+其中一些 bit 表示 ct 系统确定的跟踪连接的当前状态（通过分析观测到的网络报文），而其他 bit 则表示内部管理设置。剩余的 bit 为指定在特定情况下跟踪连接所执行的操作，例如 NAT、硬件卸载、用户自定义的超时时间等。
 
-| conntrack expressions matching this bit |
+Iptables/Nftables：其中一些 bit 位可以通过在 Iptables/Nftables 规则中使用 conntrack 表达式直接进行匹配。图 3.3 中的表显示了对可匹配 bit 位执行此操作的确切语法。如果您的链位于 Netfilter Prerouting 或 Output 钩子中，并且您的规则使用这种类型的表达式，那么您的链的优先级必须 > -200，以确保网络报文在遍历完 ct 主钩子函数之后遍历它（见图 3.1）。
+
+Conntrack：当使用用户空间工具 conntrack -L 选项列出当前跟踪的连接或执行 `cat /proc/net/nf_conntrack`，一些状态 bit 位将在输出结果中显示。图 3.3 展示了其使用语法。
+
+- - -
+**bit 0: IPS_EXPECTED**
+
+预期连接（Expected connection）：当新连接的第一个报文遍历 ct main 钩子函数时，将创建一个新的连接跟踪。如果这个新的连接跟踪被识别为预期连接，则该 bit 位被置位。例如，当使用 FTP 协议的 ct helper 时，就会发生这种情况（详细参见 FTP extension）。预期的连接通常是 “FTP data” TCP 连接 ，它与已建立的 “FTP command” TCP 连接相关。如果该 bit 为被设置，则 ctinfo 将设置为 IP_CT_RELATED。
+
+| conntrack 表达式匹配该 bit |
 |:---|:---|
 | Nftables | ct status expected |
 | Iptables | -m conntrack --ctstatus EXPECTED |
+- - -
+
+- - -
+**bit 1: IPS_SEEN_REPLY**
+
+报文已经被双向看到（该 bit 位可以 set，不能 unset）：一旦 ct 系统看到回复方向上的第一个报文，就会设置该 bit。
+
+| conntrack 表达式匹配该 bit |
+|:---|:---|
+| Nftables | ct status seen_reply |
+| Iptables | -m conntrack --ctstatus SEEN_REPLY |
+
+| 通过 conntrack 命令或者 proc 文件查看 |
+|:---|:---|
+| conntrack -L | [UNREPLIED] |
+| cat /proc/net/nf_conntrack | [UNREPLIED] |
+- - -
+
+- - -
+**bit 2: IPS_ASSURED**
+
+此跟踪的连接永远不应该提前过期：如果 ct 系统看到的报文 4 层连接完全建立并且可以看到双向流量，则设置此 bit 位。对于 TCP，一旦看到完整的 TCP 3 次握手，该 bit 就会被设置。在 UDP 的情况下，当已看到双向流量并且现在又看到一个报文时，该 bit 就会被设置。在 ICMP（例如 ping：echo-r​​equest + echo-r​​eply）的情况下，不会设置该 bit 位。未设置该 bit 位的跟踪连接可能会成为 “early drop”（早期丢弃）机制的受害者。当 ct 系统跟踪的连接数量增长非常高并达到某个最大阈值（这取决于 central ct 表的配置大小）时，ct 系统开始删除未设置 `assured` 的连接以释放一些空间。
+
+| conntrack 表达式匹配该 bit |
+|:---|:---|
+| Nftables | ct status assured |
+| Iptables | -m conntrack --ctstatus ASSURED |
+
+| 通过 conntrack 命令或者 proc 文件查看 |
+|:---|:---|
+| conntrack -L | [ASSURED] |
+| cat /proc/net/nf_conntrack | [ASSURED] |
+- - -
+
+- - -
+**bit 3: IPS_CONFIRMED**
+
+这个被跟踪的连接已经被确认，原始报文已经离开设备：一旦代表新跟踪连接的报文（该连接看到的第一个报文）遍历了 ct 系统的主钩子函数（优先级 -200）和 ct help + confirm 钩子函数（优先级 MAX），该新的跟踪的连接将会被 “confirmed”（确认）并被添加到 central ct 表中，同时设置该 bit 位。
+
+| conntrack 表达式匹配该 bit |
+|:---|:---|
+| Nftables | ct status confirmed |
+| Iptables | -m conntrack --ctstatus CONFIRMED |
+- - -
+
+- - -
+**bit 4: IPS_SRC_NAT**
+
+此跟踪的连接需要进行原始方向的 SRC NAT
+
+| conntrack 表达式匹配该 bit |
+|:---|:---|
+| Nftables | ct status snat |
+| Iptables | -m conntrack --ctstate SNAT |
+- - -
+
+- - -
+**bit 5: IPS_DST_NAT**
+
+此跟踪的连接需要进行原始方向的 DST NAT
+
+| conntrack 表达式匹配该 bit |
+|:---|:---|
+| Nftables | ct status dnat |
+| Iptables | -m conntrack --ctstate DNAT |
+- - -
+
+- - -
+**bit 6: IPS_SEQ_ADJUST**
+
+该跟踪连接需要调整 TCP 的顺序
+- - -
+
+- - -
+**bit 7: IPS_SRC_NAT_DONE**
+
+NAT 初始化 bit 位
+- - -
+
+- - -
+**bit 8: IPS_DST_NAT_DONE**
+
+NAT 初始化 bit 位
+- - -
+
+- - -
+**bit 9: IPS_DYING**
+
+此跟踪连接即将终止，已从列表中移除（不能 unset bit位）：一旦所跟踪的连接超时，该 bit 位就会被设置，并且该连接将从 central ct 表中移除并添加到死亡列表中，随后它就会被删除。
+
+| conntrack 表达式匹配该 bit |
+|:---|:---|
+| Nftables | ct status dying |
+- - -
+
+- - -
+**bit 10: IPS_FIXED_TIMEOUT**
+
+此跟踪的连接具有固定的超时时间。
+- - - 
+
+- - -
+**bit 11: IPS_TEMPLATE**
+
+此跟踪连接是一个模板。
+- - - 
+
+- - -
+**bit 12: IPS_NAT_CLASH**
+
+此跟踪连接在插入时与现有实例发生冲突。
+- - - 
+
+- - -
+**bit 13: IPS_HELPER**
+
+此跟踪连接通过 CT target 附加了一个 helper。
+- - - 
+
+- - -
+**bit 14: IPS_OFFLOAD**
+
+该跟踪的连接已被卸载到流表中。
+
+| 通过 conntrack 命令或者 proc 文件查看|
+|:---|:---|
+| conntrack -L | [OFFLOAD] |
+| cat /proc/net/nf_conntrack | [OFFLOAD] |
+- - - 
+
+- - -
+**bit 15: IPS_HW_OFFLOAD**
+
+该跟踪的连接已通过流表卸载到硬件。
+
+| 通过 conntrack 命令或者 proc 文件查看|
+|:---|:---|
+| conntrack -L | [HW_OFFLOAD] |
+| cat /proc/net/nf_conntrack | [HW_OFFLOAD] |
+- - -
+
+> 图 3.3：struct nf_conn status 成员变量的的最低有效 16 bit 位的名称和含义。
+
+### 3.3 指针和 ctinfo
+- - -
+
+请再看一下图 2。当网络数据包遍历其中一个 ct 主钩子函数（图 1 中优先级为 -200 的那些函数）并且清楚该数据包属于哪个被跟踪连接时，该数据包的 skb->_nfct packet 将使用指向中央 ct 表中相应 struct nf_conn 实例的指针进行初始化。然而，最低有效 3 位的使用方式不同，并且不是该指针的一部分。它们被用作一个小整数，在代码的大部分部分中被命名为 ctinfo。如果您想知道如何从指针中删除 3 位不会产生问题……内核内存管理确保分配用于保存 struct nf_conn 实例的内存区域的地址是 8 字节对齐的。因此，当使用 _nfct 作为指针时，其最低有效 3 位被屏蔽，从而设置为零。函数 nf_ct_get() 用于从 skb->_nfct 检索（取消引用的）指针和 ctinfo。函数 nf_ct_set() 用于将指针和 ctinfo 写入 skb->_nfct。 3 位整数 ctinfo 的语义/含义是网络数据包所属的跟踪连接的当前状态、数据包的流向及其与该连接的关系的组合。 enum ip_conntrack_info 类型为 ctinfo 的值提供名称和含义，下面图 4 中的表详细显示并解释了这些内容。该表中描述的所有情况都可以通过在 Iptables/Nftables 规则中使用 conntrack 表达式进行匹配。这是您在编写有状态数据包过滤规则时可能熟悉的语法：分别用于 Nftables 的 ct state ... 和 Iptables 的 -m conntrack --ctstate ... 。当然，如果您的链位于 Netfilter 预路由或输出挂钩中，并且您的规则使用这些类型的表达式，那么您的链的优先级必须 > -200，以确保网络数据包在 AFTER 之后遍历它ct 主钩子函数（见图 3.1）。
+
+![](/img/2024-01-27-linux-conntrack/figure3.4.1.png)
+
+ct 系统为数据包设置此值：
+* 所跟踪连接看到的第一个数据包（例如 TCP SYN 数据包，如果 ct 系统能够从头开始观察该连接的所有数据包）；因此，刚刚为该数据包创建了一个新的未确认跟踪连接，并已添加到未确认列表中
+* 或者数据包属于已知且已确认的跟踪连接，正在沿原始方向（=第一个看到的数据包的方向）流动，并且自第一个数据包以来，在回复方向上尚未看到任何数据包（该数据包可以是例如TCP SYN 数据包的重传）
+
+| 匹配此报文的 conntrack 表达式|
+|:---|:---|
+| Nftables | ct state new |
+| Iptables | -m conntrack --ctstate NEW |
+
+![](/img/2024-01-27-linux-conntrack/figure3.4.2.png)
+
+ct 系统为属于已跟踪连接且满足以下所有条件的数据包设置此值：
+* 数据包不是该连接看到的第一个数据包
+* 数据包沿原始方向流动（= 与该连接看到的第一个数据包的方向相同）
+* 在此数据包之前，已在该连接的两个方向上看到数据包
+
+| 匹配此报文的 conntrack 表达式|
+|:---|:---|
+| Nftables | ct state established |
+| Nftables | ct state established ct direction original |
+| Iptables | -m conntrack --ctstate ESTABLISHED |
+| Iptables | -m conntrack --ctstate ESTABLISHED --ctdir ORIGINAL |
+
+![](/img/2024-01-27-linux-conntrack/figure3.4.3.png)
+
+ct 系统为属于已跟踪连接且满足以下两个条件的数据包设置此值：
+* 数据包不是该连接看到的第一个数据包
+* 数据包沿回复方向流动（= 与该连接看到的第一个数据包的方向相反）
+
+| 匹配此报文的 conntrack 表达式|
+|:---|:---|
+| Nftables | ct state established |
+| Nftables | ct state established ct direction reply |
+| Iptables | -m conntrack --ctstate ESTABLISHED |
+| Iptables | -m conntrack --ctstate ESTABLISHED --ctdir REPLY |
+
+![](/img/2024-01-27-linux-conntrack/figure3.4.4.png)
+
+ct 系统为数据包设置此值，这是以下两件事之一：
+1. 该数据包是有效的 ICMP 错误消息（例如，类型=3“目标无法到达”，代码=0“网络无法到达”），与已跟踪的连接相关。相对于那个连接，它是沿着原来的方向流动的。指针 *p 指向该连接。
+2. 该数据包是新连接的第一个数据包，但该连接与已跟踪的连接相关，或者换句话说，它是预期连接（请参见上面图 3 中的状态位 IPS_EXPECTED）。这例如当您使用 FTP 协议的 ct 帮助程序时会发生这种情况。这是一个非常复杂的主题，值得专门写一篇博客文章6)。这里需要注意的是，只有属于预期连接的第一个数据包才标记有 IP_CT_RELATED。与任何其他跟踪的连接一样，该连接的所有后续数据包都标有 IP_CT_ESTABLISHED 或 IP_CT_ESTABLISHED_REPLY。
+
+| 匹配此报文的 conntrack 表达式|
+|:---|:---|
+| Nftables | ct state related |
+| Nftables | ct state related ct direction original |
+| Iptables | -m conntrack --ctstate RELATED |
+| Iptables | -m conntrack --ctstate RELATED --ctdir ORIGINAL |
+
+![](/img/2024-01-27-linux-conntrack/figure3.4.5.png)
+
+ct 系统将其设置为与已跟踪的连接相关的有效 ICMP 错误消息（例如 type=3“目标无法到达”，code=0“网络无法到达”）的数据包。相对于该连接，它沿回复方向流动。指针 *p 指向该连接。然而，值 IP_CT_RELATED_REPLY 永远不会被设置为预期的连接！请参阅上面 IP_CT_RELATED 的描述！
+
+| 匹配此报文的 conntrack 表达式|
+|:---|:---|
+| Nftables | ct state related |
+| Nftables | ct state related ct direction reply |
+| Iptables | -m conntrack --ctstate RELATED |
+| Iptables | -m conntrack --ctstate RELATED --ctdir REPLY |
+
+![](/img/2024-01-27-linux-conntrack/figure3.4.6.png)
+
+ct 系统为它认为无效的数据包设置此值：
+
+如果数据包在遍历 ct 主钩子函数时未通过有效性检查7)，则 ct 系统会认为该数据包“无效”，并将指针和 ctinfo 设置为零。因此，该数据包不与任何跟踪的连接相关联。丢弃“无效”数据包不是 ct 系统的工作。但是，管理员可以使用以下匹配表达式创建防火墙规则来丢弃这些数据包：
+
+| 匹配此报文的 conntrack 表达式|
+|:---|:---|
+| Nftables | ct state invalid |
+| Iptables | -m conntrack --ctstate INVALID |
+
+![](/img/2024-01-27-linux-conntrack/figure3.4.7.png)
+
+这种机制的想法是有一种方法来标记网络数据包，从而命令 ct 系统不理会它们（= 让它们保持不变并且不尝试跟踪它们）。与此表中描述的其他情况相反，当数据包遍历 ct 主钩子函数时，ctinfo 不会设置为此值（优先级 -200；参见图 1）。为了使这个机制发挥作用，这必须已经在 ct 主钩子函数之前遍历的钩子函数中发生（因此，优先级 < -200，例如 -300）。有关 Nftables/Iptables notrack/NOTRACK 目标，请参阅 Nftables Wiki 和 Iptables 教程。如果 ct 主钩子函数看到 ctinfo 已设置为 IP_CT_UNTRACKED 的数据包，它将保持该数据包不变，并且不会尝试跟踪它。 Nftables/Iptables 规则可以使用以下表达式来匹配这些数据包：
+
+| 匹配此报文的 conntrack 表达式|
+|:---|:---|
+| Nftables | ct state untracked |
+| Iptables | -m conntrack --ctstate UNTRACKED |
+
+> 图 4：skb->_nfct 保存一个指针和 3 位整数 ctinfo。该表显示了实践中使用的所有可能的值并解释了它们的含义。请参阅枚举 ip_conntrack_info。
+
+### 3.4 拓扑示例
+- - -
+
+在下面的部分中，我将展示一些基本的实际示例，这些示例将演示如何在 ICMP、UDP 和 TCP 协议的情况下处理连接跟踪状态。所有这些示例都将基于图 5 中所示的相同简单网络拓扑：分配有 IPv4 地址 192.168.1.2 的客户端主机和分配有 IPv4 地址 10.0.0.2 的服务器主机正在进行通信。路由器充当两台主机之间的跳点，并执行连接跟踪和状态数据包过滤。图 5 显示了三个 Netfilter IPv4 钩子：Prerouting、Forward 和 Postrouting，在本例中，路由器上的网络数据包将遍历这些钩子。 ct系统已加载，因此ct main钩子函数注册到优先级为-200的Prerouting钩子，ct help+confirm钩子函数注册到优先级为MAX的Postrouting钩子。此外，Nftables 基础链在 Forward hook 中以优先级 0 注册，这将其置于两个 ct hook 函数之间。如果您愿意，可以将此与图 1 进行比较。
+
+![](/img/2024-01-27-linux-conntrack/figure3.5.png)
+
+> 图 5：拓扑示例：客户端和服务器主机作为通信端点，路由器作为中间的跳点，执行连接跟踪和状态数据包过滤。
+
+请注意，我在下面的例子中展示的只是“好天气”的情况。我将仅展示在非常基本且成功的协议操作（例如 ICMP ping、TCP 握手等）的情况下发生的连接跟踪状态变化。所有数据包都会及时到达，因此在仍然存在活动的情况下，跟踪的连接不会超时。当然，这些协议可能会发生许多其他事情……例如数据包到达得太晚或根本没有到达，这将导致跟踪的连接超时并被删除。可能会出现“目标无法到达”、TCP 重传、TCP RST 等 ICMP 错误消息。潜在案例的数量是无穷无尽的，因此我将在这里坚持最基本的内容。
+
+![](/img/2024-01-27-linux-conntrack/figure3.6.png)
+
+> 图 6：以下部分中实际示例的图例：带有附加跟踪连接的 skb，显示 ctinfo、状态和超时。
+
+图 6 充当以下示例中的图例的图例。它显示了一个网络数据包，因为它正在遍历路由器上的钩子函数、ctinfo 变量以及附加的跟踪连接实例及其状态和超时变量。如果 ctinfo 的值、状态位之一或超时值在下面的示例中以粗体显示，则表示该值/位此时正在更改。如果字体是非粗体，则这意味着该值/位在过去已经被设置并且保持不变。虽然超时不是本文的重点，但我添加它是因为我认为它的行为也很有趣。请与我的第二篇文章的连接超时部分进行比较。
+
+### 3.5 ICMP 示例
+- - -
+
+此示例演示了在简单 ICMP ping 情况下跟踪连接的状态变化，如图 7 所示。客户端主机向服务器主机发送单个 ICMP 回显请求，服务器以 ICMP 回显应答进行应答。
+
+![](/img/2024-01-27-linux-conntrack/figure3.7.png)
+
+> 图 7：示例 ICMP ping，客户端 ping 服务器，客户端：~$ ping -c1 10.0.0.2。
+
+尽管事实上这不是面向连接的协议意义上的“连接”，但 ct 系统根据源+目标 IP 地址和 ICMP 类型、代码和标识符8) 将此 ICMP 事务处理为单个跟踪连接。图 8 显示了两个网络数据包穿过 ct 挂钩函数和路由器上的 Nftables 链时的情况。 ICMP 回显请求会导致创建新的跟踪连接。 ctinfo 设置为 IP_CT_NEW。与此数据包匹配的 Nftables ct 表达式将为 ct 状态 new。一旦数据包到达 ct help+confirm 挂钩函数，状态位 IPS_CONFIRMED 就会被设置，超时设置为 30 秒，并且所跟踪的连接将被添加到中央 ct 表中。在此示例中，相应的 ICMP 回显应答早在 30 秒超时到期之前就到达了。 ct 系统检测到它属于同一跟踪连接，将 ctinfo 设置为 IP_CT_ESTABLISHED_REPLY，设置状态位 IP_CT_SEEN_REPLY 并将超时更新为另外 30 秒。与此数据包匹配的 Nftables ct 表达式将建立 ct 状态。一旦 30 秒超时到期，ct 垃圾收集器就会设置状态位 IPS_DYING，从中央 ct 表中删除跟踪的连接，将其添加到死亡列表中，最后将其删除。
+
+![](/img/2024-01-27-linux-conntrack/figure3.8.png)
+
+> 图 8：ICMP echo-r​​equest 和 echo-r​​eply 遍历 ct hook 函数，导致创建并随后删除跟踪的连接，显示发生时的状态和超时变化（单击放大）。
+
+如果客户端使用命令 ping 10.0.0.2 向服务器发送连续的 ICMP 回显请求（默认间隔为 1 秒）而不是仅发送一个，则 ICMP 标识符将在所有这些数据包中包含相同的值（id =42（在图 8 的示例中），但对于每个新的回显请求/答复对，ICMP 序列号将增加 1。 ct 系统会将所有这些数据包分配给同一个跟踪的连接，并且只要 ICMP 回显请求/答复不断到来，该连接就不会超时。在内部，它会记住其元组中的标识符值来执行此操作；请参阅函数 icmp_pkt_to_tuple()。
+
+### 3.6 UDP 示例
+- - -
+
+此示例演示了在 DNS 查询 + 响应的情况下跟踪连接的状态变化，如图 9 所示。客户端主机向服务器 9) 主机发送一条 DNS 查询消息，请求 A 记录（IPv4 地址），对应域名google.com。这会导致包含 DNS 查询的单个 UDP 数据包从客户端发送到服务器主机目标端口 53，并导致从服务器发送回客户端的单个 UDP 数据包（包含 DNS 响应）。
+
+![](/img/2024-01-27-linux-conntrack/figure3.9.png)
+
+> 图 9：通过 UDP 的 DNS 查询+响应示例：客户端从 DNS 服务器查询 google.com 域的 A 记录，客户端：~$ host -t A google.com。
+
+在这种情况下，ct 系统的最终行为与上面的 ICMP 示例几乎相同：UDP 不是面向连接的协议，但是 ct 系统根据源 + 目标将此基于 UDP 的事务处理为单个跟踪连接IP 地址和源+目标 UDP 端口10)。图 10 显示了两个网络数据包穿过 ct 挂钩函数和路由器上的 Nftables 链时的情况。包含 DNS 查询的 UDP 数据包会导致创建新的跟踪连接。 ctinfo 设置为 IP_CT_NEW。与此数据包匹配的 Nftables ct 表达式将为 ct 状态 new。一旦数据包到达 ct help+confirm 挂钩函数，状态位 IPS_CONFIRMED 就会被设置，超时设置为 30 秒，并且所跟踪的连接将被添加到中央 ct 表中。在此示例中，包含 DNS 响应的相应 UDP 数据包在 30 秒超时到期之前就到达了。 ct 系统检测到它属于同一跟踪连接，将 ctinfo 设置为 IP_CT_ESTABLISHED_REPLY，设置状态位 IP_CT_SEEN_REPLY 并将超时更新为另外 30 秒。与此数据包匹配的 Nftables ct 表达式将建立 ct 状态。一旦 30 秒超时到期，ct 垃圾收集器就会设置状态位 IPS_DYING，从中央 ct 表中删除跟踪的连接，将其添加到死亡列表中，最后将其删除。
+
+![](/img/2024-01-27-linux-conntrack/figure3.10.png)
+
+> 图 10：通过 UDP 数据包进行 DNS 查询和响应，遍历 ct 挂钩函数，导致创建并随后删除跟踪的连接，显示发生时的状态和超时变化（点击放大）。
+
+如果更多的 UDP 数据包继续来自相同的源和目标 IP 地址以及 UDP 端口，无论哪个方向，那么 ct 系统都会将所有这些 UDP 数据包分配给同一个跟踪的连接，并且只要有更多的数据包到达，该连接就不会超时。会继续来。在这种情况下，一旦看到属于该连接的第三个数据包，状态位 IPS_ASSURED 将被设置。常见的命令行工具（例如 host）在解析域名时通常不仅仅需要 A 记录。默认情况下，主机请求 A 记录、AAAA 记录和 MX 记录。这当然会导致更多的 UDP 数据包双向发送。然而，主机对每个 DNS 查询使用另一个套接字（=另一个 UDP 源端口），这导致 ct 系统将每个查询视为一个单独的新跟踪连接。
+
+### 3.7 TCP 状态
+- - -
+
+在我们讨论实际的 TCP 示例之前，我们需要先讨论一下 TCP 状态。如果您已经使用 ct 系统一段时间，那么您可能会想知道，ctinfo 和 status 是如何实现状态数据包检测的全部功能的。在使用 conntrack 工具列出跟踪的连接时，您可能已经看到如下内容：
+
+```shell
+$ conntrack -L
+udp   17  3                   src=192.168.49.1  ...
+tcp   6   21     TIME_WAIT    src=192.168.2.100 ...
+tcp   6   360313 ESTABLISHED  src=192.168.2.100 ...
+#                ^
+#                TCP state ???
+```
+
+因此，如果您已阅读 RFC 793 和/或熟悉 TCP 协议的状态机，那么您可能会在该工具的输出中识别出那些类似 TCP 的状态名称，例如 TIME_WAIT 和 ESTABLISHED。那么这些真的是 TCP 状态吗？它们与 ctinfo 和 Nftables ct 表达式（如已建立的 ct 状态）有何关系？正如已经提到的，ct 系统只是中间的透明观察者，无法访问代表通信端点的 TCP 套接字，而且在大多数情况下，这些套接字驻留在 ct 系统之外的其他主机上。因此，您在输出中看到的那些状态当然不是端点的真实 TCP 状态。然而，ct 系统确实对 OSI 第 4 层进行了彻底分析。基于它观察到的网络数据包，它能够很好地理解 TCP 协议的行为，从而能够对当前 TCP 状态进行有根据的猜测。当 TCP 数据包遍历主要 ct 挂钩函数之一时，函数 nf_conntrack_tcp_packet() 会分析数据包的 TCP 部分。在本系列的第二篇文章中，我提到 struct nf_conn 有一个成员联合 nf_conntrack_proto proto，用于跟踪 OSI 第 4 层协议的详细信息。对于 TCP，该联合包含 struct ip_ct_tcp。除此之外，它还包含变量 uint8_t state，用于跟踪猜测的 TCP 状态。字符串数组 tcp_conntrack_names[] 包含所有可能状态的文本表示：SYN_SENT、SYN_RECV、ESTABLISHED、FIN_WAIT、CLOSE_WAIT、LAST_ACK、TIME_WAIT、CLOSE 和 SYN_SENT2。这是您在 TCP 情况下 conntrack -L 的输出中看到的内容。但这与 ctinfo 和 status 有何关系？ ct 系统分析 TCP 状态、序列编号、接收窗口、重传等……基于此，它在某些情况下将数据包视为“无效”，例如当它看到不适合的序列号时，然后通过设置它们的 skb->_nfct=NULL 将这些数据包分类为无效。 ct 系统可识别 TCP 3 次握手、TCP FIN 连接终止等，并相应地动态设置跟踪的连接超时值。当它识别出 TCP 3 次握手成功完成时，它会设置 IPS_ASSURED 状态位 11)。总结一下：当然，分析 TCP 会对 ctinfo 和 status 产生影响，但跟踪的 TCP 状态是一个单独的变量。因此，请注意，当您在 conntrack -L 的输出中看到 ESTABLISHED 时，这不是 Nftables 表达式 ct statebuilt 匹配的那个！该表达式与 ctinfo 的值匹配。一旦双向看到流量，就认为已经建立了 ct 跟踪的连接。 ct 系统不会等待 TCP 握手完成。当它看到第一个有效的回复数据包（通常是 TCP SYN ACK）时，它会将 ctinfo 设置为 IP_CT_ESTABLISHED_REPLY。事情必须是这样，否则常用的带有 conntrack 表达式的 Nftables 规则（如以下两个带有策略删除的链中的规则）将无法按预期工作：
+
+```shell
+# allowing new connections to be established from eth0 to eth1,
+# but only established+related packets allowed from eth1 to eth0
+table ip filter {
+        chain forward {
+                type filter hook forward priority filter; policy drop;
+                iif eth0 oif eth1 ct state new,established,related accept
+                iif eth1 oif eth0 ct state established,related accept
+        }
+}
+```
+
+也许这只是我个人的看法，而这对于大多数其他人来说是显而易见的。然而，我承认这个细节在我早期的连接跟踪中经常让我感到困惑，因为像 Nftables ct statebuilt 或 Iptables -m conntrack --ctstate ESTABLISHED 这样的 conntrack 表达式总是让我记住 TCP 状态 ESTABLISHED。
+
+### 3.7 TCP 示例
+- - -
+
+此示例演示了 ct 系统如何跟踪简单的 TCP 连接，如图 11 所示，从 TCP 3 向握手开始，发送一些有效负载数据，并以正常连接终止结束。客户端主机打开到服务器的连接（例如到 TCP 目标端口 80/HTTP），发送一些有效负载数据，然后以普通方式关闭连接。
+
+![](/img/2024-01-27-linux-conntrack/figure3.11.png)
+
+> 图 11：客户端和服务器之间的 TCP 连接示例：TCP 3 次握手、传输一些有效负载数据、正常连接终止
+
+ct 系统根据源+目标 IP 地址和源+目标 TCP 端口 13) 将其作为单个跟踪连接进行处理。此外，它还会分析在 OSI 第 4 层上看到的每个数据包，如上一节所述。图 12 显示了 TCP 3 次握手期间的状态和超时变化，图 13 和 14 显示了有效负载数据传输和 TCP 连接终止期间的相同情况。您可以看到，ct 系统根据对当前 TCP 状态的了解动态设置超时值。如果很清楚，则预计回复数据包很快就会从对等方到达，以使 TCP 连接继续，而不会进入错误处理，例如在握手期间或等待 TCP ACK 确认发送的有效负载数据时，ct 选择一个较短的超时值。但是，如果 3 次握手已成功完成，TCP 连接现已完全建立，并且当前没有未完成的 TCP ACK，则 ct 选择较长的超时值。然后它还会设置 IPS_ASSURED 状态位。当然，大多数 TCP 连接会交换更多的有效负载数据，并且它们是在两个方向上进行的，从而导致交换的数据包比图 13 中所示的多得多。但是，连接跟踪状态变量的值与图 13 中所示的值没有任何不同。数字。
+
+![](/img/2024-01-27-linux-conntrack/figure3.12.png)
+
+> 图 12：TCP 3 次握手：数据包遍历 ct 钩子函数，导致跟踪的连接被创建、确认、建立和保证（点击放大）。
+
+![](/img/2024-01-27-linux-conntrack/figure3.13.png)
+
+> 图 13：TCP 有效负载数据传输：数据包遍历 ct 挂钩函数，根据来自对等方的未完成的 TCP ACK 调整超时（点击放大）。
+
+![](/img/2024-01-27-linux-conntrack/figure3.14.png)
+
+> 图 14：TCP连接终止14）：数据包遍历ct钩子函数，导致超时被调整，最终超时到期后，跟踪的连接被删除（点击放大）。
 
 ## 参考
 - - -
