@@ -745,16 +745,11 @@ tcp   6   360313 ESTABLISHED  src=192.168.2.100 ...
 
 tcp_conntrack_names[] 字符串数组包含所有可能状态的文本表示：SYN_SENT、SYN_RECV、ESTABLISHED、FIN_WAIT、CLOSE_WAIT、LAST_ACK、TIME_WAIT、CLOSE 和 SYN_SENT2。该数组内容就是您通过 conntrack -L 输出中看到的内容。但这与 ctinfo 和 status 又有何关系？ ct 系统分析 TCP 状态、序列号、接收窗口、重传等，因此它在某些情况下将数据包视为“invalid”，例如，当它看到序列号不对时，然后通过设置 skb->_nfct=NULL 将这些数据包分类为无效报文。
 
-ct 系统可识别 TCP 3 次握手、TCP FIN 连接终止等，并据此动态的设置跟踪的连接的 timeout 超时时间。当它识别出 TCP 3 次握手成功完成时，它会将 status 设置为 IPS_ASSURED bit 位。总结一下：连接跟踪的 TCP 状态是一个单独的变量。
+ct 系统可识别 TCP 3 次握手、TCP FIN 连接终止等，并据此动态的设置跟踪的连接的 timeout 超时时间。当它识别出 TCP 3 次握手成功完成时，它会将 status 设置为 IPS_ASSURED bit 位。总结一下：连接跟踪的 TCP 状态是一个单独的变量，ct 系统对 TCP 报文进行分析会影响 ctinfo 和 status 变量的值。 
 
-因此，当您在 conntrack -L 的输出中看到 ESTABLISHED 时，ct 系统一旦看到双向流量，ct 系统不会等待真正的 TCP 握手完成，就认为 ct 跟踪的连接 `established`。当它看到第一个有效的回复数据包（通常是 TCP SYN ACK）时，它会将 ctinfo 设置为 IP_CT_ESTABLISHED_REPLY。
+因此，当您在 conntrack -L 的输出中看到 ESTABLISHED 时，这并不是 Nftables 表达式：`ct state established` 要匹配的内容。ct 系统一旦看到双向流量，ct 系统不会等待真正的 TCP 握手完成，就认为 ct 跟踪的连接 `established`。当它看到第一个有效的回复数据包（通常是 TCP SYN ACK）时，它会将 ctinfo 设置为 IP_CT_ESTABLISHED_REPLY。
 
-而这与
-
-事情必须是这样，否则常用的带有 conntrack 表达式的 Nftables 规则（如以下两个带有策略删除的链中的规则）将无法按预期工作：
-
-
-这不是 Nftables 表达式 ct statebuilt 匹配的那个！该表达式与 ctinfo 的值匹配。
+事情必须是这样做，否则常用的带有 conntrack 表达式的 Nftables 规则（如：以下链中带有 policy drop 的两个规则）将无法按预期工作：
 
 ```shell
 # allowing new connections to be established from eth0 to eth1,
@@ -768,30 +763,30 @@ table ip filter {
 }
 ```
 
-也许这只是我个人的看法，而这对于大多数其他人来说是显而易见的。然而，我承认这个细节在我早期的连接跟踪中经常让我感到困惑，因为像 Nftables `ct state established`或 Iptables `-m conntrack --ctstate ESTABLISHED` 这样的 conntrack 表达式总是让我记住 TCP 状态 ESTABLISHED。
+Nftables `ct state established`或 Iptables `-m conntrack --ctstate ESTABLISHED` 这样的 conntrack 表达式，并不是真正的 TCP 状态中的 ESTABLISHED。
 
 ### 3.7 TCP 示例
 - - -
 
-此示例演示了 ct 系统如何跟踪简单的 TCP 连接，如图 11 所示，从 TCP 3 向握手开始，发送一些有效负载数据，并以正常连接终止结束。客户端主机打开到服务器的连接（例如到 TCP 目标端口 80/HTTP），发送一些有效负载数据，然后以普通方式关闭连接。
+此示例演示了 ct 系统如何跟踪 TCP 连接，如图 3.11 所示，TCP 3 次握手之后，发送一些有效负载数据，并以正常连接终止结束会话。client 打开到 server 的连接（例如到 TCP 目的端口 80/HTTP），发送一些有效负载数据，然后以普通方式关闭连接。
 
 ![](/img/2024-01-27-linux-conntrack/figure3.11.png)
 
-> 图 11：客户端和服务器之间的 TCP 连接示例：TCP 3 次握手、传输一些有效负载数据、正常连接终止
+> 图 3.11：client 和 server 之间的 TCP 连接示例
 
-ct 系统根据源+目标 IP 地址和源+目标 TCP 端口 13) 将其作为单个跟踪连接进行处理。此外，它还会分析在 OSI 第 4 层上看到的每个数据包，如上一节所述。图 12 显示了 TCP 3 次握手期间的状态和超时变化，图 13 和 14 显示了有效负载数据传输和 TCP 连接终止期间的相同情况。您可以看到，ct 系统根据对当前 TCP 状态的了解动态设置超时值。如果很清楚，则预计回复数据包很快就会从对等方到达，以使 TCP 连接继续，而不会进入错误处理，例如在握手期间或等待 TCP ACK 确认发送的有效负载数据时，ct 选择一个较短的超时值。但是，如果 3 次握手已成功完成，TCP 连接现已完全建立，并且当前没有未完成的 TCP ACK，则 ct 选择较长的超时值。然后它还会设置 IPS_ASSURED 状态位。当然，大多数 TCP 连接会交换更多的有效负载数据，并且它们是在两个方向上进行的，从而导致交换的数据包比图 13 中所示的多得多。但是，连接跟踪状态变量的值与图 13 中所示的值没有任何不同。数字。
+ct 系统根据：源+目的 IP 地址和源+目的 TCP 端口，作为单个跟踪连接进行处理。此外，它还会分析每个报文的 4 层信息。图 3.12 显示了 TCP 3 次握手期间的状态和 timeout 超时时间变化，图 3.13 和 3.14 显示了有效负载数据传输情和 TCP 连接终止情况。您可以看到，ct 系统根据对当前 TCP 状态信息动态设置 timeout 超时时间。例如，在 3 次握手期间或等待 TCP ACK 时，ct 选择一个较短的超时时间。但是，如果 3 次握手已成功完成，TCP 连接现已完全建立，并且当前没有未完成的 TCP ACK，则 ct 选择较长的超时时间。然后它还会将 status 设置为 IPS_ASSURED bit 位。当然，大多数 TCP 连接会交换更多的有效负载数据，并且它们是双向进行通信的，从而导致交换的数据包比图 3.13 中所示的多得多。但是，连接跟踪状态变量的值与图 3.13 中所示的值没有任何不同。
 
 ![](/img/2024-01-27-linux-conntrack/figure3.12.png)
 
-> 图 12：TCP 3 次握手：数据包遍历 ct 钩子函数，导致跟踪的连接被创建、确认、建立和保证（点击放大）。
+> 图 12：TCP 3 次握手
 
 ![](/img/2024-01-27-linux-conntrack/figure3.13.png)
 
-> 图 13：TCP 有效负载数据传输：数据包遍历 ct 挂钩函数，根据来自对等方的未完成的 TCP ACK 调整超时（点击放大）。
+> 图 13：TCP 有效负载传输
 
 ![](/img/2024-01-27-linux-conntrack/figure3.14.png)
 
-> 图 14：TCP连接终止14）：数据包遍历ct钩子函数，导致超时被调整，最终超时到期后，跟踪的连接被删除（点击放大）。
+> 图 14：TCP连接终止
 
 ## 参考
 - - -
