@@ -184,7 +184,7 @@ GCC -O2, -O3, -Os 编译优化选项下，严格别名（strict aliasing）规�
 - - -
 
 ```c
-#include "stdio.h"
+#include <stdio.h>
 
 int foo( float *f, int *i ) {
     *i = 1;               
@@ -252,8 +252,73 @@ Linux 内核的做法是：
 ## 5. 整数环绕
 - - -
 
+在开启 GCC -O2 编译优化时，对于有符号整数的溢出，编译器认为其是未定义行为。
 
+在 C11 标准的 3.4.3 小结对未定义行为进行了明确定义：
 
+**未定义行为**：当使用不可移植或者错误的程序/错误的数据时，将导致不可预期的结果。典型例子就是整数溢出时的行为。
+
+下文，我们通过几个整数溢出的示例进行说明：
+
+### 5.1 整数溢出示例 1
+- - -
+
+```c
+#include <stdio.h>
+#include <limits.h>
+
+int f(int i) {
+    return i+1 > i;
+}
+
+int main() {
+
+    int x = INT_MAX;
+    
+    printf("%d\n", x);
+
+    printf("%d\n", f(x));
+}
+```
+
+在 GCC 开启 `-O2` 编译优化时，默认开启 `-fstrict-overflow` 编译优化，有符号整数的溢出行为为未定义行为，输出结果为：
+```bash
+2147483647
+1
+```
+
+此时 GCC 编译器认为 `i+1` 恒大于 `i`，因此该函数永远返回 `true`。
+
+![](/img/2024-02-07-gcc-strict-aliasing/figure5.jpg)
+
+在 GCC 开启 `-O2 -fwrapv` 或 `-O2 -fno-strict-overflow` 编译参数后，输出结果为：
+```bash
+2147483647
+0
+```
+
+`-fwrapv` 编译选项指示 GCC 编译器假定加法、减法和乘法的有符号算术溢出使用二进制补码表示进行环绕。在 `#include <limits.h>` 头文件中有两个宏定义，INT_MAX：2147483647（整形最大值），INT_MIN：-2147483648（整形最小值），x 初始化为：INT_MAX（2147483647/0x7FFFFFFF），x + 1 后发生溢出，导致新值回绕，变为 INT_MIN（-2147483648/0x80000000）。因此最终表达式为：`-2147483648 > 2147483647`，因此返回 `false` 即 0。
+
+![](/img/2024-02-07-gcc-strict-aliasing/figure6.jpg)
+
+### 5.1 整数溢出示例 2
+- - -
+
+```c
+#include <stdio.h>
+
+int main() {
+    
+    for (int i=0; i>=0; i++) {
+        printf("%d\n", i);
+    }
+}
+
+```
+
+在 GCC 开启 `-O2` 编译优化时，默认开启 `-fstrict-overflow` 编译优化，有符号整数的溢出行为为未定义行为，在 i 到达值 INT_MAX 后，评估 i++ 经常生未定义的行为，编译器会产生死循环。
+
+而在 GCC 开启 `-O2 -fwrapv` 编译参数时，循环将在执行 INT_MAX 次后停止。
 
 ## 参考
 - - -
@@ -264,7 +329,8 @@ Linux 内核的做法是：
 * [严格别名（Strict Aliasing）规则是什么，编译器为什么不做我想做的事？](https://zhuanlan.zhihu.com/p/595286568)
 * [Programming languages — C](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf)
 * [DPDK adopts the C11 memory model](https://www.dpdk.org/blog/2021/03/26/dpdk-adopts-the-c11-memory-model/)
-
+* [Always compile all C and C++ code with -fwrapv](https://bugzilla.mozilla.org/show_bug.cgi?id=1031653)
+* [What does -fwrapv do?](https://copyprogramming.com/howto/what-does-fwrapv-do)
 
 ## 公众号：Flowlet
 - - -
