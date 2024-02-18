@@ -8,7 +8,7 @@ date:       2024-02-07 01:01:01
 author:     "张帅"
 image: "/img/2024-02-07-gcc-strict-aliasing/background.jpg"
 showtoc: true
-draft: true
+draft: false
 tags:
     - GCC -O2
     - Strict Aliasing
@@ -213,7 +213,7 @@ int main() {
 
 我们可以通过 [godbolt](https://godbolt.org/) 这个网站实时查看 C/C++ 代码的汇编代码:
 
-![](/img/2024-02-07-gcc-strict-aliasing/figure1.jpg)
+![](/img/2024-02-07-gcc-strict-aliasing/figure1.png)
 
 
 在 GCC 开启 -O2编译优化时，输出结果为：
@@ -222,19 +222,19 @@ int main() {
 1
 ```
 
-![](/img/2024-02-07-gcc-strict-aliasing/figure2.jpg)
+![](/img/2024-02-07-gcc-strict-aliasing/figure2.png)
 
 #### 4.1.2 开启 -Wstrict-aliasing 编译参数
 - - -
 
-![](/img/2024-02-07-gcc-strict-aliasing/figure3.jpg)
+![](/img/2024-02-07-gcc-strict-aliasing/figure3.png)
 
 在本例中即使开启 `-Wstrict-aliasing` 严格别名告警编译参数，本例虽然违反了严格别名规则，在 x86-64 gcc 13.2 下也未收到任何编译告警提示。
 
 #### 4.1.3 开启 -fno-strict-aliasing 编译参数
 - - -
 
-![](/img/2024-02-07-gcc-strict-aliasing/figure4.jpg)
+![](/img/2024-02-07-gcc-strict-aliasing/figure4.png)
 
 开启 `-fno-strict-aliasing` 取消严格别名优化，修改 GCC -O2 导致的严格别名 Bug。
 
@@ -242,9 +242,11 @@ int main() {
 - - -
 
 推荐处理顺序为从左到右：
+    
     改代码 > -fno-strict-aliasing > 不开 GCC -O2 优化 > -Wno-strict-aliasing （掩耳盗铃，强烈不建议）
 
 Linux 内核的做法是：
+
     在开启 GCC -O2 编译优化的同时开启 `-fno-strict-aliasing` 编译参数。
 
 其实如果按照 GCC 那帮人的严格别名（Strict Aliasing）标准，Linux 代码有一半都跑不起来。2018 年 Linus Torvalds 就针对 Strict Aliasing 对 GCC 进行了开喷：[device property: Get rid of union aliasing](https://lkml.org/lkml/2018/6/5/769)
@@ -289,7 +291,7 @@ int main() {
 
 此时 GCC 编译器认为 `i+1` 恒大于 `i`，因此该函数永远返回 `true`。
 
-![](/img/2024-02-07-gcc-strict-aliasing/figure5.jpg)
+![](/img/2024-02-07-gcc-strict-aliasing/figure5.png)
 
 在 GCC 开启 `-O2 -fwrapv` 或 `-O2 -fno-strict-overflow` 编译参数后，输出结果为：
 ```bash
@@ -297,9 +299,13 @@ int main() {
 0
 ```
 
-`-fwrapv` 编译选项指示 GCC 编译器假定加法、减法和乘法的有符号算术溢出使用二进制补码表示进行环绕。在 `#include <limits.h>` 头文件中有两个宏定义，INT_MAX：2147483647（整形最大值），INT_MIN：-2147483648（整形最小值），x 初始化为：INT_MAX（2147483647/0x7FFFFFFF），x + 1 后发生溢出，导致新值回绕，变为 INT_MIN（-2147483648/0x80000000）。因此最终表达式为：`-2147483648 > 2147483647`，因此返回 `false` 即 0。
+`-fwrapv` 编译选项指示 GCC 编译器假定加法、减法和乘法的有符号算术溢出使用二进制补码表示进行环绕。
 
-![](/img/2024-02-07-gcc-strict-aliasing/figure6.jpg)
+在 `#include <limits.h>` 头文件中有两个宏定义，INT_MAX：2147483647（整形最大值），INT_MIN：-2147483648（整形最小值），x 初始化为：INT_MAX（2147483647/0x7FFFFFFF），x + 1 后发生溢出，导致新值回绕，变为 INT_MIN（-2147483648/0x80000000）。
+
+因此最终表达式为：`-2147483648 > 2147483647`，因此返回 `false` 即 0。
+
+![](/img/2024-02-07-gcc-strict-aliasing/figure6.png)
 
 ### 5.1 整数溢出示例 2
 - - -

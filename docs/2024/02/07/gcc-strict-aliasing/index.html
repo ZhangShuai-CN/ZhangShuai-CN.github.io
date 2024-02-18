@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    
+    <meta property="og:site_name" content="ZhangShuai&#39;s Blog">
+    <meta property="og:type" content="article">
+
+    
+    <meta property="og:image" content="/img/2024-02-07-gcc-strict-aliasing/background.jpg">
+    <meta property="twitter:image" content="/img/2024-02-07-gcc-strict-aliasing/background.jpg" />
+    
+
+    
+    <meta name="title" content="GCC -O2 踩坑指南：严格别名（Strict Aliasing）与整数环绕（Integer Wrap-around）" />
+    <meta property="og:title" content="GCC -O2 踩坑指南：严格别名（Strict Aliasing）与整数环绕（Integer Wrap-around）" />
+    <meta property="twitter:title" content="GCC -O2 踩坑指南：严格别名（Strict Aliasing）与整数环绕（Integer Wrap-around）" />
+    
+
+    
+    <meta name="description" content="GCC -O2 Compiler optimization: Strict Aliasing and Integer Wrap-around">
+    <meta property="og:description" content="GCC -O2 Compiler optimization: Strict Aliasing and Integer Wrap-around" />
+    <meta property="twitter:description" content="GCC -O2 Compiler optimization: Strict Aliasing and Integer Wrap-around" />
+    
+
+    
+    <meta property="twitter:card" content="summary" />
+    
+    
+
+    <meta name="keyword"  content="张帅, zhangshuai, ZhangShuai, , 张帅的网络日志, 张帅的博客, ZhangShuai&#39;s Blog, 博客, 个人网站, 互联网, Web, 云原生, PaaS, Iaas, Kubernetes">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>GCC -O2 踩坑指南：严格别名（Strict Aliasing）与整数环绕（Integer Wrap-around） | 张帅的博客 | ZhangShuai&#39;s Blog</title>
+
+    <link rel="canonical" href="/2024/02/07/gcc-strict-aliasing/">
+
+    
+    
+    
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    
+    <link rel="stylesheet" href="/css/hugo-theme-cleanwhite.min.css">
+
+    
+    <link rel="stylesheet" href="/css/zanshang.css">
+
+    
+    <link href="https://cdn.jsdelivr.net/gh/FortAwesome/Font-Awesome@5.15.1/css/all.css" rel="stylesheet" type="text/css">
+
+    
+    
+
+    
+    <script src="/js/jquery.min.js"></script>
+
+    
+    <script src="/js/bootstrap.min.js"></script>
+
+    
+    <script src="/js/hux-blog.min.js"></script>
+
+    
+    <script src="/js/lazysizes.min.js"></script>
+
+    
+    
+
+</head>
+
+
+
+
+
+
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+
+    <div class="container-fluid">
+        
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">ZhangShuai&#39;s Blog</a>
+        </div>
+
+        
+        
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">All Posts</a>
+                    </li>
+                    
+                        
+                        <li>
+                            <a href="/categories/startup/">startup</a>
+                        </li>
+                        
+                        <li>
+                            <a href="/categories/tech/">tech</a>
+                        </li>
+                        
+                    
+                    
+		    
+                        <li><a href="/archive//">ARCHIVE</a></li>
+                    
+                        <li><a href="/notes//">NOTES</a></li>
+                    
+                        <li><a href="/about//">ABOUT</a></li>
+                    
+		            <li>
+                        <a href="/search"><i class="fa fa-search"></i></a>
+		           </li>
+                </ul>
+            </div>
+        </div>
+        
+    </div>
+    
+</nav>
+<script>
+    
+    
+    
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        
+            $navbar.className = " ";
+            
+            setTimeout(function(){
+                
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+
+
+<style type="text/css">
+    header.intro-header {
+        background-image: url('/img/2024-02-07-gcc-strict-aliasing/background.jpg')
+    }
+</style>
+
+<header class="intro-header" >
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/gcc-o2" title="GCC -O2">
+                            GCC -O2
+                        </a>
+                        
+                        <a class="tag" href="/tags/strict-aliasing" title="Strict Aliasing">
+                            Strict Aliasing
+                        </a>
+                        
+                        <a class="tag" href="/tags/integer-wrap-around" title="Integer Wrap-around">
+                            Integer Wrap-around
+                        </a>
+                        
+                    </div>
+                    <h1>GCC -O2 踩坑指南：严格别名（Strict Aliasing）与整数环绕（Integer Wrap-around）</h1>
+                    <h2 class="subheading">严格别名（Strict Aliasing）与整数环绕（Integer Wrap-around）</h2>
+                    <span class="meta">
+                        
+                            Posted by 
+                            
+                                张帅
+                             
+                            on 
+                            Wednesday, February 7, 2024
+                            
+                            
+                            
+                            
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+
+
+<article>
+    <div class="container">
+        <div class="row">
+
+            
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                
+                <hr>
+<h6 id="关于作者">关于作者</h6>
+<blockquote>
+<p><strong><code>张帅，网络从业人员，公众号：Flowlet</code></strong></p>
+<p><strong><code>个人博客：https://flowlet.net/</code></strong></p>
+</blockquote>
+<hr>
+<h2 id="序言">序言</h2>
+<hr>
+<p>GCC 在开启 -O2 编译优化后，会遇到编译器领域的两个著名问题：<strong>严格别名（Strict Aliasing）<strong>与</strong>整数环绕（Integer Wrap-around）</strong>。</p>
+<p>本次笔者就为大家详细讲解下这两个经典的编译优化问题。</p>
+<h2 id="前言">前言</h2>
+<hr>
+<p>由于作者水平有限，本文不免存在遗漏或错误之处，欢迎指正交流。</p>
+<h2 id="1-什么是别名alias">1. 什么是别名（alias）</h2>
+<hr>
+<p>在 C 和 C++ 中，当多个左值 lvalue 指向同一个内存区域时，就会出现别名（alias）。</p>
+<p>例 1：</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="display:block;width:100%;background-color:#3d3f4a"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span></span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#8be9fd">int</span> a <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">42</span>;
+<span style="display:block;width:100%;background-color:#3d3f4a"><span style="color:#8be9fd">int</span> <span style="color:#ff79c6">*</span>ptr <span style="color:#ff79c6">=</span> <span style="color:#ff79c6">&amp;</span>a;
+</span></code></pre></td></tr></table>
+</div>
+</div><p>*ptr 改变 a 的值也会改变。这里 *ptr 就被称为 a 的别名。</p>
+<h3 id="11-类型双关type-punning">1.1 类型双关（type punning）</h3>
+<hr>
+<p>别名（alias）最常见的用途就是类型双关（type punning）。有时我们想绕过类型系统，将一个对象解释为不同的类型，这就是所谓的类型双关。类型双关经常应用在编译器、序列化、网络传输等领域。</p>
+<p>类型双关一般做法是通过别名（alias）来实现，通过获取对象的地址，将其转换为我们想要重新解释的类型的指针，然后访问该值。</p>
+<p>以下就是类型双关的例子，在标准定义中，这种类型双关属于未定义的行为。</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#8be9fd">int</span> a;
+<span style="color:#8be9fd">float</span> <span style="color:#ff79c6">*</span>ptr <span style="color:#ff79c6">=</span> (<span style="color:#8be9fd">float</span> <span style="color:#ff79c6">*</span>)<span style="color:#ff79c6">&amp;</span>a;
+
+printf(<span style="color:#f1fa8c">&#34;%f</span><span style="color:#f1fa8c">\n</span><span style="color:#f1fa8c">&#34;</span>, <span style="color:#ff79c6">*</span>ptr);
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="2-什么是严格别名">2. 什么是严格别名</h2>
+<hr>
+<p>严格别名就是编译器当看到多个别名（alias）时，会在一定规则下默认它们指向不同的内存区域（即使它们实际上指向相同的内存区域），并以此进行优化，这可能会生成与我们期望不同的代码。</p>
+<p>符合 strict aliasing，编译器认为 argv1，argv2 指向同一内存区域：</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#8be9fd">int</span> a;
+<span style="color:#8be9fd">void</span> <span style="color:#50fa7b">foo</span>(<span style="color:#8be9fd">char</span> <span style="color:#ff79c6">*</span>argv1, <span style="color:#8be9fd">int</span> <span style="color:#ff79c6">*</span>argv2)
+
+foo((<span style="color:#8be9fd">char</span> <span style="color:#ff79c6">*</span>)(<span style="color:#ff79c6">&amp;</span>a), <span style="color:#ff79c6">&amp;</span>a);
+</code></pre></td></tr></table>
+</div>
+</div><p>违背 strict aliasing，编译器认为 argv1，argv2 指向不同的内存区域 ，为未定义的行为（UB，Undefined Behavior）。</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#8be9fd">int</span> a;
+<span style="color:#8be9fd">void</span> <span style="color:#50fa7b">foo</span>(<span style="color:#8be9fd">float</span> <span style="color:#ff79c6">*</span>argv1, <span style="color:#8be9fd">int</span> <span style="color:#ff79c6">*</span>argv2)
+
+foo((<span style="color:#8be9fd">float</span> <span style="color:#ff79c6">*</span>)(<span style="color:#ff79c6">&amp;</span>a), <span style="color:#ff79c6">&amp;</span>a);
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="21-c11-n1570标准严格别名下规则">2.1 C11 （N1570）标准严格别名下规则</h3>
+<hr>
+<p>由于笔者主要从事网络领域编程，DPDK 采用 C11 标准的内存模型，因此这里只介绍 C11 标准。
+在 N1570 第 6.5 节的第 7 段：</p>
+<p>对象的存储值只能由具有以下类型之一的左值表达式访问：</p>
+<h4 id="211-与对象的有效类型兼容的类型">2.1.1 与对象的有效类型兼容的类型</h4>
+<hr>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#8be9fd">int</span> x <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">1</span>;
+<span style="color:#8be9fd">int</span> <span style="color:#ff79c6">*</span>ptr <span style="color:#ff79c6">=</span> <span style="color:#ff79c6">&amp;</span>x;
+printf(<span style="color:#f1fa8c">&#34;%d</span><span style="color:#f1fa8c">\n</span><span style="color:#f1fa8c">&#34;</span>, <span style="color:#ff79c6">*</span>ptr); <span style="color:#6272a4">// *ptr 是 int 类型的左值表达式，与 int 类型兼容（相同）
+</span></code></pre></td></tr></table>
+</div>
+</div><h4 id="212-与对象的有效类型兼容类型的限定版本">2.1.2 与对象的有效类型兼容类型的限定版本</h4>
+<hr>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#8be9fd">int</span> x <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">1</span>;
+<span style="color:#ff79c6">const</span> <span style="color:#8be9fd">int</span> <span style="color:#ff79c6">*</span>ptr <span style="color:#ff79c6">=</span> <span style="color:#ff79c6">&amp;</span>x;
+printf(<span style="color:#f1fa8c">&#34;%d</span><span style="color:#f1fa8c">\n</span><span style="color:#f1fa8c">&#34;</span>, <span style="color:#ff79c6">*</span>ptr); <span style="color:#6272a4">// *ptr 是 const int 类型的左值表达式，与 int 类型兼容
+</span></code></pre></td></tr></table>
+</div>
+</div><h4 id="212-与对象的有效类型相对应的有符号或无符号类型的类型">2.1.2 与对象的有效类型相对应的有符号或无符号类型的类型</h4>
+<hr>
+<p>例如，使用 signed int * ，或者 unsigned int * 作为 int 类型的别名。</p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#8be9fd">int</span> x <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">1</span>;
+<span style="color:#8be9fd">unsigned</span> <span style="color:#8be9fd">int</span> <span style="color:#ff79c6">*</span>ptr <span style="color:#ff79c6">=</span> (<span style="color:#8be9fd">unsigned</span> <span style="color:#8be9fd">int</span><span style="color:#ff79c6">*</span>)<span style="color:#ff79c6">&amp;</span>x;
+printf(<span style="color:#f1fa8c">&#34;%u</span><span style="color:#f1fa8c">\n</span><span style="color:#f1fa8c">&#34;</span>, <span style="color:#ff79c6">*</span>ptr); <span style="color:#6272a4">// *ptr 是 unsigned int 类型的左值表达式，是 int 类型对应的无符号类型
+</span></code></pre></td></tr></table>
+</div>
+</div><p>注意, 使用 int * 作为 unsigned int 的别名，不符合标准，但 gcc 和 clang 都做了拓展，因此没有问题。
+参见：<a href="https://twitter.com/shafikyaghmour/status/957702383810658304">Why does gcc and clang allow assigning an unsigned int * to int * since they are not compatible types, although they may alias.</a></p>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#8be9fd">unsigned</span> <span style="color:#8be9fd">int</span> x <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">1</span>;
+<span style="color:#8be9fd">int</span> <span style="color:#ff79c6">*</span>ptr <span style="color:#ff79c6">=</span> (<span style="color:#8be9fd">int</span> <span style="color:#ff79c6">*</span>)<span style="color:#ff79c6">&amp;</span>x;
+printf(<span style="color:#f1fa8c">&#34;%d</span><span style="color:#f1fa8c">\n</span><span style="color:#f1fa8c">&#34;</span>, <span style="color:#ff79c6">*</span>ptr); <span style="color:#6272a4">// No Warnning, No Error
+</span></code></pre></td></tr></table>
+</div>
+</div><h4 id="213-类型是与对象的有效类型相对应的限定版本有符号或无符号类型">2.1.3 类型是与对象的有效类型相对应的限定版本有符号或无符号类型</h4>
+<hr>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#8be9fd">int</span> x <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">1</span>;
+<span style="color:#ff79c6">const</span> <span style="color:#8be9fd">unsigned</span> <span style="color:#8be9fd">int</span> <span style="color:#ff79c6">*</span>ptr <span style="color:#ff79c6">=</span> (<span style="color:#ff79c6">const</span> <span style="color:#8be9fd">unsigned</span> <span style="color:#8be9fd">int</span><span style="color:#ff79c6">*</span>)<span style="color:#ff79c6">&amp;</span>x;
+printf(<span style="color:#f1fa8c">&#34;%u</span><span style="color:#f1fa8c">\n</span><span style="color:#f1fa8c">&#34;</span>, <span style="color:#ff79c6">*</span>ptr );
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="214-struct-或-union-类型其成员中包括上述类型之一递归地包含-struct-或包含-union-的成员">2.1.4 struct 或 union 类型，其成员中包括上述类型之一（递归地包含 struct 或包含 union 的成员）</h4>
+<hr>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#ff79c6">struct</span> foo {
+    <span style="color:#8be9fd">int</span> x;
+};
+
+<span style="color:#8be9fd">void</span> <span style="color:#50fa7b">foobar</span>(<span style="color:#ff79c6">struct</span> foo <span style="color:#ff79c6">*</span>foo_ptr, <span style="color:#8be9fd">int</span> <span style="color:#ff79c6">*</span>int_ptr);  <span style="color:#6272a4">// f 是一个 struct 类型，并包含 int 类型，因此 *int_ptr 可以是 f.x 的别名。
+</span><span style="color:#6272a4"></span>
+<span style="color:#ff79c6">struct</span> foo f;
+foobar(<span style="color:#ff79c6">&amp;</span>f, <span style="color:#ff79c6">&amp;</span>f.x);
+
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="215-字符类型">2.1.5 字符类型</h4>
+<hr>
+<div class="highlight"><div style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#8be9fd">int</span> x <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">65</span>; <span style="color:#6272a4">// ASCII 值 65 对应的字符为 A
+</span><span style="color:#6272a4"></span><span style="color:#8be9fd">char</span> <span style="color:#ff79c6">*</span>ptr <span style="color:#ff79c6">=</span> (<span style="color:#8be9fd">char</span> <span style="color:#ff79c6">*</span>)<span style="color:#ff79c6">&amp;</span>x;
+printf(<span style="color:#f1fa8c">&#34;%c</span><span style="color:#f1fa8c">\n</span><span style="color:#f1fa8c">&#34;</span>, <span style="color:#ff79c6">*</span>ptr);  <span style="color:#6272a4">// *ptr 是 char 类型的左值表达式， char 类型可以作为任何类型的别名。
+</span><span style="color:#6272a4"></span>
+</code></pre></td></tr></table>
+</div>
+</div><p>char 类型是严格别名规则下的<strong>银弹</strong>，可以作为任何类型的别名。不只是 char 类型，unsigned char，uint8_t, int8_t 也满足这条规则。</p>
+<h2 id="3-gcc-编译优化选项">3. GCC 编译优化选项</h2>
+<hr>
+<p>GCC -O0, -O1 编译优化选项下开启严格别名（strict aliasing）规则的编译选项为：-fstrict-aliasing。</p>
+<p>GCC -O2, -O3, -Os 编译优化选项下，严格别名（strict aliasing）规则默认开启。</p>
+<p>具体的各个编译优化等级的优化参数，参考如下 GCC 手册：<a href="https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html">Options That Control Optimization</a></p>
+<p>默认情况下无论是在 GCC -O0, -O1 优化下开启 -fstrict-aliasing，还是开启 GCC -O2, -O3, -Os 优化，如果想让违反严格别名规则代码在编译的时候产生告警需要增加 -Wstrict-aliasing 编译选项。</p>
+<h2 id="4-违反严格别名规则">4. 违反严格别名规则</h2>
+<hr>
+<p>下面我们举几个例子，在 GCC 开启 -O2 优化时，违反严格别名规则导致的未定义行为。</p>
+<h3 id="41-违反严格别名规则示例-1">4.1 违反严格别名规则示例 1</h3>
+<hr>
+<h4 id="411-开启-gcc--o2-导致示例-1-未定义的行为">4.1.1 开启 GCC -O2 导致示例 1 未定义的行为</h4>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#ff79c6">#include</span> <span style="color:#ff79c6">&lt;stdio.h&gt;</span><span style="color:#ff79c6">
+</span><span style="color:#ff79c6"></span>
+<span style="color:#8be9fd">int</span> <span style="color:#50fa7b">foo</span>( <span style="color:#8be9fd">float</span> <span style="color:#ff79c6">*</span>f, <span style="color:#8be9fd">int</span> <span style="color:#ff79c6">*</span>i ) {
+    <span style="color:#ff79c6">*</span>i <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">1</span>;               
+    <span style="color:#ff79c6">*</span>f <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">0.0f</span>;            
+   
+   <span style="color:#ff79c6">return</span> <span style="color:#ff79c6">*</span>i;
+}
+
+<span style="color:#8be9fd">int</span> <span style="color:#50fa7b">main</span>() {
+
+    <span style="color:#8be9fd">int</span> x <span style="color:#ff79c6">=</span> <span style="color:#bd93f9">0</span>;
+    
+    printf(<span style="color:#f1fa8c">&#34;%d</span><span style="color:#f1fa8c">\n</span><span style="color:#f1fa8c">&#34;</span>, x);
+
+    x <span style="color:#ff79c6">=</span> foo((<span style="color:#8be9fd">float</span><span style="color:#ff79c6">*</span>)(<span style="color:#ff79c6">&amp;</span>x), <span style="color:#ff79c6">&amp;</span>x);
+
+    printf(<span style="color:#f1fa8c">&#34;%d</span><span style="color:#f1fa8c">\n</span><span style="color:#f1fa8c">&#34;</span>, x);
+}
+</code></pre></div><p>在 GCC 开启 -O1编译优化时，输出结果为：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#bd93f9">0</span>
+<span style="color:#bd93f9">0</span>
+</code></pre></div><p>我们可以通过 <a href="https://godbolt.org/">godbolt</a> 这个网站实时查看 C/C++ 代码的汇编代码:</p>
+<p>
+  <img src="/img/2024-02-07-gcc-strict-aliasing/figure1.png" alt="">
+
+</p>
+<p>在 GCC 开启 -O2编译优化时，输出结果为：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#bd93f9">0</span>
+<span style="color:#bd93f9">1</span>
+</code></pre></div><p>
+  <img src="/img/2024-02-07-gcc-strict-aliasing/figure2.png" alt="">
+
+</p>
+<h4 id="412-开启--wstrict-aliasing-编译参数">4.1.2 开启 -Wstrict-aliasing 编译参数</h4>
+<hr>
+<p>
+  <img src="/img/2024-02-07-gcc-strict-aliasing/figure3.png" alt="">
+
+</p>
+<p>在本例中即使开启 <code>-Wstrict-aliasing</code> 严格别名告警编译参数，本例虽然违反了严格别名规则，在 x86-64 gcc 13.2 下也未收到任何编译告警提示。</p>
+<h4 id="413-开启--fno-strict-aliasing-编译参数">4.1.3 开启 -fno-strict-aliasing 编译参数</h4>
+<hr>
+<p>
+  <img src="/img/2024-02-07-gcc-strict-aliasing/figure4.png" alt="">
+
+</p>
+<p>开启 <code>-fno-strict-aliasing</code> 取消严格别名优化，修改 GCC -O2 导致的严格别名 Bug。</p>
+<h4 id="414-gcc-开启--o2编译优化避免严格别名-bug-的方法">4.1.4 GCC 开启 -O2编译优化，避免严格别名 Bug 的方法</h4>
+<hr>
+<p>推荐处理顺序为从左到右：</p>
+<pre><code>改代码 &gt; -fno-strict-aliasing &gt; 不开 GCC -O2 优化 &gt; -Wno-strict-aliasing （掩耳盗铃，强烈不建议）
+</code></pre>
+<p>Linux 内核的做法是：</p>
+<pre><code>在开启 GCC -O2 编译优化的同时开启 `-fno-strict-aliasing` 编译参数。
+</code></pre>
+<p>其实如果按照 GCC 那帮人的严格别名（Strict Aliasing）标准，Linux 代码有一半都跑不起来。2018 年 Linus Torvalds 就针对 Strict Aliasing 对 GCC 进行了开喷：<a href="https://lkml.org/lkml/2018/6/5/769">device property: Get rid of union aliasing</a></p>
+<h2 id="5-整数环绕">5. 整数环绕</h2>
+<hr>
+<p>在开启 GCC -O2 编译优化时，对于有符号整数的溢出，编译器认为其是未定义行为。</p>
+<p>在 C11 标准的 3.4.3 小结对未定义行为进行了明确定义：</p>
+<p><strong>未定义行为</strong>：当使用不可移植或者错误的程序/错误的数据时，将导致不可预期的结果。典型例子就是整数溢出时的行为。</p>
+<p>下文，我们通过几个整数溢出的示例进行说明：</p>
+<h3 id="51-整数溢出示例-1">5.1 整数溢出示例 1</h3>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#ff79c6">#include</span> <span style="color:#ff79c6">&lt;stdio.h&gt;</span><span style="color:#ff79c6">
+</span><span style="color:#ff79c6">#include</span> <span style="color:#ff79c6">&lt;limits.h&gt;</span><span style="color:#ff79c6">
+</span><span style="color:#ff79c6"></span>
+<span style="color:#8be9fd">int</span> <span style="color:#50fa7b">f</span>(<span style="color:#8be9fd">int</span> i) {
+    <span style="color:#ff79c6">return</span> i<span style="color:#ff79c6">+</span><span style="color:#bd93f9">1</span> <span style="color:#ff79c6">&gt;</span> i;
+}
+
+<span style="color:#8be9fd">int</span> <span style="color:#50fa7b">main</span>() {
+
+    <span style="color:#8be9fd">int</span> x <span style="color:#ff79c6">=</span> INT_MAX;
+    
+    printf(<span style="color:#f1fa8c">&#34;%d</span><span style="color:#f1fa8c">\n</span><span style="color:#f1fa8c">&#34;</span>, x);
+
+    printf(<span style="color:#f1fa8c">&#34;%d</span><span style="color:#f1fa8c">\n</span><span style="color:#f1fa8c">&#34;</span>, f(x));
+}
+</code></pre></div><p>在 GCC 开启 <code>-O2</code> 编译优化时，默认开启 <code>-fstrict-overflow</code> 编译优化，有符号整数的溢出行为为未定义行为，输出结果为：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#bd93f9">2147483647</span>
+<span style="color:#bd93f9">1</span>
+</code></pre></div><p>此时 GCC 编译器认为 <code>i+1</code> 恒大于 <code>i</code>，因此该函数永远返回 <code>true</code>。</p>
+<p>
+  <img src="/img/2024-02-07-gcc-strict-aliasing/figure5.png" alt="">
+
+</p>
+<p>在 GCC 开启 <code>-O2 -fwrapv</code> 或 <code>-O2 -fno-strict-overflow</code> 编译参数后，输出结果为：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#bd93f9">2147483647</span>
+<span style="color:#bd93f9">0</span>
+</code></pre></div><p><code>-fwrapv</code> 编译选项指示 GCC 编译器假定加法、减法和乘法的有符号算术溢出使用二进制补码表示进行环绕。</p>
+<p>在 <code>#include &lt;limits.h&gt;</code> 头文件中有两个宏定义，INT_MAX：2147483647（整形最大值），INT_MIN：-2147483648（整形最小值），x 初始化为：INT_MAX（2147483647/0x7FFFFFFF），x + 1 后发生溢出，导致新值回绕，变为 INT_MIN（-2147483648/0x80000000）。</p>
+<p>因此最终表达式为：<code>-2147483648 &gt; 2147483647</code>，因此返回 <code>false</code> 即 0。</p>
+<p>
+  <img src="/img/2024-02-07-gcc-strict-aliasing/figure6.png" alt="">
+
+</p>
+<h3 id="51-整数溢出示例-2">5.1 整数溢出示例 2</h3>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#ff79c6">#include</span> <span style="color:#ff79c6">&lt;stdio.h&gt;</span><span style="color:#ff79c6">
+</span><span style="color:#ff79c6"></span>
+<span style="color:#8be9fd">int</span> <span style="color:#50fa7b">main</span>() {
+    
+    <span style="color:#ff79c6">for</span> (<span style="color:#8be9fd">int</span> i<span style="color:#ff79c6">=</span><span style="color:#bd93f9">0</span>; i<span style="color:#ff79c6">&gt;=</span><span style="color:#bd93f9">0</span>; i<span style="color:#ff79c6">++</span>) {
+        printf(<span style="color:#f1fa8c">&#34;%d</span><span style="color:#f1fa8c">\n</span><span style="color:#f1fa8c">&#34;</span>, i);
+    }
+}
+
+</code></pre></div><p>在 GCC 开启 <code>-O2</code> 编译优化时，默认开启 <code>-fstrict-overflow</code> 编译优化，有符号整数的溢出行为为未定义行为，在 i 到达值 INT_MAX 后，评估 i++ 经常生未定义的行为，编译器会产生死循环。</p>
+<p>而在 GCC 开启 <code>-O2 -fwrapv</code> 编译参数时，循环将在执行 INT_MAX 次后停止。</p>
+<h2 id="参考">参考</h2>
+<hr>
+<ul>
+<li><a href="https://gist.github.com/shafik/848ae25ee209f698763cffee272a58f8">What is the Strict Aliasing Rule and Why do we care?</a></li>
+<li><a href="https://cellperformance.beyond3d.com/articles/2006/06/understanding-strict-aliasing.html">Understanding Strict Aliasing</a></li>
+<li><a href="https://yohhoy.hatenadiary.jp/entry/20120220/p1">（翻訳）C/C++のStrict Aliasingを理解する または - どうして#$@##@^%コンパイラは僕がしたい事をさせてくれないの！</a></li>
+<li><a href="https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html">Options That Control Optimization</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/595286568">严格别名（Strict Aliasing）规则是什么，编译器为什么不做我想做的事？</a></li>
+<li><a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf">Programming languages — C</a></li>
+<li><a href="https://www.dpdk.org/blog/2021/03/26/dpdk-adopts-the-c11-memory-model/">DPDK adopts the C11 memory model</a></li>
+<li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1031653">Always compile all C and C++ code with -fwrapv</a></li>
+<li><a href="https://copyprogramming.com/howto/what-does-fwrapv-do">What does -fwrapv do?</a></li>
+</ul>
+<h2 id="公众号flowlet">公众号：Flowlet</h2>
+<hr>
+<img src="/img/qrcode_flowlet.jpg" width = 30% height = 30% alt="Flowlet" align=center/>
+<hr>
+
+
+                
+                
+<div class="entry-shang text-center">
+    
+	    <p> 「如果这篇文章对你有用,请随意打赏」</p>
+	
+	<button class="zs show-zs btn btn-bred">赞赏支持</button>
+</div>
+<div class="zs-modal-bg"></div>
+<div class="zs-modal-box">
+	<div class="zs-modal-head">
+		<button type="button" class="close">×</button>
+		<span class="author"><a href="https://flowlet.net"><img src="/img/favicon.png" />ZhangShuai&#39;s Blog</a></span>
+        
+	        <p class="tip"><i></i><span>如果这篇文章对你有用,请随意打赏</span></p>
+		
+ 
+	</div>
+	<div class="zs-modal-body">
+		<div class="zs-modal-btns">
+			<button class="btn btn-blink" data-num="2">2元</button>
+			<button class="btn btn-blink" data-num="5">5元</button>
+			<button class="btn btn-blink" data-num="10">10元</button>
+			<button class="btn btn-blink" data-num="50">50元</button>
+			<button class="btn btn-blink" data-num="100">100元</button>
+			<button class="btn btn-blink" data-num="1">任意金额</button>
+		</div>
+		<div class="zs-modal-pay">
+			<button class="btn btn-bred" id="pay-text">2元</button>
+			<p>使用<span id="pay-type">微信</span>扫描二维码完成支付</p>
+			<img src="/img/reward/wechat-2.png"  id="pay-image"/>
+		</div>
+	</div>
+	<div class="zs-modal-footer">
+		<label><input type="radio" name="zs-type" value="wechat" class="zs-type" checked="checked"><span ><span class="zs-wechat"><img src="/img/reward/wechat-btn.png"/></span></label>
+		<label><input type="radio" name="zs-type" value="alipay" class="zs-type" class="zs-alipay"><img src="/img/reward/alipay-btn.png"/></span></label>
+	</div>
+</div>
+<script type="text/javascript" src="/js/reward.js"></script>
+
+                
+
+                
+                <hr>
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2024/01/27/linux-conntrack/" data-toggle="tooltip" data-placement="top" title="Linux 连接跟踪（conntrack）[译]">&larr;
+                            Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2024/02/10/azure-vfp/" data-toggle="tooltip" data-placement="top" title="VFP：公有云主机 SDN 的虚拟交换平台 [NSDI&#39;17]">Next
+                            Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+                
+
+                
+
+
+
+            </div>
+
+            
+            
+            <div class="
+                col-lg-2 col-lg-offset-0
+                visible-lg-block
+                sidebar-container
+                catalog-container">
+                <div class="side-catalog">
+                    <hr class="hidden-sm hidden-xs">
+                    <h5>
+                        <a class="catalog-toggle" href="#">CATALOG</a>
+                    </h5>
+                    <ul class="catalog-body"></ul>
+                </div>
+            </div>
+            
+
+            
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/ebtables" title="ebtables">
+                            ebtables
+                        </a>
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/iptables" title="iptables">
+                            iptables
+                        </a>
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/netfilter" title="netfilter">
+                            netfilter
+                        </a>
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/virtio" title="virtio">
+                            virtio
+                        </a>
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                    </div>
+                </section>
+                
+
+                
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">                  
+                    
+                    <li>
+                        <a href="mailto:1171570958@qq.com">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fas fa-envelope fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		           
+                    
+                    <li>
+                        <a href="https://twitter.com/ShuaiZhang_CN">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    
+                    
+
+		            
+                    
+                    <li>
+                        <a target="_blank" href="/img/wechat_qrcode.jpg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-weixin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		            
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/ZhangShuai-CN">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		            
+                    
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://www.linkedin.com/in/flowlet">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		           
+                    
+                    
+                    
+                    
+                    
+                    
+            
+            
+            
+           
+                   <li>
+                       <a href='' rel="alternate" type="application/rss+xml" title="ZhangShuai&#39;s Blog" >
+                           <span class="fa-stack fa-lg">
+                               <i class="fas fa-circle fa-stack-2x"></i>
+                               <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                           </span>
+                       </a>
+                   </li>
+            
+             </ul>
+		<p class="copyright text-muted">
+                    Copyright &copy; ZhangShuai&#39;s Blog 2024
+                    <br>
+                    <a href="https://themes.gohugo.io/hugo-theme-cleanwhite">CleanWhite Hugo Theme</a> by <a href="https://zhaohuabing.com">Huabing</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=zhaohuabing&repo=hugo-theme-cleanwhite&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+
+
+<script>
+    function loadAsync(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+
+
+
+
+<script>
+    
+    if($('#tag_cloud').length !== 0){
+        loadAsync("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+
+<script>
+    loadAsync("https://cdn.jsdelivr.net/npm/fastclick@1.0.6/lib/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+
+
+
+
+<script type="text/javascript">
+    function generateCatalog(selector) {
+
+        
+        
+        
+        
+            _containerSelector = 'div.post-container'
+        
+
+        
+        var P = $(_containerSelector), a, n, t, l, i, c;
+        a = P.find('h1,h2,h3,h4,h5,h6');
+
+        
+        $(selector).html('')
+
+        
+        a.each(function () {
+            n = $(this).prop('tagName').toLowerCase();
+            i = "#" + $(this).prop('id');
+            t = $(this).text();
+            c = $('<a href="' + i + '" rel="nofollow">' + t + '</a>');
+            l = $('<li class="' + n + '_nav"></li>').append(c);
+            $(selector).append(l);
+        });
+        return true;
+    }
+
+    generateCatalog(".catalog-body");
+
+    
+    $(".catalog-toggle").click((function (e) {
+        e.preventDefault();
+        $('.side-catalog').toggleClass("fold")
+    }))
+
+    
+
+
+    loadAsync("\/js\/jquery.nav.js", function () {
+        $('.catalog-body').onePageNav({
+            currentClass: "active",
+            changeHash: !1,
+            easing: "swing",
+            filter: "",
+            scrollSpeed: 700,
+            scrollOffset: 0,
+            scrollThreshold: .2,
+            begin: null,
+            end: null,
+            scrollChange: null,
+            padding: 80
+        });
+    });
+</script>
+
+
+
+
+
+
+</body>
+</html>

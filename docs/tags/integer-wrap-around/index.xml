@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Integer Wrap-around on ZhangShuai&#39;s Blog</title>
+    <link>https://flowlet.net/tags/integer-wrap-around/</link>
+    <description>Recent content in Integer Wrap-around on ZhangShuai&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 07 Feb 2024 01:01:01 +0000</lastBuildDate>
+    
+	<atom:link href="https://flowlet.net/tags/integer-wrap-around/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>GCC -O2 踩坑指南：严格别名（Strict Aliasing）与整数环绕（Integer Wrap-around）</title>
+      <link>https://flowlet.net/2024/02/07/gcc-strict-aliasing/</link>
+      <pubDate>Wed, 07 Feb 2024 01:01:01 +0000</pubDate>
+      
+      <guid>https://flowlet.net/2024/02/07/gcc-strict-aliasing/</guid>
+      <description>关于作者 张帅，网络从业人员，公众号：Flowlet 个人博客：https://flowlet.net/ 序言 GCC 在开启 -O2 编译优化后，会遇到编译器领</description>
+    </item>
+    
+  </channel>
+</rss>

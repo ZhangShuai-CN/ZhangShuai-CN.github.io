@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>vSwitch on ZhangShuai&#39;s Blog</title>
+    <link>https://flowlet.net/tags/vswitch/</link>
+    <description>Recent content in vSwitch on ZhangShuai&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 10 Feb 2024 01:01:01 +0000</lastBuildDate>
+    
+	<atom:link href="https://flowlet.net/tags/vswitch/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>VFP：公有云主机 SDN 的虚拟交换平台 [NSDI&#39;17]</title>
+      <link>https://flowlet.net/2024/02/10/azure-vfp/</link>
+      <pubDate>Sat, 10 Feb 2024 01:01:01 +0000</pubDate>
+      
+      <guid>https://flowlet.net/2024/02/10/azure-vfp/</guid>
+      <description>关于作者 张帅，网络从业人员，公众号：Flowlet 个人博客：https://flowlet.net/ 序言 公有云的 Host vSwitch 由于涉及的业务场景复杂（</description>
+    </item>
+    
+  </channel>
+</rss>

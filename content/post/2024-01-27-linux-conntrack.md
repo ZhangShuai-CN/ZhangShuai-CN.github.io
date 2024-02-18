@@ -8,7 +8,7 @@ date:       2024-01-27 01:01:01
 author:     "张帅"
 image: "/img/2024-01-27-linux-conntrack/background.jpg"
 showtoc: true
-draft: true
+draft: false
 tags:
     - Conntrack
 categories: [ Tech ]
@@ -30,9 +30,9 @@ Linux 连接跟踪子系统（Linux Conntrack）是实现带状态的包过滤�
 
 本文翻译自系列文章 [Connection tracking (conntrack)](https://thermalcircle.de/doku.php?id=blog:linux:connection_tracking_1_modules_and_hooks)，原文共分为三篇，笔者将三篇合为一篇进行讲解，本文主要分为以下三个章节：
 
-* 第一部分：CT 系统（CT System's）概述，详细说明了 CT 系统与 Netfilter 和 Nftables 等其他内核组件的关系。
-* 第二部分：CT 系统（CT System's）底层实现，详细说明了连接跟踪表（conntrack table）、连接查找和连接生命周期管理是如何工作的。
-* 第三部分：如何通过 IPtables/Nftables 分析和跟踪连接状态，并通过 ICMP、UDP 和 TCP 等一些常见协议示例进行说明。
+* **第一部分：CT 系统（CT System's）概述**，详细说明了 CT 系统与 Netfilter 和 Nftables 等其他内核组件的关系。
+* **第二部分：CT 系统（CT System's）底层实现**，详细说明了连接跟踪表（conntrack table）、连接查找和连接生命周期管理是如何工作的。
+* **第三部分：如何通过 IPtables/Nftables 分析和跟踪连接状态**，并通过 ICMP、UDP 和 TCP 等一些常见协议示例进行说明。
 
 ## 前言
 - - -
@@ -704,7 +704,7 @@ ct 系统为它认为无效的数据包，进行如下设置：
 
 ![](/img/2024-01-27-linux-conntrack/figure3.8.png)
 
-> 图 8：ICMP echo-r​​equest 和 echo-r​​eply 遍历 ct hook 函数
+> 图 3.8：ICMP echo-r​​equest 和 echo-r​​eply 遍历 ct hook 函数
 
 如果 client 使用命令 ping 10.0.0.2 向 server 发送连续的 ICMP echo-requests 报文（默认间隔为 1 秒），则所有这些数据包中将包含相同的 ICMP id（图 3.8 的示例中 id = 42），但对于每个 echo-request/reply 对的 ICMP 序列号将递增 1。 ct 系统会将所有这些数据包分配给同一个跟踪的连接，并且只要 ICMP echo-requests/reply 报文不断，该连接就不会超时。在内部，ct 通过记住其元组中的 id 值来实现这一点；代码请参阅 icmp_pkt_to_tuple() 函数。
 
@@ -715,13 +715,13 @@ ct 系统为它认为无效的数据包，进行如下设置：
 
 ![](/img/2024-01-27-linux-conntrack/figure3.9.png)
 
-> 图 9：client 从 DNS server 查询 google.com 域名的 A 记录，client:~$ host -t A google.com
+> 图 3.9：client 从 DNS server 查询 google.com 域名的 A 记录，client:~$ host -t A google.com
 
 UDP 不是面向连接的协议，但是 ct 系统根据：源 + 目的 ip 地址、源+目的 UDP 端口，将其视为单个跟踪连接。图 3.10 显示了两个网络数据包穿过 ct 钩子函数和路由器上的 Nftables 链时的情况。包含 DNS query 的 UDP 数据包会导致创建新的跟踪连接。 ctinfo 被设置为 IP_CT_NEW。与此数据包匹配的 Nftables ct 表达式为：`ct state new`。一旦数据包到达 ct help + confirm 钩子函数，status 会设置 IPS_CONFIRMED bit 位，timeout 设置为 30 秒，并且所跟踪的连接将被添加到 central ct 表中。在此示例中，包含 DNS response 的 UDP 数据包在 30 秒超时时间到期之前进行回复。ct 系统检测到它属于同一跟踪连接，将 ctinfo 设置为 IP_CT_ESTABLISHED_REPLY，设置 status IP_CT_SEEN_REPLY bit 位并将 timeout 重新更新 30 秒。与此数据包匹配的 Nftables ct 表达式为：`ct state established`。一旦 30 秒超时到期，ct 垃圾回收就会设置status IPS_DYING bit 位，从 central ct 表中删除跟踪的连接，将其添加到 dying list 中，并最终将其删除。
 
 ![](/img/2024-01-27-linux-conntrack/figure3.10.png)
 
-> 图 10： DNS query 与 DNS response 遍历 ct 钩子函数
+> 图 3.10： DNS query 与 DNS response 遍历 ct 钩子函数
 
 如果继续收到来自相同的源和目的 IP 地址以及 UDP 端口 的 UDP 数据包（无论哪个方向），那么 ct 系统都会将所有这些 UDP 数据包分配给同一个跟踪的连接，并且只要 UDP 报文不断，该连接就不会超时。在这种情况下，一旦看到属于该连接的第三个数据包，status 将被设置 IPS_ASSURED bit 位。常见的命令行工具（例如 host）在域名解析时通常不仅仅需要 A 记录。一般情况下，主机会请求 A 记录、AAAA 记录和 MX 记录。Host 会对每种 DNS 查询使用不同的 socket 套接字（= 另一个 UDP 源端口号），这导致 ct 系统将每种查询视为一个新的跟踪连接。
 
@@ -778,15 +778,15 @@ ct 系统根据：源+目的 IP 地址和源+目的 TCP 端口，作为单个跟
 
 ![](/img/2024-01-27-linux-conntrack/figure3.12.png)
 
-> 图 12：TCP 3 次握手
+> 图 3.12：TCP 3 次握手
 
 ![](/img/2024-01-27-linux-conntrack/figure3.13.png)
 
-> 图 13：TCP 有效负载传输
+> 图 3.13：TCP 有效负载传输
 
 ![](/img/2024-01-27-linux-conntrack/figure3.14.png)
 
-> 图 14：TCP连接终止
+> 图 3.14：TCP连接终止
 
 ## 参考
 - - -

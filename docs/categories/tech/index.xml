@@ -6,10 +6,37 @@
     <description>Recent content in Tech on ZhangShuai&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 03 Jan 2024 01:01:01 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 10 Feb 2024 01:01:01 +0000</lastBuildDate>
     
 	<atom:link href="https://flowlet.net/categories/tech/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>VFP：公有云主机 SDN 的虚拟交换平台 [NSDI&#39;17]</title>
+      <link>https://flowlet.net/2024/02/10/azure-vfp/</link>
+      <pubDate>Sat, 10 Feb 2024 01:01:01 +0000</pubDate>
+      
+      <guid>https://flowlet.net/2024/02/10/azure-vfp/</guid>
+      <description>关于作者 张帅，网络从业人员，公众号：Flowlet 个人博客：https://flowlet.net/ 序言 公有云的 Host vSwitch 由于涉及的业务场景复杂（</description>
+    </item>
+    
+    <item>
+      <title>GCC -O2 踩坑指南：严格别名（Strict Aliasing）与整数环绕（Integer Wrap-around）</title>
+      <link>https://flowlet.net/2024/02/07/gcc-strict-aliasing/</link>
+      <pubDate>Wed, 07 Feb 2024 01:01:01 +0000</pubDate>
+      
+      <guid>https://flowlet.net/2024/02/07/gcc-strict-aliasing/</guid>
+      <description>关于作者 张帅，网络从业人员，公众号：Flowlet 个人博客：https://flowlet.net/ 序言 GCC 在开启 -O2 编译优化后，会遇到编译器领</description>
+    </item>
+    
+    <item>
+      <title>Linux 连接跟踪（conntrack）[译]</title>
+      <link>https://flowlet.net/2024/01/27/linux-conntrack/</link>
+      <pubDate>Sat, 27 Jan 2024 01:01:01 +0000</pubDate>
+      
+      <guid>https://flowlet.net/2024/01/27/linux-conntrack/</guid>
+      <description>关于作者 张帅，网络从业人员，公众号：Flowlet 个人博客：https://flowlet.net/ 序言 Linux 连接跟踪子系统（Linux Conn</description>
+    </item>
     
     <item>
       <title>使用 RDMA 提升微软 Azure 云的存储性能 [NSDI&#39;23]</title>
