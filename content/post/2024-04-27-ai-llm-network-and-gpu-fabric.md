@@ -1,18 +1,19 @@
 ---
 layout:     post
-title:      "深度学习概述 [译]"
-subtitle:   "深度学习概述"
-description: "Deep Learning in a Nutshell"
+title:      "AI/HPC 高性能网络架构与 GPU Fabric"
+subtitle:   "AI/HPC 高性能网络架构"
+description: "AI Large Language Model Network Architecture and GPU Fabirc"
 excerpt: ""
-date:       2024-03-10 01:01:01
+date:       2024-04-27 01:01:01
 author:     "张帅"
-image: "/img/2024-03-10-Deep-Learning-in-a-Nutshell/background.jpg"
+image: "/img/2024-04-27-ai-llm-network-and-gpu-fabric/background.jpg"
 showtoc: true
 draft: true
 tags:
-    - Deep Learning
+    - AI/HPC Network
+    - GPU Fabric
 categories: [ Tech ]
-URL: "/2024/03/10/Deep-Learning-in-a-Nutshell/"
+URL: "/2024/04/27/ai-llm-network-and-gpu-fabric/"
 ---
 
 - - -
