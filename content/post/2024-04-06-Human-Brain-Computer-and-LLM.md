@@ -1,19 +1,18 @@
 ---
 layout:     post
-title:      "数据结构与算法"
-subtitle:   "数据结构与算法"
-description: "Data Structure and Algorithm"
+title:      "人脑、电脑与大模型"
+subtitle:   "人脑、电脑与大语言模型"
+description: "Human Brain, Computer and Large Language Model"
 excerpt: ""
-date:       2024-04-01 01:01:01
+date:       2024-04-06 01:01:01
 author:     "张帅"
-image: "/img/2024-04-01-data-structure-and-algorithm/background.jpg"
+image: "/img/2024-04-06-Human-Brain-Computer-and-LLM/background.jpg"
 showtoc: true
 draft: true
 tags:
-    - Data Structure
-    - Algorithm
+    - Large Language Model
 categories: [ Tech ]
-URL: "/2024/04/01/data-structure-and-algorithm/"
+URL: "/2024/04/06/Human-Brain-Computer-and-LLM/"
 ---
 
 - - -
