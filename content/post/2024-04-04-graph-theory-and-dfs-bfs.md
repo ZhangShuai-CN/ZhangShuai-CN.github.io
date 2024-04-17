@@ -29,7 +29,7 @@ URL: "/2024/04/04/graph-theory-and-dfs-bfs/"
 
 ![](/img/2024-04-04-graph-theory-and-dfs-bfs/graph.png)
 
-无论是数据中心内的整网网络拓扑，还是网络设备内的业务转发逻辑（如开源用户态网络协议栈 VPP：Vector Packet Processing）都构成一张有向图。想要从这张图中提取有用信息，就需要图论方面的相关知识。在解决实际问题的过程中发现，很多算法都有深度优先遍历（DFS：Depth-first search）和广度优先遍历（BFS：Breadth-first search）的思想在里面。
+无论是数据中心内的整网网络拓扑，还是网络设备内的业务转发逻辑（如开源用户态网络协议栈 VPP：Vector Packet Processing）都构成一张有向图。想要从这张图中提取有用信息，就需要图论方面的相关知识。
 
 本文讲解下图论基础及深度优先遍历（DFS）、广度优先遍历（BFS）。
 
@@ -170,20 +170,13 @@ URL: "/2024/04/04/graph-theory-and-dfs-bfs/"
 ### 3.1 广度优先遍历（BFS）
 - - -
 
-广度优先遍历算法从起始节点开始，逐层扩展，先访问离起始节点最近的节点，后访问离起始节点稍远的节点。以此类推，直到完成整个搜索过程。
+广度优先遍历是一种由近及远的遍历方式，从某个节点出发，始终优先访问距离最近的顶点，并一层层向外扩张。以此类推，直到完成整个搜索过程。
 
 因为遍历到的节点顺序符合「先进先出」的特点，所以广度优先遍历可以通过「队列」来实现。
 
 特点：**全面扩散，逐层递进**。
 用途：解决找到最优解的问题（找到的第一个起始--终点路径，即是最短路径）。
 
-
-
-
-
-
-
-广度优先遍历是一种由近及远的遍历方式，从某个节点出发，始终优先访问距离最近的顶点，并一层层向外扩张。
 
 ![](/img/2024-04-04-graph-theory-and-dfs-bfs/5.1.png)
 
@@ -195,13 +188,21 @@ URL: "/2024/04/04/graph-theory-and-dfs-bfs/"
 ![](/img/2024-04-04-graph-theory-and-dfs-bfs/bfs2.png)
 
 ![](/img/2024-04-04-graph-theory-and-dfs-bfs/bfs3.png)
+
 ![](/img/2024-04-04-graph-theory-and-dfs-bfs/bfs4.png)
+
 ![](/img/2024-04-04-graph-theory-and-dfs-bfs/bfs5.png)
+
 ![](/img/2024-04-04-graph-theory-and-dfs-bfs/bfs6.png)
+
 ![](/img/2024-04-04-graph-theory-and-dfs-bfs/bfs7.png)
+
 ![](/img/2024-04-04-graph-theory-and-dfs-bfs/bfs8.png)
+
 ![](/img/2024-04-04-graph-theory-and-dfs-bfs/bfs9.png)
+
 ![](/img/2024-04-04-graph-theory-and-dfs-bfs/bfs10.png)
+
 ![](/img/2024-04-04-graph-theory-and-dfs-bfs/bfs11.png)
 
 ### 3.2 深度优先遍历（DFS）
@@ -214,10 +215,6 @@ URL: "/2024/04/04/graph-theory-and-dfs-bfs/"
 特点：**一路到底，逐层回退**。
 用途：解决找到所有解问题（找到起始--终点的所有路径，此时 DFS 空间占用少）。
 
-
-
-
-深度优先遍历是一种优先走到底、无路可走再回头的遍历方式。
 
 ![](/img/2024-04-04-graph-theory-and-dfs-bfs/5.2.png)
 
