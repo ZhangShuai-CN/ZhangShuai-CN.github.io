@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    
+    <meta property="og:site_name" content="ZhangShuai&#39;s Blog">
+    <meta property="og:type" content="article">
+
+    
+    <meta property="og:image" content="/img/2024-04-04-graph-theory-and-dfs-bfs/background.jpg">
+    <meta property="twitter:image" content="/img/2024-04-04-graph-theory-and-dfs-bfs/background.jpg" />
+    
+
+    
+    <meta name="title" content="图论基础及深度优先遍历（DFS）、广度优先遍历（BFS）" />
+    <meta property="og:title" content="图论基础及深度优先遍历（DFS）、广度优先遍历（BFS）" />
+    <meta property="twitter:title" content="图论基础及深度优先遍历（DFS）、广度优先遍历（BFS）" />
+    
+
+    
+    <meta name="description" content="Basics of graph theory and the search ideas of DFS, BFS">
+    <meta property="og:description" content="Basics of graph theory and the search ideas of DFS, BFS" />
+    <meta property="twitter:description" content="Basics of graph theory and the search ideas of DFS, BFS" />
+    
+
+    
+    <meta property="twitter:card" content="summary" />
+    
+    
+
+    <meta name="keyword"  content="张帅, zhangshuai, ZhangShuai, , 张帅的网络日志, 张帅的博客, ZhangShuai&#39;s Blog, 博客, 个人网站, 互联网, Web, 云原生, PaaS, Iaas, Kubernetes">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>图论基础及深度优先遍历（DFS）、广度优先遍历（BFS） | 张帅的博客 | ZhangShuai&#39;s Blog</title>
+
+    <link rel="canonical" href="/2024/04/04/graph-theory-and-dfs-bfs/">
+
+    
+    
+    
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    
+    <link rel="stylesheet" href="/css/hugo-theme-cleanwhite.min.css">
+
+    
+    <link rel="stylesheet" href="/css/zanshang.css">
+
+    
+    <link href="https://cdn.jsdelivr.net/gh/FortAwesome/Font-Awesome@5.15.1/css/all.css" rel="stylesheet" type="text/css">
+
+    
+    
+
+    
+    <script src="/js/jquery.min.js"></script>
+
+    
+    <script src="/js/bootstrap.min.js"></script>
+
+    
+    <script src="/js/hux-blog.min.js"></script>
+
+    
+    <script src="/js/lazysizes.min.js"></script>
+
+    
+    
+
+</head>
+
+
+
+
+
+
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+
+    <div class="container-fluid">
+        
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">ZhangShuai&#39;s Blog</a>
+        </div>
+
+        
+        
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">All Posts</a>
+                    </li>
+                    
+                        
+                        <li>
+                            <a href="/categories/startup/">startup</a>
+                        </li>
+                        
+                        <li>
+                            <a href="/categories/tech/">tech</a>
+                        </li>
+                        
+                    
+                    
+		    
+                        <li><a href="/archive//">ARCHIVE</a></li>
+                    
+                        <li><a href="/notes//">NOTES</a></li>
+                    
+                        <li><a href="/about//">ABOUT</a></li>
+                    
+		            <li>
+                        <a href="/search"><i class="fa fa-search"></i></a>
+		           </li>
+                </ul>
+            </div>
+        </div>
+        
+    </div>
+    
+</nav>
+<script>
+    
+    
+    
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        
+            $navbar.className = " ";
+            
+            setTimeout(function(){
+                
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+
+
+<style type="text/css">
+    header.intro-header {
+        background-image: url('/img/2024-04-04-graph-theory-and-dfs-bfs/background.jpg')
+    }
+</style>
+
+<header class="intro-header" >
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/algorithm" title="Algorithm">
+                            Algorithm
+                        </a>
+                        
+                        <a class="tag" href="/tags/graph" title="Graph">
+                            Graph
+                        </a>
+                        
+                    </div>
+                    <h1>图论基础及深度优先遍历（DFS）、广度优先遍历（BFS）</h1>
+                    <h2 class="subheading">图论基础与 DFS、BFS</h2>
+                    <span class="meta">
+                        
+                            Posted by 
+                            
+                                张帅
+                             
+                            on 
+                            Thursday, April 4, 2024
+                            
+                            
+                            
+                            
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+
+
+<article>
+    <div class="container">
+        <div class="row">
+
+            
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                
+                <hr>
+<h6 id="关于作者">关于作者</h6>
+<blockquote>
+<p><strong><code>张帅，网络从业人员，公众号：Flowlet</code></strong></p>
+<p><strong><code>个人博客：https://flowlet.net/</code></strong></p>
+</blockquote>
+<hr>
+<h2 id="前言">前言</h2>
+<hr>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/graph.png" alt="">
+
+</p>
+<p>无论是数据中心内的整网网络拓扑，还是网络设备内的业务转发逻辑（如开源用户态网络协议栈 VPP：Vector Packet Processing）都构成一张有向图。想要从这张图中提取有用信息，就需要图论方面的相关知识。</p>
+<p>本文讲解下图论基础及深度优先遍历（DFS）、广度优先遍历（BFS）。</p>
+<h2 id="1-图论基础">1. 图论基础</h2>
+<hr>
+<p>图论（Graph Theory）是离散数学的一个分支，图（Graph）是由点集合和这些点之间的连线组成，其中点被称为：顶点（Vertex/Node/Point），点与点之间的连线则被称为：边（Edge/Arc/Link）。记为，G = (V, E)。</p>
+<h3 id="11-有向图和无向图">1.1 有向图和无向图</h3>
+<hr>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/1.png" alt="">
+
+</p>
+<p>根据边是否有方向，图可以被划分为：<strong>有向图（Directed Graph）<strong>和</strong>无向图（Undirected Graph）</strong>。一般我们把有向图的顶点和边称为：(Node, Arc)，而无向图的顶点和边称为：(Vertex, Edge)。</p>
+<p>与顶点相关联的边的数目则称为该顶点的<strong>度（Degree）</strong>，对于有向图而言，顶点 A 的<strong>出度（Outdegree）</strong> 为以 A 为起点的有向边的数目，顶点 A 的<strong>入度（Indegree）</strong> 为以 A 为终点的有向边的数目。对于无向图而言其没有出度和入度的概念。</p>
+<h3 id="12-加权图和无权图">1.2 加权图和无权图</h3>
+<hr>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/2.png" alt="">
+
+</p>
+<p>每条边都有<strong>权值（Weight）</strong> 的图称为<strong>加权图（Weighted Graph）</strong>，相反每条边都没有权值的图称为<strong>无权图（Unweighted Graph）</strong>。</p>
+<h3 id="13-稀疏图和稠密图">1.3 稀疏图和稠密图</h3>
+<hr>
+<p><strong>稀疏图（Sparse Graph）</strong>：边的数目相对较少（远小于 n x (n-1)）的图称为稀疏图。</p>
+<p><strong>稠密图（Dense Graph）</strong>：边的数目相对较多的图称为稠密图。</p>
+<h2 id="2-图的表示">2. 图的表示</h2>
+<hr>
+<p>图的存储可以通过<strong>顺序存储结构</strong>和<strong>链式存储结构</strong>来实现。其中顺序存储结构包括：邻接矩阵和边集数组。链式存储结构包括：邻接表、链式前向星、十字链表和邻接多重表。</p>
+<p>接下来我们来介绍两种常用的图存储结构：邻接矩阵与邻接表。</p>
+<h3 id="21-邻接矩阵">2.1 邻接矩阵</h3>
+<hr>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/3.png" alt="">
+
+</p>
+<p>邻接矩阵（Adjacency Matrix）：使用一个二维矩阵来存储顶点之间的邻接关系。</p>
+<p>对于无向图来说，如果顶点 i 与顶点 j 之间有边，我们就将矩阵 V[i][j] 和 V[j][i] 标记为 1；相反矩阵 V[i][j] 为 0 则代表两点之间没边。对于无向图，两个方向的边等价，此时邻接矩阵关于主对角线对称。</p>
+<p>对于有向图来说，如果有一条从顶点 i 指向顶点 j 的边，我们就将矩阵 V[i][j] 标记为 1。对于加权图而言，数组中存储就是对应的权值。</p>
+<p><strong>邻接矩阵的特点：</strong></p>
+<p><strong>优点</strong>：实现简单，可以直接查询顶点 Vi 与 Vj 之间是否存在边（或者直接查询其边的权值），因此增删查改操作的效率很高，时间复杂度均为 O(1)。</p>
+<p><strong>缺点</strong>：空间复杂度为 O(𝑛<sup>2</sup>)，存储稀疏图（Sparse Graph）时，即顶点多，边少的图时，邻接矩阵的存储方式比较浪费空间。</p>
+<h4 id="211-初始化">2.1.1 初始化</h4>
+<hr>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/3.1.png" alt="">
+
+</p>
+<p>传入 𝑛 个顶点，首先初始化一个长度为 𝑛 的顶点列表 vertices；随后初始化一个 𝑛 × 𝑛 大小的邻接矩阵 adjMat。</p>
+<h4 id="212-添加删除边">2.1.2 添加/删除边</h4>
+<hr>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/3.2.png" alt="">
+
+</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/3.3.png" alt="">
+
+</p>
+<p>直接修改邻接矩阵指定的边的值即可，如果是无向图，因此需要同时更新两个方向的边。</p>
+<h4 id="213-添加顶点">2.1.3 添加顶点</h4>
+<hr>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/3.4.png" alt="">
+
+</p>
+<p>在邻接矩阵的尾部添加一行一列，并全部填充为 0。</p>
+<h4 id="214-删除顶点">2.1.4 删除顶点</h4>
+<hr>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/3.5.png" alt="">
+
+</p>
+<p>在邻接矩阵中删除一行一列。当删除首行首列时达到最差情况，需要将 (𝑛 − 1)<sup>2</sup> 个元素 “向左上移动”。</p>
+<h3 id="22-邻接表">2.2 邻接表</h3>
+<hr>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/4.png" alt="">
+
+</p>
+<p>邻接表（Adjacency List）：每个顶点对应一条链表，链表中存储的是与这个顶点相连接的边。</p>
+<p><strong>邻接表的特点：</strong></p>
+<p><strong>优点</strong>：空间复杂度为 O（n + m），存储稀疏图时更加节省空间。</p>
+<p><strong>缺点</strong>：邻接表需要遍历链表来查找边，因此其时间效率不如邻接矩阵。</p>
+<h4 id="221-初始化">2.2.1 初始化</h4>
+<hr>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/4.1.png" alt="">
+
+</p>
+<p>假设无向图的顶点总数为 𝑛、边总数为 𝑚，在邻接表中创建 𝑛 个顶点和 2𝑚 条边。</p>
+<h4 id="222-添加边">2.2.2 添加边</h4>
+<hr>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/4.2.png" alt="">
+
+</p>
+<p>在顶点对应链表的末尾添加边即可，因为是无向图，所以需要同时添加两个方向的边。</p>
+<h4 id="223-删除边">2.2.3 删除边</h4>
+<hr>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/4.3.png" alt="">
+
+</p>
+<p>在顶点对应链表中查找并删除指定边，在无向图中，需要同时删除两个方向的边。</p>
+<h4 id="224-添加顶点">2.2.4 添加顶点</h4>
+<hr>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/4.4.png" alt="">
+
+</p>
+<p>在邻接表中添加一个链表，并将新增顶点作为链表头节点。</p>
+<h4 id="225-删除顶点">2.2.5 删除顶点</h4>
+<hr>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/4.5.png" alt="">
+
+</p>
+<p>需遍历整个邻接表，删除包含指定顶点的所有边。</p>
+<h2 id="3-图的遍历">3. 图的遍历</h2>
+<hr>
+<p>图的遍历方式主要分为两种：<strong>广度优先遍历</strong>和<strong>深度优先遍历</strong>。</p>
+<h3 id="31-广度优先遍历bfs">3.1 广度优先遍历（BFS）</h3>
+<hr>
+<p>广度优先遍历是一种由近及远的遍历方式，从某个节点出发，始终优先访问距离最近的顶点，并一层层向外扩张。以此类推，直到完成整个搜索过程。</p>
+<p>因为遍历到的节点顺序符合「先进先出」的特点，所以广度优先遍历可以通过「队列」来实现。</p>
+<p><strong>特点</strong>：全面扩散，逐层递进。</p>
+<p><strong>用途</strong>：解决找到最优解的问题（找到的第一个起始&ndash;终点路径，即是最短路径）。</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/5.1.png" alt="">
+
+</p>
+<p>如上图所示：从左上角顶点出发，首先遍历该顶点的所有邻接顶点，然后遍历下一个顶点的所有邻接顶点，以此类推，直至所有顶点访问完毕。BFS 通常借助队列来实现，队列具有“先入先出”的性质，这与 BFS 的“由近及远”的思想
+异曲同工。</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/bfs1.png" alt="">
+
+</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/bfs2.png" alt="">
+
+</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/bfs3.png" alt="">
+
+</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/bfs4.png" alt="">
+
+</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/bfs5.png" alt="">
+
+</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/bfs6.png" alt="">
+
+</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/bfs7.png" alt="">
+
+</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/bfs8.png" alt="">
+
+</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/bfs9.png" alt="">
+
+</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/bfs10.png" alt="">
+
+</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/bfs11.png" alt="">
+
+</p>
+<h3 id="32-深度优先遍历dfs">3.2 深度优先遍历（DFS）</h3>
+<hr>
+<p>深度优先遍历算法采用了回溯思想，从起始节点开始，沿着一条路径尽可能深入地访问节点，直到无法继续前进时为止，然后回溯到上一个未访问的节点，继续深入搜索，直到完成整个搜索过程。</p>
+<p>因为遍历到的节点顺序符合「先进后出」的特点，所以深度优先搜索遍历可以通过「栈/递归」来实现。</p>
+<p><strong>特点</strong>：一路到底，逐层回退。</p>
+<p><strong>用途</strong>：解决找到所有解问题（找到起始&ndash;终点的所有路径，此时 DFS 空间占用少）。</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/5.2.png" alt="">
+
+</p>
+<p>如上图所示：从左上角顶点出发，访问当前顶点的某个邻接顶点，直到走到尽头时返回，再继续走到尽头并返回，以此类推，直至所有顶点遍历完成。这种“走到尽头再返回”的算法范式通常基于<strong>栈/递归</strong>来实现。</p>
+<ul>
+<li><strong>直虚线代表向下递推，表示开启了一个新的递归方法来访问新顶点。</strong></li>
+<li><strong>曲虚线代表向上回溯，表示此递归方法已经返回，回溯到了开启此方法的位置。</strong></li>
+</ul>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/dfs1.png" alt="">
+
+</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/dfs2.png" alt="">
+
+</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/dfs3.png" alt="">
+
+</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/dfs4.png" alt="">
+
+</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/dfs5.png" alt="">
+
+</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/dfs6.png" alt="">
+
+</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/dfs7.png" alt="">
+
+</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/dfs8.png" alt="">
+
+</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/dfs9.png" alt="">
+
+</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/dfs10.png" alt="">
+
+</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/dfs11.png" alt="">
+
+</p>
+<h2 id="4-图的遍历-python-实战">4. 图的遍历 python 实战</h2>
+<hr>
+<p>本例，我们通过 <a href="https://dreampuf.github.io/GraphvizOnline/">Graphviz online</a> 创作的有向图如下所示：</p>
+<p>
+  <img src="/img/2024-04-04-graph-theory-and-dfs-bfs/5-d.png" alt="">
+
+</p>
+<pre><code class="language-graphviz" data-lang="graphviz">digraph G {
+   A -&gt; C
+   A -&gt; B
+   B -&gt; D
+   B -&gt; E
+   C -&gt; F
+   E -&gt; F
+}
+</code></pre><!-- ```graphviz
+graph G {
+   A -- C
+   A -- B
+   B -- D
+   B -- E
+   C -- F
+   E -- F
+}
+```
+
+![](/img/2024-04-04-graph-theory-and-dfs-bfs/5-u.png) -->
+<h3 id="41-邻接表">4.1 邻接表</h3>
+<hr>
+<p>我们通过邻接表表示该图：它将每个节点与一个包含其相邻节点的集合一起存储在字典中。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">graph <span style="color:#ff79c6">=</span> {
+        <span style="color:#f1fa8c">&#39;A&#39;</span>: [<span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>], 
+        <span style="color:#f1fa8c">&#39;B&#39;</span>: [<span style="color:#f1fa8c">&#39;D&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>],
+        <span style="color:#f1fa8c">&#39;E&#39;</span>: [<span style="color:#f1fa8c">&#39;F&#39;</span>],
+        <span style="color:#f1fa8c">&#39;C&#39;</span>: [<span style="color:#f1fa8c">&#39;F&#39;</span>]
+    }
+</code></pre></div><h4 id="411-深度优先遍历dfs">4.1.1 深度优先遍历（DFS）</h4>
+<hr>
+<h5 id="4111-深度优先遍历dfs栈">4.1.1.1 深度优先遍历（DFS）：栈</h5>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">
+<span style="color:#6272a4">#!/usr/bin/env python3</span>
+<span style="color:#6272a4"># -*- coding: utf-8 -*-</span>
+
+graph <span style="color:#ff79c6">=</span> {
+        <span style="color:#f1fa8c">&#39;A&#39;</span>: [<span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>], 
+        <span style="color:#f1fa8c">&#39;B&#39;</span>: [<span style="color:#f1fa8c">&#39;D&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>],
+        <span style="color:#f1fa8c">&#39;E&#39;</span>: [<span style="color:#f1fa8c">&#39;F&#39;</span>],
+        <span style="color:#f1fa8c">&#39;C&#39;</span>: [<span style="color:#f1fa8c">&#39;F&#39;</span>]
+    }
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">dfs</span>(graph, start):
+    visited, stack <span style="color:#ff79c6">=</span> [], [start]
+    <span style="color:#ff79c6">while</span> stack:
+        vertex <span style="color:#ff79c6">=</span> stack<span style="color:#ff79c6">.</span>pop()
+        <span style="color:#ff79c6">if</span> vertex <span style="color:#ff79c6">not</span> <span style="color:#ff79c6">in</span> visited:
+            visited<span style="color:#ff79c6">.</span>append(vertex)
+            <span style="color:#ff79c6">if</span> graph<span style="color:#ff79c6">.</span>__contains__(vertex):
+                stack<span style="color:#ff79c6">.</span>extend(graph[vertex])
+
+    <span style="color:#ff79c6">return</span> visited
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">main</span>():
+    <span style="color:#ff79c6">print</span>(dfs(graph, <span style="color:#f1fa8c">&#39;A&#39;</span>))
+
+<span style="color:#ff79c6">if</span> __name__ <span style="color:#ff79c6">==</span> <span style="color:#f1fa8c">&#39;__main__&#39;</span>:
+    main()
+
+</code></pre></div><p>结果如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">
+<span style="color:#ff79c6">[</span><span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span>, <span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>, <span style="color:#f1fa8c">&#39;D&#39;</span><span style="color:#ff79c6">]</span>
+
+</code></pre></div><h5 id="4112-深度优先遍历dfs递归">4.1.1.2 深度优先遍历（DFS）：递归</h5>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6272a4">#!/usr/bin/env python3</span>
+<span style="color:#6272a4"># -*- coding: utf-8 -*-</span>
+
+
+graph <span style="color:#ff79c6">=</span> {
+        <span style="color:#f1fa8c">&#39;A&#39;</span>: [<span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>], 
+        <span style="color:#f1fa8c">&#39;B&#39;</span>: [<span style="color:#f1fa8c">&#39;D&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>],
+        <span style="color:#f1fa8c">&#39;E&#39;</span>: [<span style="color:#f1fa8c">&#39;F&#39;</span>],
+        <span style="color:#f1fa8c">&#39;C&#39;</span>: [<span style="color:#f1fa8c">&#39;F&#39;</span>]
+    }
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">dfs</span>(graph, start, visited<span style="color:#ff79c6">=</span>None):
+    <span style="color:#ff79c6">if</span> visited <span style="color:#ff79c6">is</span> None:
+        visited <span style="color:#ff79c6">=</span> []
+
+    visited<span style="color:#ff79c6">.</span>append(start)
+
+    <span style="color:#ff79c6">if</span> graph<span style="color:#ff79c6">.</span>__contains__(start):
+        <span style="color:#ff79c6">for</span> <span style="color:#8be9fd;font-style:italic">next</span> <span style="color:#ff79c6">in</span> graph[start]:
+            <span style="color:#ff79c6">if</span> <span style="color:#8be9fd;font-style:italic">next</span> <span style="color:#ff79c6">not</span> <span style="color:#ff79c6">in</span> visited:
+                dfs(graph, <span style="color:#8be9fd;font-style:italic">next</span>, visited)
+
+    <span style="color:#ff79c6">return</span> visited
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">main</span>():
+    <span style="color:#ff79c6">print</span>(dfs(graph, <span style="color:#f1fa8c">&#39;A&#39;</span>))
+
+<span style="color:#ff79c6">if</span> __name__ <span style="color:#ff79c6">==</span> <span style="color:#f1fa8c">&#39;__main__&#39;</span>:
+    main()
+
+</code></pre></div><p>结果如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">
+<span style="color:#ff79c6">[</span><span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;D&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span><span style="color:#ff79c6">]</span>
+
+</code></pre></div><h4 id="412-广度优先遍历bfs">4.1.2 广度优先遍历（BFS）</h4>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6272a4">#!/usr/bin/env python3</span>
+<span style="color:#6272a4"># -*- coding: utf-8 -*-</span>
+
+graph <span style="color:#ff79c6">=</span> {
+        <span style="color:#f1fa8c">&#39;A&#39;</span>: [<span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>], 
+        <span style="color:#f1fa8c">&#39;B&#39;</span>: [<span style="color:#f1fa8c">&#39;D&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>],
+        <span style="color:#f1fa8c">&#39;E&#39;</span>: [<span style="color:#f1fa8c">&#39;F&#39;</span>],
+        <span style="color:#f1fa8c">&#39;C&#39;</span>: [<span style="color:#f1fa8c">&#39;F&#39;</span>]
+    }
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">bfs</span>(graph, start):
+    visited, queue <span style="color:#ff79c6">=</span> [], [start]
+    <span style="color:#ff79c6">while</span> queue:
+        vertex <span style="color:#ff79c6">=</span> queue<span style="color:#ff79c6">.</span>pop(<span style="color:#bd93f9">0</span>)
+        <span style="color:#ff79c6">if</span> vertex <span style="color:#ff79c6">not</span> <span style="color:#ff79c6">in</span> visited:
+            visited<span style="color:#ff79c6">.</span>append(vertex)
+            <span style="color:#ff79c6">if</span> graph<span style="color:#ff79c6">.</span>__contains__(vertex):
+                queue<span style="color:#ff79c6">.</span>extend(graph[vertex])
+    
+    <span style="color:#ff79c6">return</span> visited
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">main</span>():
+    <span style="color:#ff79c6">print</span>(bfs(graph, <span style="color:#f1fa8c">&#39;A&#39;</span>))
+
+<span style="color:#ff79c6">if</span> __name__ <span style="color:#ff79c6">==</span> <span style="color:#f1fa8c">&#39;__main__&#39;</span>:
+    main()
+
+</code></pre></div><p>结果如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">
+<span style="color:#ff79c6">[</span><span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>, <span style="color:#f1fa8c">&#39;D&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span><span style="color:#ff79c6">]</span>
+
+</code></pre></div><h4 id="413-顶点之间路径">4.1.3 顶点之间路径</h4>
+<hr>
+<h5 id="4131-两顶点间所有路径dfs-栈">4.1.3.1 两顶点间所有路径：DFS 栈</h5>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">
+<span style="color:#6272a4">#!/usr/bin/env python3</span>
+<span style="color:#6272a4"># -*- coding: utf-8 -*-</span>
+
+graph <span style="color:#ff79c6">=</span> {
+        <span style="color:#f1fa8c">&#39;A&#39;</span>: [<span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>], 
+        <span style="color:#f1fa8c">&#39;B&#39;</span>: [<span style="color:#f1fa8c">&#39;D&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>],
+        <span style="color:#f1fa8c">&#39;E&#39;</span>: [<span style="color:#f1fa8c">&#39;F&#39;</span>],
+        <span style="color:#f1fa8c">&#39;C&#39;</span>: [<span style="color:#f1fa8c">&#39;F&#39;</span>]
+    }
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">dfs_paths</span>(graph, start, end):
+    stack <span style="color:#ff79c6">=</span> [(start, [start])]
+    <span style="color:#ff79c6">while</span> stack:
+        (vertex, path) <span style="color:#ff79c6">=</span> stack<span style="color:#ff79c6">.</span>pop()
+        <span style="color:#ff79c6">if</span> graph<span style="color:#ff79c6">.</span>__contains__(vertex):
+            <span style="color:#ff79c6">for</span> <span style="color:#8be9fd;font-style:italic">next</span> <span style="color:#ff79c6">in</span> graph[vertex]:
+                <span style="color:#ff79c6">if</span> <span style="color:#8be9fd;font-style:italic">next</span> <span style="color:#ff79c6">==</span> end:
+                    <span style="color:#ff79c6">yield</span> path <span style="color:#ff79c6">+</span> [<span style="color:#8be9fd;font-style:italic">next</span>]
+                <span style="color:#ff79c6">else</span>:
+                    stack<span style="color:#ff79c6">.</span>append((<span style="color:#8be9fd;font-style:italic">next</span>, path<span style="color:#ff79c6">+</span>[<span style="color:#8be9fd;font-style:italic">next</span>]))
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">main</span>():
+    <span style="color:#ff79c6">print</span>(<span style="color:#8be9fd;font-style:italic">list</span>(dfs_paths(graph, <span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span>)))
+
+<span style="color:#ff79c6">if</span> __name__ <span style="color:#ff79c6">==</span> <span style="color:#f1fa8c">&#39;__main__&#39;</span>:
+    main()
+
+</code></pre></div><p>结果如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">
+<span style="color:#ff79c6">[[</span><span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span><span style="color:#ff79c6">]</span>, <span style="color:#ff79c6">[</span><span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span><span style="color:#ff79c6">]]</span>
+
+</code></pre></div><h5 id="4132-两顶点间所有路径dfs-递归">4.1.3.2 两顶点间所有路径：DFS 递归</h5>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">
+<span style="color:#6272a4">#!/usr/bin/env python3</span>
+<span style="color:#6272a4"># -*- coding: utf-8 -*-</span>
+
+graph <span style="color:#ff79c6">=</span> {
+        <span style="color:#f1fa8c">&#39;A&#39;</span>: [<span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>], 
+        <span style="color:#f1fa8c">&#39;B&#39;</span>: [<span style="color:#f1fa8c">&#39;D&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>],
+        <span style="color:#f1fa8c">&#39;E&#39;</span>: [<span style="color:#f1fa8c">&#39;F&#39;</span>],
+        <span style="color:#f1fa8c">&#39;C&#39;</span>: [<span style="color:#f1fa8c">&#39;F&#39;</span>]
+    }
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">dfs_paths</span>(graph, start, end, path<span style="color:#ff79c6">=</span>None):
+    <span style="color:#ff79c6">if</span> path <span style="color:#ff79c6">is</span> None:
+        path <span style="color:#ff79c6">=</span> [start]
+
+    <span style="color:#ff79c6">if</span> start <span style="color:#ff79c6">==</span> end:
+        <span style="color:#ff79c6">yield</span> path
+
+    <span style="color:#ff79c6">if</span> graph<span style="color:#ff79c6">.</span>__contains__(start):
+        <span style="color:#ff79c6">for</span> <span style="color:#8be9fd;font-style:italic">next</span> <span style="color:#ff79c6">in</span> graph[start]:
+            <span style="color:#ff79c6">if</span> <span style="color:#8be9fd;font-style:italic">next</span> <span style="color:#ff79c6">not</span> <span style="color:#ff79c6">in</span> path:
+                <span style="color:#ff79c6">yield</span> <span style="color:#ff79c6">from</span> dfs_paths(graph, <span style="color:#8be9fd;font-style:italic">next</span>, end, path <span style="color:#ff79c6">+</span> [<span style="color:#8be9fd;font-style:italic">next</span>])
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">main</span>():
+    <span style="color:#ff79c6">print</span>(<span style="color:#8be9fd;font-style:italic">list</span>(dfs_paths(graph, <span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span>)))
+
+<span style="color:#ff79c6">if</span> __name__ <span style="color:#ff79c6">==</span> <span style="color:#f1fa8c">&#39;__main__&#39;</span>:
+    main()
+
+</code></pre></div><p>结果如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">
+<span style="color:#ff79c6">[[</span><span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span><span style="color:#ff79c6">]</span>, <span style="color:#ff79c6">[</span><span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span><span style="color:#ff79c6">]]</span>
+
+</code></pre></div><h5 id="4133-两顶点间所有路径bfs">4.1.3.3 两顶点间所有路径：BFS</h5>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6272a4">#!/usr/bin/env python3</span>
+<span style="color:#6272a4"># -*- coding: utf-8 -*-</span>
+
+graph <span style="color:#ff79c6">=</span> {
+        <span style="color:#f1fa8c">&#39;A&#39;</span>: [<span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>], 
+        <span style="color:#f1fa8c">&#39;B&#39;</span>: [<span style="color:#f1fa8c">&#39;D&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>],
+        <span style="color:#f1fa8c">&#39;E&#39;</span>: [<span style="color:#f1fa8c">&#39;F&#39;</span>],
+        <span style="color:#f1fa8c">&#39;C&#39;</span>: [<span style="color:#f1fa8c">&#39;F&#39;</span>]
+    }
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">bfs_paths</span>(graph, start, end):
+    queue <span style="color:#ff79c6">=</span> [(start, [start])]
+    <span style="color:#ff79c6">while</span> queue:
+        (vertex, path) <span style="color:#ff79c6">=</span> queue<span style="color:#ff79c6">.</span>pop(<span style="color:#bd93f9">0</span>)
+        <span style="color:#ff79c6">if</span> graph<span style="color:#ff79c6">.</span>__contains__(vertex):
+            <span style="color:#ff79c6">for</span> <span style="color:#8be9fd;font-style:italic">next</span> <span style="color:#ff79c6">in</span> graph[vertex]:
+                <span style="color:#ff79c6">if</span> <span style="color:#8be9fd;font-style:italic">next</span> <span style="color:#ff79c6">==</span> end:
+                    <span style="color:#ff79c6">yield</span> path <span style="color:#ff79c6">+</span> [<span style="color:#8be9fd;font-style:italic">next</span>]
+                <span style="color:#ff79c6">else</span>:
+                    queue<span style="color:#ff79c6">.</span>append((<span style="color:#8be9fd;font-style:italic">next</span>, path<span style="color:#ff79c6">+</span>[<span style="color:#8be9fd;font-style:italic">next</span>]))
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">main</span>():
+    <span style="color:#ff79c6">print</span>(<span style="color:#8be9fd;font-style:italic">list</span>(bfs_paths(graph, <span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span>)))
+
+<span style="color:#ff79c6">if</span> __name__ <span style="color:#ff79c6">==</span> <span style="color:#f1fa8c">&#39;__main__&#39;</span>:
+    main()
+
+</code></pre></div><p>结果如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">
+<span style="color:#ff79c6">[[</span><span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span><span style="color:#ff79c6">]</span>, <span style="color:#ff79c6">[</span><span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span><span style="color:#ff79c6">]]</span>
+
+</code></pre></div><h4 id="414-顶点之间最短路径">4.1.4 顶点之间最短路径</h4>
+<hr>
+<p>通过 BFS 求路径过程中，第一个满足条件的路径即为最短路径。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6272a4">#!/usr/bin/env python3</span>
+<span style="color:#6272a4"># -*- coding: utf-8 -*-</span>
+
+graph <span style="color:#ff79c6">=</span> {
+        <span style="color:#f1fa8c">&#39;A&#39;</span>: [<span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>], 
+        <span style="color:#f1fa8c">&#39;B&#39;</span>: [<span style="color:#f1fa8c">&#39;D&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>],
+        <span style="color:#f1fa8c">&#39;E&#39;</span>: [<span style="color:#f1fa8c">&#39;F&#39;</span>],
+        <span style="color:#f1fa8c">&#39;C&#39;</span>: [<span style="color:#f1fa8c">&#39;F&#39;</span>]
+    }
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">bfs_paths</span>(graph, start, end):
+    queue <span style="color:#ff79c6">=</span> [(start, [start])]
+    <span style="color:#ff79c6">while</span> queue:
+        (vertex, path) <span style="color:#ff79c6">=</span> queue<span style="color:#ff79c6">.</span>pop(<span style="color:#bd93f9">0</span>)
+        <span style="color:#ff79c6">if</span> graph<span style="color:#ff79c6">.</span>__contains__(vertex):
+            <span style="color:#ff79c6">for</span> <span style="color:#8be9fd;font-style:italic">next</span> <span style="color:#ff79c6">in</span> graph[vertex]:
+                <span style="color:#ff79c6">if</span> <span style="color:#8be9fd;font-style:italic">next</span> <span style="color:#ff79c6">==</span> end:
+                    <span style="color:#ff79c6">yield</span> path <span style="color:#ff79c6">+</span> [<span style="color:#8be9fd;font-style:italic">next</span>]
+                <span style="color:#ff79c6">else</span>:
+                    queue<span style="color:#ff79c6">.</span>append((<span style="color:#8be9fd;font-style:italic">next</span>, path<span style="color:#ff79c6">+</span>[<span style="color:#8be9fd;font-style:italic">next</span>]))
+
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">shortest_path_bfs</span>(graph, start, end):
+    <span style="color:#ff79c6">try</span>:
+        <span style="color:#ff79c6">return</span> <span style="color:#8be9fd;font-style:italic">next</span>(bfs_paths(graph, start, end))
+    <span style="color:#ff79c6">except</span> StopIteration:
+        <span style="color:#ff79c6">return</span> None
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">main</span>():
+
+    <span style="color:#ff79c6">print</span>(shortest_path_bfs(graph, <span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span>))
+
+<span style="color:#ff79c6">if</span> __name__ <span style="color:#ff79c6">==</span> <span style="color:#f1fa8c">&#39;__main__&#39;</span>:
+    main()
+
+</code></pre></div><p>结果如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">
+<span style="color:#ff79c6">[</span><span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span><span style="color:#ff79c6">]</span>
+
+</code></pre></div><h3 id="42-邻接矩阵">4.2 邻接矩阵</h3>
+<hr>
+<p>我们通过邻接矩阵表示该图：它将每个节点的存储在列表中，并将节点之间边的关系存储在二维列表中。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">
+vertexs <span style="color:#ff79c6">=</span> [<span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>, <span style="color:#f1fa8c">&#39;D&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span>]
+
+graph <span style="color:#ff79c6">=</span> [
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># A</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># B</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>], <span style="color:#6272a4"># C</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># D</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>], <span style="color:#6272a4"># E</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>]  <span style="color:#6272a4"># F</span>
+]
+
+</code></pre></div><h4 id="421-深度优先遍历dfs">4.2.1 深度优先遍历（DFS）</h4>
+<hr>
+<h5 id="4211-深度优先遍历dfs堆栈">4.2.1.1 深度优先遍历（DFS）：堆栈</h5>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">
+<span style="color:#6272a4">#!/usr/bin/env python3</span>
+<span style="color:#6272a4"># -*- coding: utf-8 -*-</span>
+
+vertexs <span style="color:#ff79c6">=</span> [<span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>, <span style="color:#f1fa8c">&#39;D&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span>]
+
+graph <span style="color:#ff79c6">=</span> [
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># A</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># B</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>], <span style="color:#6272a4"># C</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># D</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>], <span style="color:#6272a4"># E</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>]  <span style="color:#6272a4"># F</span>
+]
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">dfs</span>(graph, start):
+    visited, stack <span style="color:#ff79c6">=</span> [], [start]
+    <span style="color:#ff79c6">while</span> stack:
+        vertex <span style="color:#ff79c6">=</span> stack<span style="color:#ff79c6">.</span>pop()
+        <span style="color:#ff79c6">if</span> vertex <span style="color:#ff79c6">not</span> <span style="color:#ff79c6">in</span> visited:
+            visited<span style="color:#ff79c6">.</span>append(vertex)
+            <span style="color:#ff79c6">for</span> idx, weight <span style="color:#ff79c6">in</span> <span style="color:#8be9fd;font-style:italic">enumerate</span>(graph[vertex]):
+                <span style="color:#ff79c6">if</span> weight:
+                    stack<span style="color:#ff79c6">.</span>append(idx)
+
+    <span style="color:#ff79c6">return</span> visited
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">main</span>():
+
+    <span style="color:#ff79c6">print</span>([vertexs[idx] <span style="color:#ff79c6">for</span> idx <span style="color:#ff79c6">in</span> dfs(graph, vertexs<span style="color:#ff79c6">.</span>index(<span style="color:#f1fa8c">&#39;A&#39;</span>))])
+
+<span style="color:#ff79c6">if</span> __name__ <span style="color:#ff79c6">==</span> <span style="color:#f1fa8c">&#39;__main__&#39;</span>:
+    main()
+
+</code></pre></div><p>结果如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">
+<span style="color:#ff79c6">[</span><span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span>, <span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>, <span style="color:#f1fa8c">&#39;D&#39;</span><span style="color:#ff79c6">]</span>
+
+</code></pre></div><h5 id="4212-深度优先遍历dfs递归">4.2.1.2 深度优先遍历（DFS）：递归</h5>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">
+<span style="color:#6272a4">#!/usr/bin/env python3</span>
+<span style="color:#6272a4"># -*- coding: utf-8 -*-</span>
+
+vertexs <span style="color:#ff79c6">=</span> [<span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>, <span style="color:#f1fa8c">&#39;D&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span>]
+
+graph <span style="color:#ff79c6">=</span> [
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># A</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># B</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>], <span style="color:#6272a4"># C</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># D</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>], <span style="color:#6272a4"># E</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>]  <span style="color:#6272a4"># F</span>
+]
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">dfs</span>(graph, start, visited<span style="color:#ff79c6">=</span>None):
+    <span style="color:#ff79c6">if</span> visited <span style="color:#ff79c6">is</span> None:
+        visited <span style="color:#ff79c6">=</span> []
+
+    visited<span style="color:#ff79c6">.</span>append(start)
+
+    <span style="color:#ff79c6">for</span> idx, weight <span style="color:#ff79c6">in</span> <span style="color:#8be9fd;font-style:italic">enumerate</span>(graph[start]):
+        <span style="color:#ff79c6">if</span> weight <span style="color:#ff79c6">and</span> idx <span style="color:#ff79c6">not</span> <span style="color:#ff79c6">in</span> visited:
+            dfs(graph, idx, visited)
+
+    <span style="color:#ff79c6">return</span> visited
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">main</span>():
+
+    <span style="color:#ff79c6">print</span>([vertexs[idx] <span style="color:#ff79c6">for</span> idx <span style="color:#ff79c6">in</span> dfs(graph, vertexs<span style="color:#ff79c6">.</span>index(<span style="color:#f1fa8c">&#39;A&#39;</span>))])
+
+<span style="color:#ff79c6">if</span> __name__ <span style="color:#ff79c6">==</span> <span style="color:#f1fa8c">&#39;__main__&#39;</span>:
+    main()
+
+</code></pre></div><p>结果如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">
+<span style="color:#ff79c6">[</span><span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;D&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span><span style="color:#ff79c6">]</span>
+
+</code></pre></div><h4 id="422-广度优先遍历bfs">4.2.2 广度优先遍历（BFS）</h4>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">
+<span style="color:#6272a4">#!/usr/bin/env python3</span>
+<span style="color:#6272a4"># -*- coding: utf-8 -*-</span>
+
+vertexs <span style="color:#ff79c6">=</span> [<span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>, <span style="color:#f1fa8c">&#39;D&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span>]
+
+graph <span style="color:#ff79c6">=</span> [
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># A</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># B</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>], <span style="color:#6272a4"># C</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># D</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>], <span style="color:#6272a4"># E</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>]  <span style="color:#6272a4"># F</span>
+]
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">bfs</span>(graph, start):
+    visited, queue <span style="color:#ff79c6">=</span> [], [start]
+    <span style="color:#ff79c6">while</span> queue:
+        vertex <span style="color:#ff79c6">=</span> queue<span style="color:#ff79c6">.</span>pop(<span style="color:#bd93f9">0</span>)
+        <span style="color:#ff79c6">if</span> vertex <span style="color:#ff79c6">not</span> <span style="color:#ff79c6">in</span> visited:
+            visited<span style="color:#ff79c6">.</span>append(vertex)
+            <span style="color:#ff79c6">for</span> idx, weight <span style="color:#ff79c6">in</span> <span style="color:#8be9fd;font-style:italic">enumerate</span>(graph[vertex]):
+                <span style="color:#ff79c6">if</span> weight:
+                    queue<span style="color:#ff79c6">.</span>append(idx)
+    
+    <span style="color:#ff79c6">return</span> visited
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">main</span>():
+
+    <span style="color:#ff79c6">print</span>([vertexs[idx] <span style="color:#ff79c6">for</span> idx <span style="color:#ff79c6">in</span> bfs(graph, vertexs<span style="color:#ff79c6">.</span>index(<span style="color:#f1fa8c">&#39;A&#39;</span>))])
+
+<span style="color:#ff79c6">if</span> __name__ <span style="color:#ff79c6">==</span> <span style="color:#f1fa8c">&#39;__main__&#39;</span>:
+    main()
+
+</code></pre></div><p>结果如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">
+<span style="color:#ff79c6">[</span><span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>, <span style="color:#f1fa8c">&#39;D&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span><span style="color:#ff79c6">]</span>
+
+</code></pre></div><h4 id="423-顶点之间路径">4.2.3 顶点之间路径</h4>
+<hr>
+<h5 id="4231-两顶点间所有路径dfs-栈">4.2.3.1 两顶点间所有路径：DFS 栈</h5>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">
+<span style="color:#6272a4">#!/usr/bin/env python3</span>
+<span style="color:#6272a4"># -*- coding: utf-8 -*-</span>
+
+vertexs <span style="color:#ff79c6">=</span> [<span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>, <span style="color:#f1fa8c">&#39;D&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span>]
+
+graph <span style="color:#ff79c6">=</span> [
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># A</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># B</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>], <span style="color:#6272a4"># C</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># D</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>], <span style="color:#6272a4"># E</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>]  <span style="color:#6272a4"># F</span>
+]
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">dfs_paths</span>(graph, start, end):
+    stack <span style="color:#ff79c6">=</span> [(start, [start])]
+    <span style="color:#ff79c6">while</span> stack:
+        (vertex, path) <span style="color:#ff79c6">=</span> stack<span style="color:#ff79c6">.</span>pop()
+        <span style="color:#ff79c6">for</span> idx, weight <span style="color:#ff79c6">in</span> <span style="color:#8be9fd;font-style:italic">enumerate</span>(graph[vertex]):
+            <span style="color:#ff79c6">if</span> weight:
+                <span style="color:#ff79c6">if</span> idx <span style="color:#ff79c6">==</span> end:
+                    <span style="color:#ff79c6">yield</span> path <span style="color:#ff79c6">+</span> [idx]
+                <span style="color:#ff79c6">else</span>:
+                    stack<span style="color:#ff79c6">.</span>append((idx, path<span style="color:#ff79c6">+</span>[idx]))
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">main</span>():
+
+    paths <span style="color:#ff79c6">=</span> []
+    <span style="color:#ff79c6">for</span> path <span style="color:#ff79c6">in</span> dfs_paths(graph, vertexs<span style="color:#ff79c6">.</span>index(<span style="color:#f1fa8c">&#39;A&#39;</span>), vertexs<span style="color:#ff79c6">.</span>index(<span style="color:#f1fa8c">&#39;F&#39;</span>)):
+        paths<span style="color:#ff79c6">.</span>append([vertexs[idx] <span style="color:#ff79c6">for</span> idx <span style="color:#ff79c6">in</span> path])
+
+    <span style="color:#ff79c6">print</span>(paths)
+
+<span style="color:#ff79c6">if</span> __name__ <span style="color:#ff79c6">==</span> <span style="color:#f1fa8c">&#39;__main__&#39;</span>:
+    main()
+
+</code></pre></div><p>结果如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">
+<span style="color:#ff79c6">[[</span><span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span><span style="color:#ff79c6">]</span>, <span style="color:#ff79c6">[</span><span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span><span style="color:#ff79c6">]]</span>
+
+</code></pre></div><h5 id="4232-两顶点间所有路径dfs-递归">4.2.3.2 两顶点间所有路径：DFS 递归</h5>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">
+<span style="color:#6272a4">#!/usr/bin/env python3</span>
+<span style="color:#6272a4"># -*- coding: utf-8 -*-</span>
+
+vertexs <span style="color:#ff79c6">=</span> [<span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>, <span style="color:#f1fa8c">&#39;D&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span>]
+
+graph <span style="color:#ff79c6">=</span> [
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># A</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># B</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>], <span style="color:#6272a4"># C</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># D</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>], <span style="color:#6272a4"># E</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>]  <span style="color:#6272a4"># F</span>
+]
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">dfs_paths</span>(graph, start, end, path<span style="color:#ff79c6">=</span>None):
+    <span style="color:#ff79c6">if</span> path <span style="color:#ff79c6">is</span> None:
+        path <span style="color:#ff79c6">=</span> [start]
+
+    <span style="color:#ff79c6">if</span> start <span style="color:#ff79c6">==</span> end:
+        <span style="color:#ff79c6">yield</span> path
+
+    <span style="color:#ff79c6">for</span> idx, weight <span style="color:#ff79c6">in</span> <span style="color:#8be9fd;font-style:italic">enumerate</span>(graph[start]):
+        <span style="color:#ff79c6">if</span> weight:
+            <span style="color:#ff79c6">if</span> idx <span style="color:#ff79c6">not</span> <span style="color:#ff79c6">in</span> path:
+                <span style="color:#ff79c6">yield</span> <span style="color:#ff79c6">from</span> dfs_paths(graph, idx, end, path <span style="color:#ff79c6">+</span> [idx])
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">main</span>():
+
+    paths <span style="color:#ff79c6">=</span> []
+    <span style="color:#ff79c6">for</span> path <span style="color:#ff79c6">in</span> dfs_paths(graph, vertexs<span style="color:#ff79c6">.</span>index(<span style="color:#f1fa8c">&#39;A&#39;</span>), vertexs<span style="color:#ff79c6">.</span>index(<span style="color:#f1fa8c">&#39;F&#39;</span>)):
+        paths<span style="color:#ff79c6">.</span>append([vertexs[idx] <span style="color:#ff79c6">for</span> idx <span style="color:#ff79c6">in</span> path])
+
+    <span style="color:#ff79c6">print</span>(paths)
+
+<span style="color:#ff79c6">if</span> __name__ <span style="color:#ff79c6">==</span> <span style="color:#f1fa8c">&#39;__main__&#39;</span>:
+    main()
+
+</code></pre></div><p>结果如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">
+<span style="color:#ff79c6">[[</span><span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span><span style="color:#ff79c6">]</span>, <span style="color:#ff79c6">[</span><span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span><span style="color:#ff79c6">]]</span>
+
+</code></pre></div><h5 id="4233-两顶点间所有路径bfs">4.2.3.3 两顶点间所有路径：BFS</h5>
+<hr>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">
+<span style="color:#6272a4">#!/usr/bin/env python3</span>
+<span style="color:#6272a4"># -*- coding: utf-8 -*-</span>
+
+vertexs <span style="color:#ff79c6">=</span> [<span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>, <span style="color:#f1fa8c">&#39;D&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span>]
+
+graph <span style="color:#ff79c6">=</span> [
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># A</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># B</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>], <span style="color:#6272a4"># C</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># D</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>], <span style="color:#6272a4"># E</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>]  <span style="color:#6272a4"># F</span>
+]
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">bfs_paths</span>(graph, start, end):
+    queue <span style="color:#ff79c6">=</span> [(start, [start])]
+    <span style="color:#ff79c6">while</span> queue:
+        (vertex, path) <span style="color:#ff79c6">=</span> queue<span style="color:#ff79c6">.</span>pop(<span style="color:#bd93f9">0</span>)
+        <span style="color:#ff79c6">for</span> idx, weight <span style="color:#ff79c6">in</span> <span style="color:#8be9fd;font-style:italic">enumerate</span>(graph[vertex]):
+            <span style="color:#ff79c6">if</span> weight:
+                <span style="color:#ff79c6">if</span> idx <span style="color:#ff79c6">==</span> end:
+                    <span style="color:#ff79c6">yield</span> path <span style="color:#ff79c6">+</span> [idx]
+                <span style="color:#ff79c6">else</span>:
+                    queue<span style="color:#ff79c6">.</span>append((idx, path<span style="color:#ff79c6">+</span>[idx]))
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">main</span>():
+
+    paths <span style="color:#ff79c6">=</span> []
+    <span style="color:#ff79c6">for</span> path <span style="color:#ff79c6">in</span> bfs_paths(graph, vertexs<span style="color:#ff79c6">.</span>index(<span style="color:#f1fa8c">&#39;A&#39;</span>), vertexs<span style="color:#ff79c6">.</span>index(<span style="color:#f1fa8c">&#39;F&#39;</span>)):
+        paths<span style="color:#ff79c6">.</span>append([vertexs[idx] <span style="color:#ff79c6">for</span> idx <span style="color:#ff79c6">in</span> path])
+
+    <span style="color:#ff79c6">print</span>(paths)
+
+<span style="color:#ff79c6">if</span> __name__ <span style="color:#ff79c6">==</span> <span style="color:#f1fa8c">&#39;__main__&#39;</span>:
+    main()
+
+</code></pre></div><p>结果如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">
+<span style="color:#ff79c6">[[</span><span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span><span style="color:#ff79c6">]</span>, <span style="color:#ff79c6">[</span><span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span><span style="color:#ff79c6">]]</span>
+
+</code></pre></div><h4 id="424-顶点之间最短路径">4.2.4 顶点之间最短路径</h4>
+<hr>
+<p>通过 BFS 求路径过程中，第一个满足条件的路径即为最短路径。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">
+<span style="color:#6272a4">#!/usr/bin/env python3</span>
+<span style="color:#6272a4"># -*- coding: utf-8 -*-</span>
+
+vertexs <span style="color:#ff79c6">=</span> [<span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;B&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>, <span style="color:#f1fa8c">&#39;D&#39;</span>, <span style="color:#f1fa8c">&#39;E&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span>]
+
+graph <span style="color:#ff79c6">=</span> [
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># A</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">1</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># B</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>], <span style="color:#6272a4"># C</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>], <span style="color:#6272a4"># D</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">1</span>], <span style="color:#6272a4"># E</span>
+    [<span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>, <span style="color:#bd93f9">0</span>]  <span style="color:#6272a4"># F</span>
+]
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">bfs_paths</span>(graph, start, end):
+    queue <span style="color:#ff79c6">=</span> [(start, [start])]
+    <span style="color:#ff79c6">while</span> queue:
+        (vertex, path) <span style="color:#ff79c6">=</span> queue<span style="color:#ff79c6">.</span>pop(<span style="color:#bd93f9">0</span>)
+        <span style="color:#ff79c6">for</span> idx, weight <span style="color:#ff79c6">in</span> <span style="color:#8be9fd;font-style:italic">enumerate</span>(graph[vertex]):
+            <span style="color:#ff79c6">if</span> weight:
+                <span style="color:#ff79c6">if</span> idx <span style="color:#ff79c6">==</span> end:
+                    <span style="color:#ff79c6">yield</span> path <span style="color:#ff79c6">+</span> [idx]
+                <span style="color:#ff79c6">else</span>:
+                    queue<span style="color:#ff79c6">.</span>append((idx, path<span style="color:#ff79c6">+</span>[idx]))
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">shortest_path_bfs</span>(graph, start, end):
+    <span style="color:#ff79c6">try</span>:
+        <span style="color:#ff79c6">return</span> <span style="color:#8be9fd;font-style:italic">next</span>(bfs_paths(graph, start, end))
+    <span style="color:#ff79c6">except</span> StopIteration:
+        <span style="color:#ff79c6">return</span> None
+
+<span style="color:#ff79c6">def</span> <span style="color:#50fa7b">main</span>():
+
+    <span style="color:#ff79c6">print</span>([vertexs[idx] <span style="color:#ff79c6">for</span> idx <span style="color:#ff79c6">in</span> shortest_path_bfs(graph, vertexs<span style="color:#ff79c6">.</span>index(<span style="color:#f1fa8c">&#39;A&#39;</span>), vertexs<span style="color:#ff79c6">.</span>index(<span style="color:#f1fa8c">&#39;F&#39;</span>))])
+
+<span style="color:#ff79c6">if</span> __name__ <span style="color:#ff79c6">==</span> <span style="color:#f1fa8c">&#39;__main__&#39;</span>:
+    main()
+
+</code></pre></div><p>结果如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">
+<span style="color:#ff79c6">[</span><span style="color:#f1fa8c">&#39;A&#39;</span>, <span style="color:#f1fa8c">&#39;C&#39;</span>, <span style="color:#f1fa8c">&#39;F&#39;</span><span style="color:#ff79c6">]</span>
+
+</code></pre></div><h2 id="参考">参考</h2>
+<hr>
+<ul>
+<li><a href="https://eddmann.com/posts/depth-first-search-and-breadth-first-search-in-python/">Depth-First Search and Breadth-First Search in Python</a></li>
+<li><a href="https://github.com/krahets/hello-algo">hello-algo</a></li>
+<li><a href="https://blog.csdn.net/m0_69478345/article/details/128476009">算法第六期——DFS初入门(深度优先搜索)(Python)</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/24986203">搜索思想——DFS &amp; BFS（基础基础篇）</a></li>
+<li><a href="https://algo.itcharge.cn/">算法通关手册（LeetCode）</a></li>
+</ul>
+<h2 id="公众号flowlet">公众号：Flowlet</h2>
+<hr>
+<img src="/img/qrcode_flowlet.jpg" width = 30% height = 30% alt="Flowlet" align=center/>
+<hr>
+
+
+                
+                
+<div class="entry-shang text-center">
+    
+	    <p> 「如果这篇文章对你有用,请随意打赏」</p>
+	
+	<button class="zs show-zs btn btn-bred">赞赏支持</button>
+</div>
+<div class="zs-modal-bg"></div>
+<div class="zs-modal-box">
+	<div class="zs-modal-head">
+		<button type="button" class="close">×</button>
+		<span class="author"><a href="https://flowlet.net"><img src="/img/favicon.png" />ZhangShuai&#39;s Blog</a></span>
+        
+	        <p class="tip"><i></i><span>如果这篇文章对你有用,请随意打赏</span></p>
+		
+ 
+	</div>
+	<div class="zs-modal-body">
+		<div class="zs-modal-btns">
+			<button class="btn btn-blink" data-num="2">2元</button>
+			<button class="btn btn-blink" data-num="5">5元</button>
+			<button class="btn btn-blink" data-num="10">10元</button>
+			<button class="btn btn-blink" data-num="50">50元</button>
+			<button class="btn btn-blink" data-num="100">100元</button>
+			<button class="btn btn-blink" data-num="1">任意金额</button>
+		</div>
+		<div class="zs-modal-pay">
+			<button class="btn btn-bred" id="pay-text">2元</button>
+			<p>使用<span id="pay-type">微信</span>扫描二维码完成支付</p>
+			<img src="/img/reward/wechat-2.png"  id="pay-image"/>
+		</div>
+	</div>
+	<div class="zs-modal-footer">
+		<label><input type="radio" name="zs-type" value="wechat" class="zs-type" checked="checked"><span ><span class="zs-wechat"><img src="/img/reward/wechat-btn.png"/></span></label>
+		<label><input type="radio" name="zs-type" value="alipay" class="zs-type" class="zs-alipay"><img src="/img/reward/alipay-btn.png"/></span></label>
+	</div>
+</div>
+<script type="text/javascript" src="/js/reward.js"></script>
+
+                
+
+                
+                <hr>
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2024/02/10/azure-vfp/" data-toggle="tooltip" data-placement="top" title="VFP：公有云主机 SDN 的虚拟交换平台 [NSDI&#39;17]">&larr;
+                            Previous Post</a>
+                    </li>
+                    
+                    
+                </ul>
+                
+
+                
+
+
+
+            </div>
+
+            
+            
+            <div class="
+                col-lg-2 col-lg-offset-0
+                visible-lg-block
+                sidebar-container
+                catalog-container">
+                <div class="side-catalog">
+                    <hr class="hidden-sm hidden-xs">
+                    <h5>
+                        <a class="catalog-toggle" href="#">CATALOG</a>
+                    </h5>
+                    <ul class="catalog-body"></ul>
+                </div>
+            </div>
+            
+
+            
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/ebtables" title="ebtables">
+                            ebtables
+                        </a>
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/iptables" title="iptables">
+                            iptables
+                        </a>
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/netfilter" title="netfilter">
+                            netfilter
+                        </a>
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/virtio" title="virtio">
+                            virtio
+                        </a>
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                    </div>
+                </section>
+                
+
+                
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">                  
+                    
+                    <li>
+                        <a href="mailto:1171570958@qq.com">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fas fa-envelope fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		           
+                    
+                    <li>
+                        <a href="https://twitter.com/ShuaiZhang_CN">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    
+                    
+
+		            
+                    
+                    <li>
+                        <a target="_blank" href="/img/wechat_qrcode.jpg">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-weixin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		            
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/ZhangShuai-CN">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		            
+                    
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://www.linkedin.com/in/flowlet">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x"></i>
+                                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+		           
+                    
+                    
+                    
+                    
+                    
+                    
+            
+            
+            
+           
+                   <li>
+                       <a href='' rel="alternate" type="application/rss+xml" title="ZhangShuai&#39;s Blog" >
+                           <span class="fa-stack fa-lg">
+                               <i class="fas fa-circle fa-stack-2x"></i>
+                               <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                           </span>
+                       </a>
+                   </li>
+            
+             </ul>
+		<p class="copyright text-muted">
+                    Copyright &copy; ZhangShuai&#39;s Blog 2024
+                    <br>
+                    <a href="https://themes.gohugo.io/hugo-theme-cleanwhite">CleanWhite Hugo Theme</a> by <a href="https://zhaohuabing.com">Huabing</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="100px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=zhaohuabing&repo=hugo-theme-cleanwhite&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+
+
+<script>
+    function loadAsync(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+
+
+
+
+<script>
+    
+    if($('#tag_cloud').length !== 0){
+        loadAsync("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+
+<script>
+    loadAsync("https://cdn.jsdelivr.net/npm/fastclick@1.0.6/lib/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+
+
+
+
+<script type="text/javascript">
+    function generateCatalog(selector) {
+
+        
+        
+        
+        
+            _containerSelector = 'div.post-container'
+        
+
+        
+        var P = $(_containerSelector), a, n, t, l, i, c;
+        a = P.find('h1,h2,h3,h4,h5,h6');
+
+        
+        $(selector).html('')
+
+        
+        a.each(function () {
+            n = $(this).prop('tagName').toLowerCase();
+            i = "#" + $(this).prop('id');
+            t = $(this).text();
+            c = $('<a href="' + i + '" rel="nofollow">' + t + '</a>');
+            l = $('<li class="' + n + '_nav"></li>').append(c);
+            $(selector).append(l);
+        });
+        return true;
+    }
+
+    generateCatalog(".catalog-body");
+
+    
+    $(".catalog-toggle").click((function (e) {
+        e.preventDefault();
+        $('.side-catalog').toggleClass("fold")
+    }))
+
+    
+
+
+    loadAsync("\/js\/jquery.nav.js", function () {
+        $('.catalog-body').onePageNav({
+            currentClass: "active",
+            changeHash: !1,
+            easing: "swing",
+            filter: "",
+            scrollSpeed: 700,
+            scrollOffset: 0,
+            scrollThreshold: .2,
+            begin: null,
+            end: null,
+            scrollChange: null,
+            padding: 80
+        });
+    });
+</script>
+
+
+
+
+
+
+</body>
+</html>
