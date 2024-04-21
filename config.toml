@@ -3,7 +3,7 @@ title = "ZhangShuai's Blog"
 theme = "hugo-theme-cleanwhite"
 languageCode = "en-us"
 # Enable comments by entering your Disqus shortname
-disqusShortname = ""
+disqusShortname = "ZhangShuai"
 googleAnalytics = ""
 preserveTaxonomyNames = true
 paginate = 10 #frontpage pagination
@@ -142,6 +142,21 @@ notAlternative = true
 [params.algolia]
 vars = ["title", "summary", "date", "publishdate", "expirydate", "permalink"]
 params = ["categories", "tags"] 
+
+[params.giscus]
+data-repo="ZhangShuai-CN/ZhangShuai-CN.github.io"
+data-repo-id="R_kgDOH2zwvQ"
+data-category="Announcements"
+data-category-id="DIC_kwDOH2zwvc4Ce067"
+data-mapping="pathname"
+data-strict="0"
+data-reactions-enabled="1"
+data-emit-metadata="0"
+data-input-position="bottom"
+data-theme="preferred_color_scheme"
+data-lang="zh-CN"
+crossorigin="anonymous"
+
 
 [markup]
   defaultMarkdownHandler = "goldmark"
