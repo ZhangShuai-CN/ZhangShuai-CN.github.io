@@ -1,7 +1,7 @@
 ---
 layout:     post
 title:      "通过 P4 释放 SmartNIC 数据包处理性能 [SIGCOMM 2023]"
-subtitle:   "AI/HPC 高性能网络架构"
+subtitle:   "Pipeleon：用于 P4 可编程 SmartNIC 的自动化性能优化框架"
 description: "Unleashing SmartNIC Packet Processing Performance in P4"
 excerpt: ""
 date:       2024-04-23 01:01:01
