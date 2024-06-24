@@ -16,13 +16,13 @@ cat <<EOF
         -s  compress directory,default current directory
         -j  compress jpg
         -p  compress png
-        -s  compress size,default 512k, 512k/2M
+        -s  compress size,default 1024k, 1024k/2M
 
     Example:
-        jpg_png_compress.sh -j -s 512k
-        jpg_png_compress.sh -p -s 512k
-        jpg_png_compress.sh -s 512k
-        jpg_png_compress.sh -d static/img/ -s 512k
+        jpg_png_compress.sh -j -s 1024k
+        jpg_png_compress.sh -p -s 1024k
+        jpg_png_compress.sh -s 1024k
+        jpg_png_compress.sh -d static/img/ -s 1024k
 EOF
 }
 
